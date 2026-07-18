@@ -304,6 +304,22 @@ const age = Vexora.Request.input("age", 18);
 const clientIp = Vexora.Request.ip();
 ```
 
+### 📤 Response Engine (`Vexora.Response`)
+Standardize API payloads and automatically track execution latencies:
+
+```javascript
+// A. Success Response (HTTP 200)
+// Automatically appends: { "status": true, "message": "...", "data": {...}, "execution_time": "1.24ms" }
+Vexora.Response.success({ id: 1, name: "Satyam" }, "Profile loaded successfully!");
+
+// B. Error Response with custom HTTP Code (HTTP 401)
+// Automatically appends: { "status": false, "message": "...", "data": null, "execution_time": "0.85ms" }
+Vexora.Response.error("Invalid password!", 401);
+
+// C. Custom formatted JSON output
+Vexora.Response.json(true, "Custom message", { score: 99 }, 202);
+```
+
 ### 🪟 In-Memory Sessions (`Vexora.ss`)
 Stores sessions in RAM memory using standard TTL limits:
 ```javascript
