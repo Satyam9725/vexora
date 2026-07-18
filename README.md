@@ -39,6 +39,33 @@ npm install vexora
 
 ---
 
+## 🚀 Quick Start
+
+### 1. Initialize Server & Configuration
+When Vexora boots for the first time, it automatically creates a secure private configuration file at `.Vexora/config` in your project root.
+
+```javascript
+import Vexora from "vexora";
+
+// Start Vexora Server
+const server = Vexora.Server(async (req, res) => {
+    // 1. Dynamic route router mapping
+    const handled = await Vexora.ApiController(req, res);
+    if (handled) return;
+
+    // 2. Base Fallback Route
+    if (req.method === "GET" && req.path === "/") {
+        return res.success({ hello: "world" }, "Welcome to Vexora!");
+    }
+});
+
+server.listen(3000, () => {
+    console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
+});
+```
+
+---
+
 ## ⚙️ Vexora Internal Architecture
 
 ```mermaid
