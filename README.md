@@ -123,6 +123,56 @@ function checkPermissions() {
 
 ---
 
+## 🛣️ Routing & Controller System
+
+Vexora uses a **Directory-Based Autoloading Sub-Router** mapping mechanism. Any directory containing an `index.js` file (such as `auth/index.js`) is automatically mounted at a route matching the folder name (e.g., `/auth/*`).
+
+### 1. Define Sub-Router (`auth/index.js`)
+Use `Vexora.RouteController` to declare endpoints and map them to separate controller files in the same directory:
+
+```javascript
+// auth/index.js
+const authRouter = new Vexora.RouteController();
+
+// A. Map HTTP methods to specific controller script files
+authRouter.get('/profile', 'profile');        // Maps GET /auth/profile -> auth/profile.js
+authRouter.post('/login', 'login');          // Maps POST /auth/login -> auth/login.js
+
+// B. Match multiple HTTP verbs
+authRouter.match(['GET', 'POST'], '/register', 'register'); // Maps to auth/register.js
+
+// C. Dynamic Parameters Mapping
+authRouter.get('/users/:id', 'view_user');   // Maps GET /auth/users/:id -> auth/view_user.js
+
+// D. Catch-all routing handler
+authRouter.any('/:any', (req, res) => {
+    return res.error("Action not found!", 404);
+});
+
+export default authRouter;
+```
+
+### 2. Create Controller Action Script (`auth/view_user.js`)
+Controller actions are zero-boilerplate, sandboxed script files. Crucial variables (`Vexora`, `req`, `res`, `db`, `params`) are pre-injected automatically.
+
+```javascript
+// auth/view_user.js - NO imports needed!
+
+// Access dynamic parameters mapped from URL (/auth/users/:id)
+const userId = params.id; 
+
+// Run queries on the configured database pool
+const user = await Vexora.fetch("SELECT * FROM users WHERE id = ? LIMIT 1", [userId]);
+
+if (!user) {
+    Vexora.Response.error('User not found!', 404);
+} else {
+    Vexora.Response.success(user, 'User details loaded successfully!');
+}
+```
+
+---
+
 ## ⚙️ Internal Architecture
 
 ```mermaid
@@ -193,4 +243,4 @@ Vexora keeps your production environments secure:
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-*Built with passion by Satyam Kumar (<satyam.ku9725@gmail.com>)* 🚀# vexora
+*Built with passion by Satyam Kumar (<satyam.ku9725@gmail.com>)* 🚀
