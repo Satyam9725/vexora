@@ -8,9 +8,9 @@
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg?style=flat-square)](#)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](#)
 
-**Vexora** is an advanced, blazing-fast, and zero-dependency backend framework for Node.js. Build high-performance APIs, real-time WebSockets, and database-driven applications without NPM dependency bloat.
+**Vexora** is an advanced, enterprise-grade, blazing-fast, and zero-dependency backend framework for Node.js. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
-[Key Features](#-key-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Architecture](#%EF%B8%8F-internal-architecture) • [Documentation](#%EF%B8%8F-core-modules-documentation)
+[Key Features](#-key-features) • [Installation](#-installation) • [Architecture](#-vexora-internal-architecture) • [Routing](#-routing--controller-system) • [Database](#-multi-connection-database-routing--crud) • [API Reference](#%EF%B8%8F-api-reference)
 
 </div>
 
@@ -18,20 +18,20 @@
 
 ## ✨ Key Features
 
-- 📦 **Zero-Dependency Core**: Built entirely on native Node.js APIs (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package overhead.
-- ⚡ **Ultra-High Performance**: Near-native HTTP throughput (~90k requests/sec), outperforming standard middleware pipelines.
-- 🧵 **Thread-Safe Request Context**: Access active requests, responses, and session structures globally anywhere in your code using `AsyncLocalStorage` (no prop-drilling).
-- 🔌 **Native WebSockets**: Built-in binary frame parser and unmasking engine built directly into raw TCP streams.
-- 🗄️ **Multi-Connection Database Multiplexer**: Built-in connection pool routing supporting MySQL and PostgreSQL simultaneously with auto-escaping, pagination, and savepoints.
-- 🔐 **Military-Grade Security by Default**: Security headers, CORS preflight checks, sliding-window Rate-Limiting, recursive input parameter auto-trimming, and `AES-256-GCM` authenticated encryption.
-- 💾 **Native RAM Cache (Redis Equivalent)**: Sub-microsecond memory store with TTL eviction, atomic counters, and automatic Garbage Collector.
-- 🪵 **Secure Silent Logging**: Masks sensitive request attributes, conceals absolute filesystem paths, and logs errors with unique UUID Error IDs.
+- 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependencies.
+- ⚡ **Ultra-High Throughput**: Shallow call stacks interface directly with TCP sockets, processing up to **~90,000 requests/sec** (outperforming Express and Fastify).
+- 🧵 **Thread-Safe Request Context**: Native `AsyncLocalStorage` maps active requests, responses, and session instances globally across all files without parameter-drilling.
+- 🔌 **Native WebSockets Server**: Highly optimized TCP frame parser and binary mask/unmask handler built directly into the core stream layer.
+- 🗄️ **Multi-Connection DB Routing**: Simultaneous pool routing for MySQL and PostgreSQL with automated escaping, entity quoting, pagination, and savepoints.
+- 💾 **RAM Cache (Redis Equivalent)**: Sub-microsecond memory store with TTL eviction, atomic counters, and automatic Garbage Collector.
+- 🔐 **Hardened Security by Default**: Dynamic CORS preflight controllers, Helmet-style security headers, global rate-limit counts, and auto-trimmed inputs.
+- 🪵 **Secure Silent Logging**: Automatic masking of sensitive fields (passwords, tokens, CVVs), absolute file path concealing, date-based JSON storage, and unique client Error UUIDs.
 
 ---
 
 ## 📦 Installation
 
-To install Vexora in your project, run:
+Install Vexora in your project directory:
 
 ```bash
 npm install vexora
@@ -39,87 +39,30 @@ npm install vexora
 
 ---
 
-## 🚀 Quick Start
+## ⚙️ Vexora Internal Architecture
 
-### 1. Initialize Server & Configuration
-When Vexora boots for the first time, it automatically creates a secure private configuration file at `.Vexora/config` in your project root.
-
-```javascript
-import Vexora from "vexora";
-
-// Start Vexora Server
-const server = Vexora.Server(async (req, res) => {
-    // 1. Dynamic route router mapping
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
-
-    // 2. Base Fallback Route
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" }, "Welcome to Vexora!");
-    }
-});
-
-server.listen(3000, () => {
-    console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
-});
+```mermaid
+graph TD
+    Client[Client Request] --> Guard[Security Guard & Rate Limiter]
+    Guard --> Context[Context Setup - AsyncLocalStorage]
+    Context --> Router[RouteController & ApiController]
+    Router --> Controller[AsyncFunction Sandbox Evaluator]
+    Controller --> DBRouter[Database pool Multiplexer]
+    DBRouter --> MySQL[(MySQL Pool)]
+    DBRouter --> PG[(Postgres Pool)]
+    Controller --> Cache[In-Memory TTL RAM Cache]
+    Controller --> Logger[Audit Logger - Silent trace & Masking]
+    Logger --> Disk[.Vexora/logs/ date.json]
 ```
 
-### 2. Configure Databases (`.Vexora/config`)
-Write multiple connection strings directly using standard URLs (special characters in passwords are handled automatically).
+### 1. Context-Aware Request Lifecycle
+Vexora uses Node's native `AsyncLocalStorage` from the `node:async_hooks` module. When an HTTP request arrives, the server binds the raw request, response, and session context to an isolated storage cell. Methods like `Vexora.Request.input()` automatically query this storage cell, providing thread-safe global access across files without carrying `req` or `res` arguments.
 
-```ini
-# Default Database
-MYSQL_DB_URL=mysql://db_user:password@localhost:3306/primary_db
+### 2. Zero-Boilerplate Sandbox Evaluator
+The route autoloader scans folders for index routers and evaluates scripts using a secure async closure wrapper constructor: `new AsyncFunction('Vexora', 'req', 'res', 'db', 'params', code)`. Variables are pre-injected automatically, code blocks are matched for auto-returns, and runtime errors are logged silently while displaying only a UUID to the client to conceal paths.
 
-# Auth Connection Key
-MYSQL_DB_AUTH=mysql://auth_user:pass123@localhost:3306/auth_db
-```
-
----
-
-## 🗄️ Multi-Connection CRUD Operations
-
-Vexora dynamically multiplexes queries based on config keys. Pass the database configuration key as the first argument, or omit it to target `MYSQL_DB_URL` by default.
-
-```javascript
-// 1. Check if user email exists (Sanitized & Quoted natively)
-const exists = await Vexora.exists("MYSQL_DB_AUTH", "users", "email = ?", ["test@email.com"]);
-
-// 2. Secure Insert (Returns insertId / primary key)
-const userId = await Vexora.insert("MYSQL_DB_AUTH", "users", {
-    email: "test@email.com",
-    username: "john_doe",
-    status: "active"
-});
-
-// 3. Dynamic Fetch Row
-const user = await Vexora.fetch("MYSQL_DB_AUTH", "SELECT * FROM users WHERE id = ? LIMIT 1", [userId]);
-
-// 4. Raw execution
-await Vexora.exec("UPDATE users SET status = ? WHERE id = ?", ["suspended", userId]);
-```
-
----
-
-## 🧵 Global Request Context
-
-No need to pass the `req` object down through dozens of helper functions. Vexora manages contextual state natively.
-
-```javascript
-import Vexora from "vexora";
-
-// Accessible anywhere in your application!
-function checkPermissions() {
-    const role = Vexora.Request.input("role", "guest"); // Auto-Trimming active
-    const ip = Vexora.Request.ip();
-    
-    if (role === "admin") {
-        Vexora.ss.set("is_admin", true); // Store session in RAM
-        return true;
-    }
-    return false;
-}
-```
+### 3. Dynamic Database Multiplexer
+Connections are loaded on-the-fly and cached in a global pool map. Table and column identifiers are checked against strict regexes (`/^[a-zA-Z0-9_]+$/`) and wrapped in database-specific quotes (``` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection at the schema level.
 
 ---
 
@@ -173,37 +116,121 @@ if (!user) {
 
 ---
 
-## ⚙️ Internal Architecture
+## 🗄️ Multi-Connection Database Routing & CRUD
 
-```mermaid
-graph TD
-    Client[Client Request] --> Guard[Security Guard & Rate Limiter]
-    Guard --> Context[Context Setup - AsyncLocalStorage]
-    Context --> Router[RouteController & ApiController]
-    Router --> Controller[AsyncFunction Sandbox Evaluator]
-    Controller --> DBRouter[Database pool Multiplexer]
-    DBRouter --> MySQL[(MySQL Pool)]
-    DBRouter --> PG[(Postgres Pool)]
-    Controller --> Cache[In-Memory TTL RAM Cache]
-    Controller --> Logger[Audit Logger - Silent trace & Masking]
-    Logger --> Disk[.Vexora/logs/ date.json]
+Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/config` using URL connection syntax:
+
+```ini
+# Default MySQL Database
+MYSQL_DB_URL=mysql://db_user:password@localhost:3306/primary_db
+
+# PostgreSQL Auth Connection Key
+POSTGREE_DB_AUTH=postgres://auth_user:pass123@localhost:5432/auth_db
+```
+
+To switch database pools, pass the configuration key (or simple aliases like `"auth"`, `"user"`) as the first parameter. If omitted, Vexora routes the query to `MYSQL_DB_URL` by default.
+
+### 1. Raw Queries
+```javascript
+// Run query on primary MySQL database
+const users = await Vexora.query("SELECT * FROM users WHERE status = ?", ["active"]);
+
+// Run query on Postgres database using config key
+const logs = await Vexora.query("POSTGREE_DB_AUTH", "SELECT * FROM logs WHERE level = $1", ["error"]);
+```
+
+### 2. Standard CRUD Helpers
+Table and column identifiers are auto-sanitized and quoted matching engine schemas (``` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection.
+
+```javascript
+// Insert
+const userId = await Vexora.insert("POSTGREE_DB_AUTH", "users", {
+    email: "john@example.com",
+    username: "john_doe",
+    status: "active"
+});
+
+// Update (Returns affected rows count)
+const affectedRows = await Vexora.update(
+    "POSTGREE_DB_AUTH", 
+    "users", 
+    { status: "suspended" }, 
+    "id = ?", 
+    [userId]
+);
+
+// Delete
+await Vexora.delete("POSTGREE_DB_AUTH", "users", "id = ?", [userId]);
+```
+
+### 3. Exists, Counts & Column Grabs
+```javascript
+// Check existence
+const exists = await Vexora.exists("POSTGREE_DB_AUTH", "users", "email = ?", ["test@email.com"]);
+
+// Count elements
+const total = await Vexora.count("users", "status = ?", ["active"]);
+
+// Fetch a single column value directly
+const balance = await Vexora.fetchColumn("SELECT balance FROM users WHERE id = ?", [1]);
+```
+
+### 4. Advanced Pagination
+Automatically calculates pagination boundaries, offsets, and compiles total elements metadata count:
+```javascript
+const page = await Vexora.paginate(
+    "SELECT * FROM users WHERE status = ?",
+    ["active"],
+    1,   // Page number
+    10   // Limit size
+);
+
+console.log(page.items);         // Array of 10 rows
+console.log(page.total_items);   // Total elements count
+console.log(page.total_pages);   // Total pages count
+console.log(page.has_next);      // true / false
+```
+
+### 5. Nested Savepoint Transactions
+Vexora manages nested savepoint levels (`SAVEPOINT trans{level}`) automatically:
+```javascript
+await Vexora.begin(); // Level 1 transaction
+try {
+    await Vexora.insert("logs", { log_type: "parent" });
+
+    await Vexora.begin(); // Level 2 transaction (Savepoint)
+    try {
+        await Vexora.update("users", { balance: 100 }, "id = ?", [1]);
+        await Vexora.commit(); // Release inner savepoint
+    } catch (innerErr) {
+        await Vexora.rollback(); // Rollback specifically to outer savepoint safely
+    }
+
+    await Vexora.commit(); // Commit all
+} catch (err) {
+    await Vexora.rollback(); // Rollback parent transaction
+}
 ```
 
 ---
 
-## 🛠️ Core Modules Documentation
+## 🛠️ API Reference
 
 ### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
-Sub-microsecond memory key-value operations with TTL and atomic actions.
+Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
 ```javascript
-// Set cached object with 60 seconds TTL
-Vexora.Redis.set("session:token", { userId: 45 }, 60);
+// 1. Store value with 60 seconds TTL
+Vexora.Redis.set("user:1001", { name: "Satyam Kumar" }, 60);
 
-// Retrieve cache
-const val = Vexora.Redis.get("session:token");
+// 2. Retrieve cached value
+const user = Vexora.Redis.get("user:1001");
 
-// Atomic Counters
-Vexora.Redis.incr("page_hits");
+// 3. Atomic Increment & Decrement
+Vexora.Redis.incr("page_views");
+Vexora.Redis.decr("page_views");
+
+// 4. Check remaining TTL (in seconds)
+const remainingTtl = Vexora.Redis.ttl("user:1001");
 ```
 
 ### 🔐 Cryptographic Helpers (`Vexora.Helper`)
@@ -213,9 +240,14 @@ Secure cryptographically-sound hashing and encryption.
 const hashed = Vexora.Helper.hashPassword("my_secret_pass");
 const isValid = Vexora.Helper.verifyPassword("my_secret_pass", hashed);
 
-// AES-256-GCM authenticated encryption (uses AES_SECRET in config)
+// AES-256-GCM authenticated encryption (uses AES_SECRET in config automatically)
 const secretMessage = Vexora.Helper.encrypt("sensitive information");
 const decryptedText = Vexora.Helper.decrypt(secretMessage);
+
+// Secure Random Tokens
+const token = Vexora.Helper.randomToken(32); // Hex token
+const otp = Vexora.Helper.randomInt(100000, 999999); // Secure OTP integer
+const uuid = Vexora.Helper.uuid(); // UUID generator
 ```
 
 ### 🔌 Real-Time WebSockets (`Vexora.WebSocket`)
@@ -232,11 +264,48 @@ io.on("connection", (socket) => {
 });
 ```
 
-### 📜 Security Shield & Audit Logger
-Vexora keeps your production environments secure:
-- **DDoS Block**: Global Rate Limiter returns HTTP 429 with dynamic wait metrics in JSON response.
-- **XSS & Clickjacking Protection**: Security headers (such as `nosniff`, `X-Frame-Options`) are set automatically.
-- **Muted Error Traces**: Production logs hide absolute terminal stack traces, masked fields (like passwords, CVVs) are redacted, and errors are assigned unique UUIDs for client lookup.
+### 🧵 Global Request Context (`Vexora.Request`)
+Access active inputs recursively trimmed by default:
+```javascript
+// Get all inputs combined (Query + Body)
+const inputs = Vexora.Request.all();
+
+// Grab parameter value (fallback default option if empty)
+const age = Vexora.Request.input("age", 18);
+
+// Grab real client IP address (Cloudflare / proxy headers matched)
+const clientIp = Vexora.Request.ip();
+```
+
+### 🪟 In-Memory Sessions (`Vexora.ss`)
+Stores sessions in RAM memory using standard TTL limits:
+```javascript
+// Set session variable
+Vexora.ss.set("user_role", "admin");
+
+// Get session variable
+const role = Vexora.ss.get("user_role");
+
+// Session info (creation date, TTL limits)
+const info = Vexora.ss.info();
+
+// Regenerate Session ID (prevents session fixation attacks)
+Vexora.ss.regenerate();
+```
+
+### 🛡️ Input Validation (`Vexora.Validator`)
+Advanced string-based validation rules for instant payload verification:
+```javascript
+const validator = Vexora.Validator.make(Vexora.Request.all(), {
+    username: "required|string|min:4",
+    email: "required|email",
+    age: "required|integer|min:18"
+});
+
+if (validator.fails()) {
+    return Vexora.Response.error("Validation Failed", 422, validator.getErrors());
+}
+```
 
 ---
 
