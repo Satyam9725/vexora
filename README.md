@@ -3,10 +3,10 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg?style=flat-square)](#)
+[![Dependencies](https://img.shields.io/badge/dependencies-2-brightgreen.svg?style=flat-square)](#)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](#)
 
-**Vexora** is an advanced, enterprise-grade, blazing-fast, and zero-dependency backend framework for Node.js. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
+**Vexora** is an advanced, enterprise-grade, blazing-fast, and zero-dependency core backend framework for Node.js. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
 [Key Features](#-key-features) • [Installation](#-installation) • [Architecture](#-vexora-internal-architecture) • [Routing](#-routing--controller-system) • [Database](#-multi-connection-database-routing--crud) • [API Reference](#%EF%B8%8F-api-reference)
 
@@ -16,7 +16,7 @@
 
 ## ✨ Key Features
 
-- 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependencies.
+- 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependency bloat (only optional native db drivers `mysql2` and `pg` are used for DB connections).
 - ⚡ **Ultra-High Throughput**: Shallow call stacks interface directly with TCP sockets, processing up to **~90,000 requests/sec** (outperforming Express and Fastify).
 - 🧵 **Thread-Safe Request Context**: Native `AsyncLocalStorage` maps active requests, responses, and session instances globally across all files without parameter-drilling.
 - 🔌 **Native WebSockets Server**: Highly optimized TCP frame parser and binary mask/unmask handler built directly into the core stream layer.
@@ -34,6 +34,23 @@ Install Vexora in your project directory:
 ```bash
 npm install vexora
 ```
+
+---
+
+## 🛠️ Command-Line Interface (CLI)
+
+Vexora includes a built-in CLI helper to quickly scaffold a new project or create route controllers:
+
+- **Scaffold a new project structure**:
+  ```bash
+  npx vexora init
+  ```
+  *(Creates `.Vexora/config`, a `controllers/` directory, `controllers/welcome.js` example, and a pre-configured `app.js` server script)*
+
+- **Generate a new controller script**:
+  ```bash
+  npx vexora make:controller auth/profile
+  ```
 
 ---
 
@@ -60,6 +77,31 @@ const server = Vexora.Server(async (req, res) => {
 server.listen(3000, () => {
     console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
 });
+```
+
+---
+
+### 📁 Serving Static Files
+
+Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers and traversal checks:
+
+```javascript
+import Vexora from "vexora";
+
+// Create static handler mounting the "public" directory
+const serveStatic = Vexora.static("public", { maxAge: 86400 }); // maxAge in seconds
+
+const server = Vexora.Server(async (req, res) => {
+    // 1. Serve static files
+    const served = await serveStatic(req, res);
+    if (served) return;
+
+    // 2. Fallback to API routing...
+    const handled = await Vexora.ApiController(req, res);
+    if (handled) return;
+});
+
+server.listen(3000);
 ```
 
 ---
@@ -136,6 +178,102 @@ if (!user) {
     Vexora.Response.error('User not found!', 404);
 } else {
     Vexora.Response.success(user, 'User details loaded successfully!');
+}
+```
+
+### 3. Route Protection & Guards
+To restrict access to specific route paths (e.g., admin panels or profile pages), you can write middleware-style route guards inside the main HTTP server callback:
+
+```javascript
+const server = Vexora.Server(async (req, res) => {
+    // 1. Secure Route Guard: Protect all "/admin/*" routes
+    if (req.path.startsWith("/admin")) {
+        const token = req.headers["authorization"];
+        if (!token) {
+            return res.status(401).json({ status: false, message: "Authorization Token Required" });
+        }
+        
+        // Decrypt and verify token via TokenVault
+        const verify = Vexora.TokenVault.unseal(token, "userKeySecret", "auth");
+        if (!verify.status) {
+            return res.status(403).json({ status: false, message: "Invalid or Expired Token" });
+        }
+        
+        // Inject user identity into request parameters for the controller
+        req.user = verify.payload; 
+    }
+
+    // 2. Fallback to API routing
+    const handled = await Vexora.ApiController(req, res);
+    if (handled) return;
+
+    // 3. Fallback Route
+    if (req.method === "GET" && req.path === "/") {
+        return res.success({ hello: "world" });
+    }
+});
+```
+
+### 4. Global Server Lockdown (`Vexora.protect`)
+To trigger an emergency lockdown or maintenance mode globally across all endpoints, you can execute:
+```javascript
+Vexora.protect(); // Causes all incoming HTTP requests to fail with '404 Not Found' immediately
+```
+
+### 5. CSRF Protection Middleware (`Vexora.csrf`)
+Vexora includes built-in, highly-configurable CSRF (Cross-Site Request Forgery) protection middleware.
+It automatically:
+- Generates and stores a cryptographically secure CSRF token in the user's session for safe methods (`GET`, `HEAD`, `OPTIONS`, `TRACE`).
+- Injects the token into the `x-csrf-token` response header and sets a cookie (defaulting to `XSRF-TOKEN`) allowing client application scripts (like Axios or Angular) to access it.
+- Verifies the presence of a matching token for state-changing HTTP methods (`POST`, `PUT`, `DELETE`, `PATCH`) using a constant-time comparison helper (`crypto.timingSafeEqual`) to prevent timing attack exploits.
+- Rejects unauthorized requests with an automatic `403 Forbidden` JSON response.
+
+#### A. Basic Usage
+To enable CSRF protection globally, call it inside the main server callback handler:
+
+```javascript
+const server = Vexora.Server(async (req, res) => {
+    // Enable CSRF protection middleware globally
+    const isCsrfBlocked = Vexora.csrf(req, res);
+    if (isCsrfBlocked) return; // Terminate request execution if verification fails
+
+    // Proceed to standard router mapping
+    const handled = await Vexora.ApiController(req, res);
+    if (handled) return;
+});
+```
+
+#### B. Advanced Configuration
+You can customize cookie settings, header/parameter mapping names, and exclude specific routes (e.g. Stripe/PayPal webhooks) from CSRF protection:
+
+```javascript
+// Configure CSRF Options
+Vexora.csrf.configure({
+    cookieName: "MY-XSRF-TOKEN",
+    headerName: "x-custom-csrf-token",
+    paramName: "csrf_token_field",
+    cookieOptions: {
+        httpOnly: false, // Must be false if client-side SPA needs to read it
+        secure: true,
+        sameSite: "Lax", // Or "Strict"
+        path: "/"
+    },
+    excludePaths: [
+        "/webhooks",           // Matches any path starting with /webhooks (e.g. /webhooks/stripe)
+        /^\/api\/v\d+\/hooks/  // RegEx match support for webhook APIs
+    ]
+});
+```
+
+#### C. CSRF Token Rotation (Mitigate Session Fixation)
+To defend against Session Fixation and token hijacking, regenerate the CSRF token on key state transitions (like user logging in):
+
+```javascript
+// Inside your login controller script
+if (isValidLogin) {
+    // Rotate the CSRF token
+    Vexora.csrf.rotate(req); 
+    Vexora.Response.success({ user }, "Welcome back!");
 }
 ```
 
@@ -354,21 +492,21 @@ const app = server.listen(3000, () => {
 const io = Vexora.WebSocket(app);
 
 io.on("connection", (socket) => {
-    console.log(`🔌 Client connected: ${socket.id || "Active"}`);
+    console.log("🔌 Client connected!");
 
     // Send a message directly to the newly connected client
-    socket.send({ welcome: "Connected to Vexora WebSocket Server!" });
+    socket.send({ type: "welcome", message: "Welcome to Vexora WebSocket Server!" });
 
     // Listen for incoming messages from this client
     socket.on("message", (msg) => {
-        let cleanText = (typeof msg === "object" && msg.text) ? msg.text : msg;
-        console.log(`📩 Received message: ${cleanText}`);
+        console.log("Received message:", msg);
 
-        // Echo the message back to the sender
-        socket.send(`Echo: ${cleanText}`);
+        // Option A: Broadcast message to all OTHER clients (excluding the sender)
+        // Ideal for chats where sender appends locally instantly
+        socket.broadcast(msg);
 
-        // Broadcast the message to all other connected clients
-        socket.broadcast(`Broadcast: ${cleanText}`);
+        // Option B: Broadcast message to EVERYONE (including the sender)
+        // io.broadcast(msg);
     });
 
     // Listen for disconnection
