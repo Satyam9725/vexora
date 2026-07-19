@@ -2,8 +2,6 @@
 
 <div align="center">
 
-[![NPM Version](https://img.shields.io/npm/v/vexora.svg?style=flat-square&color=FF5733)](https://www.npmjs.com/package/vexora)
-[![NPM Downloads](https://img.shields.io/npm/dm/vexora.svg?style=flat-square&color=33b2ff)](https://www.npmjs.com/package/vexora)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg?style=flat-square)](#)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](#)
@@ -277,18 +275,323 @@ const otp = Vexora.Helper.randomInt(100000, 999999); // Secure OTP integer
 const uuid = Vexora.Helper.uuid(); // UUID generator
 ```
 
-### 🔌 Real-Time WebSockets (`Vexora.WebSocket`)
-Blazing-fast real-time layer communicating directly on TCP socket streams.
+### 🗝️ Token Vault (`Vexora.TokenVault`)
+The `TokenVault` provides a secure, cryptographically-hardened way to seal and unseal payloads (like authentication tokens or password reset tokens). It uses key derivation (HKDF) combined with a master key and a user-specific key (`uKey`) to generate AES-256-GCM encrypted tokens. It also supports optional environment bindings (Session, IP, User-Agent).
+
+#### 1. Configure the Vault
+Initialize the vault with one or more master keys (at least 16 characters each), along with default issuer and audience identifiers:
 ```javascript
-const io = Vexora.WebSocket(server);
+Vexora.TokenVault.configure(
+    {
+        key_v1: "master-key-secret-must-be-at-least-16-chars"
+    },
+    "my-app-issuer",   // Optional: Issuer
+    "my-app-audience"  // Optional: Audience
+);
+```
+
+#### 2. Seal a Payload (Create Token)
+Use `seal` to generate an encrypted token.
+```javascript
+const payload = { userId: 42, role: "admin" };
+const userKey = "user-id-or-unique-user-secret"; // Used for HKDF derivation
+
+const result = Vexora.TokenVault.seal(
+    payload,
+    userKey,
+    "1H",           // Duration: e.g. "30M" (minutes), "1H" (hours), "2D" (days)
+    "auth",         // Purpose (defaults to "auth")
+    0,              // nbfOffset (Not Before offset in seconds)
+    false,          // bindSession (Bind token to current request session)
+    true,           // bindIp (Bind token to current request IP)
+    true,           // bindDevice (Bind token to current User-Agent)
+    1               // maxUses (Optional. 1 = one-time use token, 0 = unlimited)
+);
+
+if (result.status) {
+    console.log("Token:", result.token); // Format: "key_v1.ciphertext"
+    console.log("JTI (Unique ID):", result.jti); // UUID for tracking usage
+    console.log("Expires At:", result.exp); // UNIX timestamp
+} else {
+    console.error("Failed to seal:", result.error);
+}
+```
+
+#### 3. Unseal a Payload (Verify & Decrypt Token)
+Use `unseal` to decrypt and validate the token. It automatically verifies expiry, issuer, audience, purpose, and any environment bindings:
+```javascript
+const token = "key_v1.ciphertext...";
+const userKey = "user-id-or-unique-user-secret";
+
+const result = Vexora.TokenVault.unseal(token, userKey, "auth");
+
+if (result.status) {
+    console.log("Decrypted Data:", result.data);   // { userId: 42, role: "admin" }
+    console.log("Claims:", result.claims);          // Metadata: iss, aud, iat, exp, etc.
+} else {
+    console.error("Token verification failed:", result.error);
+    // e.g., "Token expired", "IP binding validation failed", "Purpose mismatch"
+}
+```
+
+### 🔌 Real-Time WebSockets (`Vexora.WebSocket`)
+Vexora includes a highly-optimized, zero-dependency native WebSocket engine that runs directly over TCP stream layers.
+
+#### 1. Server-Side Setup
+Initialize the WebSocket manager by passing the running HTTP server instance, then listen to events:
+```javascript
+import Vexora from "vexora";
+
+const server = Vexora.Server(async (req, res) => {
+    // Normal HTTP routing...
+});
+
+const app = server.listen(3000, () => {
+    console.log("🚀 Server running on http://localhost:3000");
+});
+
+// Bind WebSocket Engine to the Server
+const io = Vexora.WebSocket(app);
 
 io.on("connection", (socket) => {
-    socket.send({ welcome: "Connected to Vexora WebSockets!" });
+    console.log(`🔌 Client connected: ${socket.id || "Active"}`);
 
+    // Send a message directly to the newly connected client
+    socket.send({ welcome: "Connected to Vexora WebSocket Server!" });
+
+    // Listen for incoming messages from this client
     socket.on("message", (msg) => {
-        socket.broadcast("Broadcast message: " + msg);
+        let cleanText = (typeof msg === "object" && msg.text) ? msg.text : msg;
+        console.log(`📩 Received message: ${cleanText}`);
+
+        // Echo the message back to the sender
+        socket.send(`Echo: ${cleanText}`);
+
+        // Broadcast the message to all other connected clients
+        socket.broadcast(`Broadcast: ${cleanText}`);
+    });
+
+    // Listen for disconnection
+    socket.on("disconnect", () => {
+        console.log("🔌 Client disconnected");
     });
 });
+```
+
+#### 2. Client-Side Setup (`index.html`)
+Here is a complete, beautifully-styled, single-file HTML & JS dashboard to connect to Vexora WebSockets from a browser. Create an `index.html` and open it:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexora WebSocket Client</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090e;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #8b5cf6;
+            --success: #10b981;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+        }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .header h2 { font-size: 1.8rem; font-weight: 800; color: #a78bfa; margin-bottom: 0.25rem; }
+        .header p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        .status-indicator { display: flex; align-items: center; gap: 0.5rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; transition: background 0.3s; }
+        .dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+        .chat-box {
+            height: 250px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .msg { padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 85%; width: fit-content; line-height: 1.4; }
+        .msg.system { background: transparent; color: var(--text-muted); font-style: italic; max-width: 100%; padding: 0.25rem 0; }
+        .msg.client { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #c084fc; align-self: flex-end; }
+        .msg.server { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: #34d399; align-self: flex-start; }
+
+        .input-group { display: flex; gap: 0.5rem; }
+        input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            color: var(--text);
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            background: var(--primary);
+            border: none;
+            color: var(--text);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-conn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .btn-conn.connected { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h2>Vexora Socket Client</h2>
+            <p>Real-time bidirectional event console</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <button class="btn btn-conn" id="connBtn" onclick="toggleConnection()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px;">Connect</button>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="msg system">Click Connect to establish stream protocol.</div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type message..." disabled>
+            <button class="btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        const chatBox = document.getElementById('chatBox');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const connBtn = document.getElementById('connBtn');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function appendMessage(text, sender = 'system') {
+            const div = document.createElement('div');
+            div.className = `msg ${sender}`;
+            div.innerText = sender === 'client' ? `👤 ${text}` : sender === 'server' ? `⚡ ${text}` : text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function toggleConnection() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+                return;
+            }
+
+            // Fallback URL: Uses same domain or localhost on port 3000
+            const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + (window.location.host || 'localhost:3000');
+            appendMessage(`Connecting to ${wsUrl}...`, 'system');
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                statusDot.classList.add('connected');
+                statusText.innerText = 'Connected';
+                connBtn.innerText = 'Disconnect';
+                connBtn.classList.add('connected');
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                appendMessage('Stream link established with Vexora server.', 'system');
+            };
+
+            ws.onmessage = (event) => {
+                let text = event.data;
+                try {
+                    const parsed = JSON.parse(event.data);
+                    text = JSON.stringify(parsed);
+                } catch {}
+                appendMessage(text, 'server');
+            };
+
+            ws.onclose = () => {
+                statusDot.classList.remove('connected');
+                statusText.innerText = 'Disconnected';
+                connBtn.innerText = 'Connect';
+                connBtn.classList.remove('connected');
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                messageInput.value = '';
+                appendMessage('WebSocket link terminated.', 'system');
+            };
+
+            ws.onerror = () => {
+                appendMessage('WebSocket connection error.', 'system');
+            };
+        }
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(text);
+                appendMessage(text, 'client');
+                messageInput.value = '';
+            }
+        }
+
+        // Support Enter key mapping
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
 ```
 
 ### 🧵 Global Request Context (`Vexora.Request`)
