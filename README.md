@@ -96,8 +96,11 @@ npm install vexora
 ### 1. Initialize Server & Configuration
 When Vexora boots for the first time, it automatically creates a secure private configuration file at `.Vexora/config` in your project root.
 
-<details>
-<summary><b>💻 Click to View Server Initialization Example (सर्वर स्टार्ट करने का कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View Server Initialization Example (सर्वर स्टार्ट करने का कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -118,6 +121,8 @@ server.listen(3000, () => {
     console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
 });
 ```
+
+</div>
 </details>
 
 ---
@@ -126,8 +131,11 @@ server.listen(3000, () => {
 
 Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers and traversal checks:
 
-<details>
-<summary><b>💻 Click to View Serving Static Files Example (स्टैटिक फ़ाइलें सर्व करने का कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View Serving Static Files Example (स्टैटिक फ़ाइलें सर्व करने का कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -147,6 +155,8 @@ const server = Vexora.Server(async (req, res) => {
 
 server.listen(3000);
 ```
+
+</div>
 </details>
 
 ---
@@ -437,8 +447,11 @@ try {
 
 ### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
 Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
-<details>
-<summary><b>💻 Click to View RAM Cache / Redis Example (कैश स्टोरेज का कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View RAM Cache / Redis Example (कैश स्टोरेज का कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 // 1. Store value with 60 seconds TTL
@@ -454,6 +467,8 @@ Vexora.Redis.decr("page_views");
 // 4. Check remaining TTL (in seconds)
 const remainingTtl = Vexora.Redis.ttl("user:1001");
 ```
+
+</div>
 </details>
 
 ### 🔐 Cryptographic Helpers (`Vexora.Helper`)
@@ -537,8 +552,11 @@ Vexora includes a highly-optimized, zero-dependency native WebSocket engine that
 
 #### 1. Server-Side Setup
 Initialize the WebSocket manager by passing the running HTTP server instance, then listen to events:
-<details>
-<summary><b>💻 Click to View WebSocket Server-Side Setup (वेबसॉकेट सर्वर-साइड कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View WebSocket Server-Side Setup (वेबसॉकेट सर्वर-साइड कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -578,13 +596,18 @@ io.on("connection", (socket) => {
     });
 });
 ```
+
+</div>
 </details>
 
 #### 2. Client-Side Setup (`index.html`)
 Here is a complete, beautifully-styled, single-file HTML & JS dashboard to connect to Vexora WebSockets from a browser. Create an `index.html` and open it:
 
-<details>
-<summary><b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard (क्लाइंट-साइड डैशबोर्ड कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard (क्लाइंट-साइड डैशबोर्ड कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```html
 <!DOCTYPE html>
@@ -798,6 +821,8 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
 </body>
 </html>
 ```
+
+</div>
 </details>
 
 ### 🧵 Global Request Context (`Vexora.Request`)
@@ -1179,8 +1204,11 @@ To use Vexora's Queue system, define a background job handler first, and then di
 
 Below is a complete, copy-pasteable example of using background jobs to send welcome emails immediately after registering a user, keeping the API response time instant (Click to expand / देखने के लिए क्लिक करें):
 
-<details>
-<summary><b>💻 Click to View Complete Server & Queue Example (कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View Complete Server & Queue Example (कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -1223,6 +1251,8 @@ server.listen(3000, () => {
     console.log("🚀 Server running at http://localhost:3000");
 });
 ```
+
+</div>
 </details>
 
 #### 3. Driver Types
@@ -1251,8 +1281,11 @@ To use Vexora's built-in Scheduler in your application:
 
 Here is a complete, copy-pasteable example of registering tasks (Click to expand / देखने के लिए क्लिक करें):
 
-<details>
-<summary><b>💻 Click to View Complete Server & Scheduler Example (कोड देखने के लिए क्लिक करें)</b></summary>
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>💻 Click to View Complete Server & Scheduler Example (कोड देखने के लिए क्लिक करें)</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -1285,6 +1318,8 @@ server.listen(3000, () => {
     console.log("🚀 Server running at http://localhost:3000");
 });
 ```
+
+</div>
 </details>
 
 #### 3. Cron Expression & Interval Syntax Reference
