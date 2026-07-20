@@ -9,6 +9,8 @@ files/
 .gitignore
 node_modules
 
+public/
+api/
 
 # Node Modules
 node_modules/

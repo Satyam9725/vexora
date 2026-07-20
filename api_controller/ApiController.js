@@ -51,35 +51,35 @@ class ApiController {
             return false;
         }
 
-        let moduleName = parts[0];
-        let baseMount = `/${moduleName}`;
+        const searchDirs = [
+            process.cwd(),
+            path.join(process.cwd(), 'http'),
+            path.join(process.cwd(), 'api'),
+            path.join(process.cwd(), 'controllers')
+        ];
 
-        // If URL has /api/ prefix (e.g. /api/auth/register), strip 'api' and use the next part
-        if (moduleName === 'api' && parts[1]) {
-            moduleName = parts[1];
-            baseMount = `/api/${moduleName}`;
-        }
-
-        let indexFile = undefined;
-        if (this.pathCache.has(moduleName)) {
-            indexFile = this.pathCache.get(moduleName);
-        } else {
-            // Search candidates for module index.js (e.g. process.cwd()/[moduleName]/index.js)
-            const searchDirs = [
-                process.cwd(),
-                path.join(process.cwd(), 'http'),
-                path.join(process.cwd(), 'api'),
-                path.join(process.cwd(), 'controllers')
-            ];
-            
+        const findIndexFile = (mod) => {
+            if (this.pathCache.has(mod)) return this.pathCache.get(mod);
             for (const dir of searchDirs) {
-                const candidate = path.join(dir, moduleName, 'index.js');
+                const candidate = path.join(dir, mod, 'index.js');
                 if (fs.existsSync(candidate)) {
-                    indexFile = candidate;
-                    break;
+                    this.pathCache.set(mod, candidate);
+                    return candidate;
                 }
             }
-            this.pathCache.set(moduleName, indexFile || null);
+            this.pathCache.set(mod, null);
+            return null;
+        };
+
+        let moduleName = parts[0];
+        let baseMount = `/${moduleName}`;
+        let indexFile = findIndexFile(moduleName);
+
+        // If URL has /api/ prefix (e.g. /api/auth/register) and api/index.js wasn't found, try the next part
+        if (!indexFile && moduleName === 'api' && parts[1]) {
+            moduleName = parts[1];
+            baseMount = `/api/${moduleName}`;
+            indexFile = findIndexFile(moduleName);
         }
         
         if (indexFile) {

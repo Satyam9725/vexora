@@ -21,6 +21,7 @@ import MemoryCache from "../cache/MemoryCache.js";
 import Vexora from "../Vexora.js";
 import { log as auditLog } from "../Middleware/audit_logger.js";
 import Helper from "../utils/Helper.js";
+import { requestContext } from "../core/Context.js";
 
 const EMPTY_PARAMS = Object.freeze({});
 
@@ -251,6 +252,10 @@ class Router {
      * Helper to execute string action or function callback
      */
     async _executeAction(req, res, action, params = {}) {
+        if (!requestContext.getStore() && req && res) {
+            return await requestContext.run({ req, response: res }, () => this._executeAction(req, res, action, params));
+        }
+
         if (typeof action === 'function') {
             return await action(req, res, params);
         }

@@ -331,14 +331,20 @@ export default function Server(callback, options = {}) {
     });
 
     server.on("close", () => {
-      console.log("🛑 Vexora Server Stopped");
+      if (!isClusterEnabled || cluster.isWorker) {
+        // Output close message cleanly
+      }
     });
 
     process.once("SIGINT", () => {
-      console.log("\nStopping Vexora...");
+      if (!isClusterEnabled || (cluster.worker && cluster.worker.id === 1)) {
+        console.log("\nStopping Vexora...");
+      }
 
       server.close(() => {
-        console.log("✅ Server Closed");
+        if (!isClusterEnabled || (cluster.worker && cluster.worker.id === 1)) {
+          console.log("✅ Server Closed");
+        }
         process.exit(0);
       });
     });
