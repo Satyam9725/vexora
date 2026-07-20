@@ -16,12 +16,6 @@
 
 ## ✨ Key Features
 
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>✨ Click to View Key Features</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
-
 - 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependency bloat (only optional native db drivers `mysql2` and `pg` are used for DB connections).
 - ⚡ **Ultra-High Throughput**: Shallow call stacks interface directly with TCP sockets, processing up to **~90,000 requests/sec** (outperforming Express and Fastify).
 - 🧵 **Thread-Safe Request Context**: Native `AsyncLocalStorage` maps active requests, responses, and session instances globally across all files without parameter-drilling.
@@ -33,20 +27,11 @@
 - 🔐 **Hardened Security by Default**: Dynamic CORS preflight controllers, Helmet-style security headers, global rate-limit counts, and auto-trimmed inputs.
 - 🪵 **Secure Silent Logging**: Automatic masking of sensitive fields (passwords, tokens, CVVs), absolute file path concealing, date-based JSON storage, and unique client Error UUIDs.
 
-</div>
-</details>
-
 ---
 
 ## 🎯 Supported Features Checklist
 
 Vexora is packed with features to handle all aspects of a modern, secure, and fast backend:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🎯 Click to View Supported Features Checklist</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 - 🛣️ **Directory-Based API Routing** — Automatic sub-router autoloading with parameter parsing, catch-all routes, and sandbox controller evaluations.
 - 🔒 **Timing-Safe CSRF Protection** — Constant-time timing attack protection (`crypto.timingSafeEqual`), dynamic cookie/header sync, path exclusions, and token rotation.
@@ -65,20 +50,11 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 - 🪟 **In-Memory State Sessions** — Session tracking with TTL controls, session fixation security (`ss.regenerate()`), and detailed session statistics.
 - 🪵 **Secure Silent Audit Logging** — Conceals absolute folder paths on errors, issues error UUID trackers, and masks credential fields in logs.
 
-</div>
-</details>
-
 ---
 
 ## 📊 Framework Comparison (Vexora vs Express vs Fastify)
 
 How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>📊 Click to View Framework Performance & Security Comparison</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ### ⚡ Core Features & Performance
 
@@ -105,38 +81,20 @@ How does Vexora stack up against other popular Node.js frameworks? Here is a bre
 | **Sensitive Field Masking** | <small>⭐☆☆☆☆ <br> (No default. Logs passwords in plain text)</small> | <small>⭐⭐☆☆☆ <br> (Needs manual serializers config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Automatically masks passwords/CVVs/tokens in logs)</small> |
 | **Overall Security Grade** | <small>**C- (Vulnerable by default)**</small> | <small>**B (Safe with plugins)**</small> | <small>**A+ (Hardened by default)**</small> |
 
-</div>
-</details>
-
 ---
 
 ## 📦 Installation
 
 Install Vexora in your project directory:
 
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>📦 Click to View Installation Guide</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
-
 ```bash
 npm install vexora
 ```
-
-</div>
-</details>
 
 ## 🚀 Quick Start
 
 ### 1. Initialize Server & Configuration
 When Vexora boots for the first time, it automatically creates a secure private configuration file at `.Vexora/config` in your project root.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Server Initialization Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -158,20 +116,11 @@ server.listen(3000, () => {
 });
 ```
 
-</div>
-</details>
-
 ---
 
 ### 📁 Serving Static Files
 
 Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers and traversal checks:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Serving Static Files Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -192,18 +141,9 @@ const server = Vexora.Server(async (req, res) => {
 server.listen(3000);
 ```
 
-</div>
-</details>
-
 ---
 
 ## ⚙️ Vexora Internal Architecture
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>⚙️ Click to View Vexora Internal Architecture & Flowchart</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```mermaid
 graph TD
@@ -227,9 +167,6 @@ The route autoloader scans folders for index routers and evaluates scripts using
 
 ### 3. Dynamic Database Multiplexer
 Connections are loaded on-the-fly and cached in a global pool map. Table and column identifiers are checked against strict regexes (`/^[a-zA-Z0-9_]+$/`) and wrapped in database-specific quotes (``` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection at the schema level.
-
-</div>
-</details>
 
 ---
 
@@ -492,12 +429,6 @@ try {
 
 ### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
 Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View RAM Cache / Redis Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
-
 ```javascript
 // 1. Store value with 60 seconds TTL
 Vexora.Redis.set("user:1001", { name: "Satyam Kumar" }, 60);
@@ -513,17 +444,8 @@ Vexora.Redis.decr("page_views");
 const remainingTtl = Vexora.Redis.ttl("user:1001");
 ```
 
-</div>
-</details>
-
 ### 🔐 Cryptographic Helpers (`Vexora.Helper`)
 Secure cryptographically-sound hashing and encryption.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Cryptographic Helpers Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 // Secure Scrypt hashing & timing-safe verification
@@ -540,17 +462,8 @@ const otp = Vexora.Helper.randomInt(100000, 999999); // Secure OTP integer
 const uuid = Vexora.Helper.uuid(); // UUID generator
 ```
 
-</div>
-</details>
-
 ### 🗝️ Token Vault (`Vexora.TokenVault`)
 The `TokenVault` provides a secure, cryptographically-hardened way to seal and unseal payloads (like authentication tokens or password reset tokens). It uses key derivation (HKDF) combined with a master key and a user-specific key (`uKey`) to generate AES-256-GCM encrypted tokens. It also supports optional environment bindings (Session, IP, User-Agent).
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Token Vault Setup & Verification Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configure the Vault
 Initialize the vault with one or more master keys (at least 16 characters each), along with default issuer and audience identifiers:
@@ -608,20 +521,11 @@ if (result.status) {
 }
 ```
 
-</div>
-</details>
-
 ### 🔌 Real-Time WebSockets (`Vexora.WebSocket`)
 Vexora includes a highly-optimized, zero-dependency native WebSocket engine that runs directly over TCP stream layers.
 
 #### 1. Server-Side Setup
 Initialize the WebSocket manager by passing the running HTTP server instance, then listen to events:
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View WebSocket Server-Side Setup</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
-
 ```javascript
 import Vexora from "vexora";
 
@@ -661,17 +565,8 @@ io.on("connection", (socket) => {
 });
 ```
 
-</div>
-</details>
-
 #### 2. Client-Side Setup (`index.html`)
 Here is a complete, beautifully-styled, single-file HTML & JS dashboard to connect to Vexora WebSockets from a browser. Create an `index.html` and open it:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```html
 <!DOCTYPE html>
@@ -886,17 +781,8 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
 </html>
 ```
 
-</div>
-</details>
-
 ### 🧵 Global Request Context (`Vexora.Request`)
 Access active inputs recursively trimmed by default:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Global Request Context Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 // Get all inputs combined (Query + Body)
@@ -909,17 +795,8 @@ const age = Vexora.Request.input("age", 18);
 const clientIp = Vexora.Request.ip();
 ```
 
-</div>
-</details>
-
 ### 📤 Response Engine (`Vexora.Response`)
 Standardize API payloads and automatically track execution latencies:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Response Engine Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 // A. Success Response (HTTP 200)
@@ -934,17 +811,8 @@ Vexora.Response.error("Invalid password!", 401);
 Vexora.Response.json(true, "Custom message", { score: 99 }, 202);
 ```
 
-</div>
-</details>
-
 ### 💾 In-Memory Cache & Redis Mock (`Vexora.Redis` / `Vexora.Cache`)
 Vexora includes a sub-microsecond in-memory key-value store mapping to `Vexora.Redis` or `Vexora.Cache`. It supports standard Redis-style functions, time-to-live (TTL) expiration, automatic garbage collection, atomic counters, and strict RAM limit enforcement.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View In-Memory Cache & Redis Mock Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Limit Enforcement Config (`.Vexora/config`)
 You can define the maximum RAM size allowed for this store in your config file. If the limit is reached, any further storage requests will be rejected to protect the server from memory leaks or exhaustion.
@@ -1007,17 +875,8 @@ Output Structure:
 }
 ```
 
-</div>
-</details>
-
 ### 🪟 In-Memory Sessions (`Vexora.ss`)
 Stores sessions in RAM memory using standard TTL limits:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View In-Memory Sessions Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 // Set session variable
@@ -1033,17 +892,8 @@ const info = Vexora.ss.info();
 Vexora.ss.regenerate();
 ```
 
-</div>
-</details>
-
 ### 🛡️ Input Validation (`Vexora.Validator`)
 Advanced string-based validation rules for instant payload verification:
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Input Validation Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 const validator = Vexora.Validator.make(Vexora.Request.all(), {
@@ -1057,17 +907,8 @@ if (validator.fails()) {
 }
 ```
 
-</div>
-</details>
-
 ### ✉️ Native SMTP Mail Client (`Vexora.mail`)
 Vexora includes a native, lightweight, zero-dependency SMTP client to send HTML and text emails over secure TLS or STARTTLS channels.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>✉️ Click to View Native SMTP Mail Client Setup & Sending Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configuration (`.Vexora/config`)
 Configure your SMTP connection defaults using the following keys:
@@ -1122,19 +963,10 @@ await Vexora.mail.send({
 });
 ```
 
-</div>
-</details>
-
 ---
 
 ### 🌐 Native HTTP Client (`Vexora.http`)
 Vexora includes a native, modern, lightweight wrapper to send HTTP/HTTPS requests (GET, POST, PUT, DELETE, etc.) directly from your backend using Node's native fetch API.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🌐 Click to View HTTP Client Request Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### Making a POST Request (with Body and Headers)
 To send a POST request with payload data (Body) and custom headers (e.g., Auth Tokens):
@@ -1177,19 +1009,10 @@ const response = await Vexora.http.delete("https://api.example.com/users/1", {
 });
 ```
 
-</div>
-</details>
-
 ---
 
 ### 🚫 IP Address Blocking (`BLOCKED_IPS`)
 Vexora includes a secure, zero-overhead IP blocking middleware. You can specify a list of IP addresses to block in your configuration. Any requests originating from blocked IP addresses are intercepted at the very start of the server lifecycle and rejected immediately with an HTTP `403 Forbidden` response.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🚫 Click to View IP Address Blocking Setup & Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configuration (`.Vexora/config`)
 Define your blocked IP addresses as a comma-separated list:
@@ -1208,19 +1031,10 @@ If a client with a blocked IP address attempts to access the server, Vexora will
 ```
 No dynamic routing, controller, database pool connections, or session logic will be executed for blocked requests, ensuring maximum performance and resource protection.
 
-</div>
-</details>
-
 ---
 
 ### ⚠️ Suspicious Behavior Throttling & Auto-Blocking
 Vexora dynamically monitors client behaviors by tracking incoming request rates per IP. If any client starts sending requests beyond normal usage thresholds (e.g., spamming or DDoS attempts), Vexora immediately blocklists their IP temporarily in the memory cache.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>⚠️ Click to View Suspicious Behavior Throttling Setup & Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configuration (`.Vexora/config`)
 Configure tracking metrics using the following parameters:
@@ -1247,19 +1061,10 @@ AUTO_BLOCK_DURATION=300
 ```
 After the `AUTO_BLOCK_DURATION` expires, the IP is automatically unblocked and can make requests again.
 
-</div>
-</details>
-
 ---
 
 ### 🤖 Automated Human/Bot Behavior Analyzer
 Vexora features a state-of-the-art behavioral guard that distinguishes between normal human clients and automated bot scripts/scanners, automatically blocking malicious behaviors.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🤖 Click to View Bot Behavior Analyzer Setup & Protection Layers</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configuration (`.Vexora/config`)
 Configure behavioral rules in your config file:
@@ -1282,19 +1087,10 @@ MAX_CONSECUTIVE_404S=15
 2. **Headless Browser & Scraper User-Agent Filter**: Blocks common scraping/automation clients like `puppeteer`, `playwright`, `selenium`, `headlesschrome`, `curl`, `wget`, and `python-requests` immediately on their first request.
 3. **Brute-Force Route Scanner**: Tracks consecutive `404 Not Found` response status codes. If a client triggers `MAX_CONSECUTIVE_404S` failures consecutively, Vexora flags them as a vulnerability scanner and blocklists the IP.
 
-</div>
-</details>
-
 ---
 
 ### 🛡️ CAPTCHA Verification (reCAPTCHA & Turnstile)
 Vexora provides native verification modules for both Google reCAPTCHA and Cloudflare Turnstile tokens. It allows direct verification calls as well as integration into route middleware.
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🛡️ Click to View CAPTCHA Verification & Middleware Examples</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 #### 1. Configuration (`.Vexora/config`)
 Configure the provider and secret key:
@@ -1341,9 +1137,6 @@ const server = Vexora.Server(async (req, res) => {
 });
 ```
 
-</div>
-</details>
-
 ---
 
 ### 🗂️ Queue & Background Jobs System
@@ -1369,12 +1162,6 @@ QUEUE_POLL_INTERVAL=1000
 To use Vexora's Queue system, define a background job handler first, and then dispatch jobs to it from your route callbacks or controllers.
 
 Below is a complete, copy-pasteable example of using background jobs to send welcome emails immediately after registering a user, keeping the API response time instant (Click to expand / देखने के लिए क्लिक करें):
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Complete Server & Queue Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -1418,9 +1205,6 @@ server.listen(3000, () => {
 });
 ```
 
-</div>
-</details>
-
 #### 3. Driver Types
 * **Memory Driver (`QUEUE_DRIVER=memory`)**: Very fast, zero external dependency. Jobs are stored in an in-memory queue. Best for local development and unit tests.
 * **Cache Driver (`QUEUE_DRIVER=cache`)**: Jobs are serialized and saved in Vexora's built-in RAM Cache. Persistent across server restarts, ensuring jobs are not lost if the app crashes. (Note: `'redis'` can also be used as an alias for this driver).
@@ -1446,12 +1230,6 @@ To use Vexora's built-in Scheduler in your application:
 3. **Run Server**: The scheduler loop starts automatically when `Vexora.Server()` is initialized.
 
 Here is a complete, copy-pasteable example of registering tasks (Click to expand / देखने के लिए क्लिक करें):
-
-<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
-<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Complete Server & Scheduler Example</b>
-</summary>
-<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ```javascript
 import Vexora from "vexora";
@@ -1484,9 +1262,6 @@ server.listen(3000, () => {
     console.log("🚀 Server running at http://localhost:3000");
 });
 ```
-
-</div>
-</details>
 
 #### 3. Cron Expression & Interval Syntax Reference
 Vexora's scheduler supports standard 5-field cron expressions as well as simple numeric strings representing execution intervals in **seconds**. 
