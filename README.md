@@ -16,6 +16,12 @@
 
 ## ✨ Key Features
 
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>✨ Click to View Key Features</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
+
 - 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependency bloat (only optional native db drivers `mysql2` and `pg` are used for DB connections).
 - ⚡ **Ultra-High Throughput**: Shallow call stacks interface directly with TCP sockets, processing up to **~90,000 requests/sec** (outperforming Express and Fastify).
 - 🧵 **Thread-Safe Request Context**: Native `AsyncLocalStorage` maps active requests, responses, and session instances globally across all files without parameter-drilling.
@@ -27,11 +33,20 @@
 - 🔐 **Hardened Security by Default**: Dynamic CORS preflight controllers, Helmet-style security headers, global rate-limit counts, and auto-trimmed inputs.
 - 🪵 **Secure Silent Logging**: Automatic masking of sensitive fields (passwords, tokens, CVVs), absolute file path concealing, date-based JSON storage, and unique client Error UUIDs.
 
+</div>
+</details>
+
 ---
 
 ## 🎯 Supported Features Checklist
 
 Vexora is packed with features to handle all aspects of a modern, secure, and fast backend:
+
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>🎯 Click to View Supported Features Checklist</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 - 🛣️ **Directory-Based API Routing** — Automatic sub-router autoloading with parameter parsing, catch-all routes, and sandbox controller evaluations.
 - 🔒 **Timing-Safe CSRF Protection** — Constant-time timing attack protection (`crypto.timingSafeEqual`), dynamic cookie/header sync, path exclusions, and token rotation.
@@ -50,11 +65,20 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 - 🪟 **In-Memory State Sessions** — Session tracking with TTL controls, session fixation security (`ss.regenerate()`), and detailed session statistics.
 - 🪵 **Secure Silent Audit Logging** — Conceals absolute folder paths on errors, issues error UUID trackers, and masks credential fields in logs.
 
+</div>
+</details>
+
 ---
 
 ## 📊 Framework Comparison (Vexora vs Express vs Fastify)
 
 How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
+
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>📊 Click to View Framework Performance & Security Comparison</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
 ### ⚡ Core Features & Performance
 
@@ -81,15 +105,27 @@ How does Vexora stack up against other popular Node.js frameworks? Here is a bre
 | **Sensitive Field Masking** | <small>⭐☆☆☆☆ <br> (No default. Logs passwords in plain text)</small> | <small>⭐⭐☆☆☆ <br> (Needs manual serializers config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Automatically masks passwords/CVVs/tokens in logs)</small> |
 | **Overall Security Grade** | <small>**C- (Vulnerable by default)**</small> | <small>**B (Safe with plugins)**</small> | <small>**A+ (Hardened by default)**</small> |
 
+</div>
+</details>
+
 ---
 
 ## 📦 Installation
 
 Install Vexora in your project directory:
 
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>📦 Click to View Installation Guide</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
+
 ```bash
 npm install vexora
 ```
+
+</div>
+</details>
 
 ## 🚀 Quick Start
 
@@ -98,7 +134,7 @@ When Vexora boots for the first time, it automatically creates a secure private 
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Server Initialization Example (सर्वर स्टार्ट करने का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Server Initialization Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -133,7 +169,7 @@ Vexora includes a native, secure, stream-based static asset server (`Vexora.stat
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Serving Static Files Example (स्टैटिक फ़ाइलें सर्व करने का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Serving Static Files Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -163,6 +199,12 @@ server.listen(3000);
 
 ## ⚙️ Vexora Internal Architecture
 
+<details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
+<summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
+  <b>⚙️ Click to View Vexora Internal Architecture & Flowchart</b>
+</summary>
+<div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
+
 ```mermaid
 graph TD
     Client[Client Request] --> Guard[Security Guard & Rate Limiter]
@@ -185,6 +227,9 @@ The route autoloader scans folders for index routers and evaluates scripts using
 
 ### 3. Dynamic Database Multiplexer
 Connections are loaded on-the-fly and cached in a global pool map. Table and column identifiers are checked against strict regexes (`/^[a-zA-Z0-9_]+$/`) and wrapped in database-specific quotes (``` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection at the schema level.
+
+</div>
+</details>
 
 ---
 
@@ -449,7 +494,7 @@ try {
 Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View RAM Cache / Redis Example (कैश स्टोरेज का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View RAM Cache / Redis Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -476,7 +521,7 @@ Secure cryptographically-sound hashing and encryption.
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Cryptographic Helpers Example (पासवर्ड हैशिंग और एन्क्रिप्शन का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Cryptographic Helpers Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -503,7 +548,7 @@ The `TokenVault` provides a secure, cryptographically-hardened way to seal and u
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Token Vault Setup & Verification Examples (टोकन वॉल्ट सेटअप और वेरिफिकेशन का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Token Vault Setup & Verification Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -573,7 +618,7 @@ Vexora includes a highly-optimized, zero-dependency native WebSocket engine that
 Initialize the WebSocket manager by passing the running HTTP server instance, then listen to events:
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View WebSocket Server-Side Setup (वेबसॉकेट सर्वर-साइड कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View WebSocket Server-Side Setup</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -624,7 +669,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard (क्लाइंट-साइड डैशबोर्ड कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -849,7 +894,7 @@ Access active inputs recursively trimmed by default:
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Global Request Context Examples (रिक्वेस्ट डेटा पढ़ने का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Global Request Context Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -872,7 +917,7 @@ Standardize API payloads and automatically track execution latencies:
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Response Engine Examples (रिस्पॉन्स भेजने का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Response Engine Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -897,7 +942,7 @@ Vexora includes a sub-microsecond in-memory key-value store mapping to `Vexora.R
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View In-Memory Cache & Redis Mock Examples (कैश स्टोरेज और डायग्नोस्टिक्स का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View In-Memory Cache & Redis Mock Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -970,7 +1015,7 @@ Stores sessions in RAM memory using standard TTL limits:
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View In-Memory Sessions Example (इन-मेमोरी सेशन मैनेजमेंट का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View In-Memory Sessions Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -996,7 +1041,7 @@ Advanced string-based validation rules for instant payload verification:
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Input Validation Example (इनपुट वैलिडेशन का कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Input Validation Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1020,7 +1065,7 @@ Vexora includes a native, lightweight, zero-dependency SMTP client to send HTML 
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>✉️ Click to View Native SMTP Mail Client Setup & Sending Examples (ईमेल भेजने और कॉन्फ़िगरेशन का कोड देखने के लिए क्लिक करें)</b>
+  <b>✉️ Click to View Native SMTP Mail Client Setup & Sending Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1087,7 +1132,7 @@ Vexora includes a native, modern, lightweight wrapper to send HTTP/HTTPS request
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🌐 Click to View HTTP Client Request Examples (HTTP रिक्वेस्ट भेजने का कोड देखने के लिए क्लिक करें)</b>
+  <b>🌐 Click to View HTTP Client Request Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1142,7 +1187,7 @@ Vexora includes a secure, zero-overhead IP blocking middleware. You can specify 
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🚫 Click to View IP Address Blocking Setup & Examples (आईपी ब्लॉकिंग कॉन्फ़िगरेशन का कोड देखने के लिए क्लिक करें)</b>
+  <b>🚫 Click to View IP Address Blocking Setup & Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1173,7 +1218,7 @@ Vexora dynamically monitors client behaviors by tracking incoming request rates 
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>⚠️ Click to View Suspicious Behavior Throttling Setup & Examples (थ्रॉटलिंग और ऑटो-ब्लॉकिंग का कोड देखने के लिए क्लिक करें)</b>
+  <b>⚠️ Click to View Suspicious Behavior Throttling Setup & Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1212,7 +1257,7 @@ Vexora features a state-of-the-art behavioral guard that distinguishes between n
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🤖 Click to View Bot Behavior Analyzer Setup & Protection Layers (बॉट डिटेक्शन का कोड देखने के लिए क्लिक करें)</b>
+  <b>🤖 Click to View Bot Behavior Analyzer Setup & Protection Layers</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1247,7 +1292,7 @@ Vexora provides native verification modules for both Google reCAPTCHA and Cloudf
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>🛡️ Click to View CAPTCHA Verification & Middleware Examples (कैप्चा वेरिफिकेशन का कोड देखने के लिए क्लिक करें)</b>
+  <b>🛡️ Click to View CAPTCHA Verification & Middleware Examples</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1327,7 +1372,7 @@ Below is a complete, copy-pasteable example of using background jobs to send wel
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Complete Server & Queue Example (कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Complete Server & Queue Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1404,7 +1449,7 @@ Here is a complete, copy-pasteable example of registering tasks (Click to expand
 
 <details name="vexora-docs" style="margin: 1rem 0; border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px; overflow: hidden; background: rgba(139, 92, 246, 0.03);">
 <summary style="padding: 1rem; font-weight: 600; cursor: pointer; background: rgba(139, 92, 246, 0.08); color: #c084fc; outline: none; user-select: none;">
-  <b>💻 Click to View Complete Server & Scheduler Example (कोड देखने के लिए क्लिक करें)</b>
+  <b>💻 Click to View Complete Server & Scheduler Example</b>
 </summary>
 <div style="padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.2);">
 
@@ -1484,17 +1529,17 @@ Vexora.Schedule("1-5 * * * *", async () => {
 });
 ```
 
-##### E. Standard Cron Syntaxes (Common Real-World Examples / सामान्य व्यावहारिक उदाहरण)
-* `*/5 * * * *`: Runs every 5 minutes (हर 5 मिनट में चले)
-* `0 * * * *`: Runs every hour at minute 0 (हर घंटे में एक बार चले)
-* `0 0 * * *`: Runs daily at Midnight (12:00 AM) (हर दिन रात 12 बजे चले)
-* `0 12 * * *`: Runs daily at Noon (12:00 PM) (हर दिन दोपहर 12 बजे चले)
-* `0 0,12 * * *`: Runs twice a day (at midnight and noon) (हर दिन दो बार - रात 12 बजे और दोपहर 12 बजे चले)
-* `0 0 * * 0`: Runs weekly at midnight every Sunday (हफ्ते में एक बार - रविवार रात 12 बजे चले) (Note: `'0 0 * * 7'` is also supported for Sunday)
-* `0 9 * * 1`: Runs weekly every Monday at 9:00 AM (हर सोमवार सुबह 9 बजे चले)
-* `0 0 1 * *`: Runs monthly on the 1st day at midnight (महीने में एक बार - पहली तारीख रात 12 बजे चले)
-* `0 0 1 1 *`: Runs yearly on Jan 1st at midnight (साल में एक बार - 1 जनवरी रात 12 बजे चले)
-* `* * * * *`: Runs every minute (हर एक मिनट में चले)
+##### E. Standard Cron Syntaxes (Common Real-World Examples)
+* `*/5 * * * *`: Runs every 5 minutes
+* `0 * * * *`: Runs every hour at minute 0
+* `0 0 * * *`: Runs daily at Midnight (12:00 AM)
+* `0 12 * * *`: Runs daily at Noon (12:00 PM)
+* `0 0,12 * * *`: Runs twice a day (at midnight and noon)
+* `0 0 * * 0`: Runs weekly at midnight every Sunday (Note: `'0 0 * * 7'` is also supported for Sunday)
+* `0 9 * * 1`: Runs weekly every Monday at 9:00 AM
+* `0 0 1 * *`: Runs monthly on the 1st day at midnight
+* `0 0 1 1 *`: Runs yearly on Jan 1st at midnight
+* `* * * * *`: Runs every minute
 
 #### 4. Managing the Scheduler Loop
 The scheduler can be started, stopped, or restarted at runtime using the following methods:
