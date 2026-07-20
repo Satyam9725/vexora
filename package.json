@@ -1,6 +1,6 @@
 {
   "name": "vexora",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Vexora Framework - Advanced, Blazing-Fast, Zero-Dependency Backend Framework for Node.js",
   "type": "module",
   "main": "./Vexora.js",
@@ -47,8 +47,5 @@
   "dependencies": {
     "mysql2": "^3.23.0",
     "pg": "^8.22.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
   }
 }
