@@ -1,18 +1,14 @@
 # Vexora Framework 🚀 (The Backend Master)
 
-<div align="center">
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Dependencies](https://img.shields.io/badge/dependencies-2-brightgreen.svg?style=flat-square)](#)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](#)
 
 **Vexora** is the ultimate backend master framework for Node.js. It is an advanced, enterprise-grade, blazing-fast, and zero-dependency core backend engine. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
-[Key Features](#key-features) • [Checklist](#supported-features-checklist) • [Comparison](#framework-comparison) • [Installation](#installation) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Routing](#routing) • [Database](#database) • [API Reference](#api-reference)
+[Key Features](#key-features) | [Checklist](#supported-features-checklist) | [Comparison](#framework-comparison) | [Installation](#installation) | [Quick Start](#quick-start) | [Architecture](#architecture) | [Routing](#routing) | [Database](#database) | [API Reference](#api-reference)
 
-[RAM Cache](#ram-cache) • [WebSockets](#websockets) • [Token Vault](#token-vault) • [SMTP Mail](#smtp-mail) • [HTTP Client](#http-client) • [Queue Worker](#queue-jobs) • [Cron Scheduler](#task-scheduler) • [Bot Shield](#bot-shield) • [CAPTCHA](#captcha) • [License](#license)
-
-</div>
+[RAM Cache](#ram-cache) | [WebSockets](#websockets) | [Token Vault](#token-vault) | [SMTP Mail](#smtp-mail) | [HTTP Client](#http-client) | [Queue Worker](#queue-jobs) | [Cron Scheduler](#task-scheduler) | [Bot Shield](#bot-shield) | [CAPTCHA](#captcha) | [File Upload](#file-upload) | [License](#license)
 
 ---
 
@@ -61,11 +57,22 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 
 How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
 
-### 🔒 Performance & Security Star Ratings
+### ⚡ Core Features & Performance
 
 | Feature / Criteria | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
 | :--- | :--- | :--- | :--- |
 | **Performance / Speed** | <small>Low-Medium (~15,000 req/sec)</small> | <small>High (~60,000 req/sec)</small> | <small>**Ultra-High (~90,000 req/sec)**</small> |
+| **Dependency Size** | <small>Heavy (Dozens of dependencies)</small> | <small>Medium (Several dependencies)</small> | <small>**Zero-Dependency Core** (Built entirely on Node.js core)</small> |
+| **Request Context** | <small>Requires parameter drilling (`req, res`)</small> | <small>Requires parameter drilling</small> | <small>**Thread-Safe Global Context** (`AsyncLocalStorage` - No drilling)</small> |
+| **Real-time WebSockets** | <small>Requires third-party packages (`socket.io`, `ws`)</small> | <small>Requires `@fastify/websocket` plugin</small> | <small>**Native WebSockets Server** built directly into TCP layer</small> |
+| **Database Routing** | <small>None (Requires Prisma, Sequelize, etc.)</small> | <small>None (Requires external plugins/ORMs)</small> | <small>**In-built Multi-Connection DB Multiplexer** (MySQL & Postgres)</small> |
+| **Security Defaults** | <small>Barebones (Needs manual configuration)</small> | <small>Medium (Plugins needed)</small> | <small>**Hardened by Default** (CSRF, Rate Limiting, Helmet Headers, CORS)</small> |
+| **Error Logging** | <small>Exposes full stack traces by default</small> | <small>Standard logging</small> | <small>**Silent Masked Logging** (UUIDs for clients, masked sensitive fields)</small> |
+
+### 🔒 Security Implementations & Star Ratings
+
+| Feature / Criteria | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
+| :--- | :--- | :--- | :--- |
 | **CSRF Protection** | <small>⭐⭐☆☆☆ <br> (No default. Third-party packages deprecated)</small> | <small>⭐⭐⭐☆☆ <br> (No default. Plugin `@fastify/csrf` is solid)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Timing-safe verification & token rotation built-in)</small> |
 | **SQL Injection Defense** | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Regex-based quoting and prepared queries built-in)</small> |
 | **Security Headers (Helmet)** | <small>⭐☆☆☆☆ <br> (No default. Requires separate `helmet` plugin)</small> | <small>⭐⭐⭐☆☆ <br> (Basic headers. Requires `@fastify/helmet`)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Helmet equivalent headers sent by default)</small> |
@@ -83,6 +90,7 @@ How does Vexora stack up against other popular Node.js frameworks? Here is a bre
 | **Background Queue & Cron Daemon** | ❌ <small>Requires `bull` / `node-cron`</small> | ❌ <small>Requires external plugins</small> | ✅ **Built-in Queue Worker & Scheduler** | ⭐⭐⭐⭐⭐ **(10/10)** |
 | **Bot Jitter & Route Scanner Shield** | ❌ <small>Vulnerable to bots</small> | ❌ <small>Requires custom scripts</small> | ✅ **Built-in Jitter & 404 Scanner Guard** | ⭐⭐⭐⭐⭐ **(10/10)** |
 | **Sub-microsecond RAM Cache** | ❌ <small>Requires external Redis</small> | ❌ <small>Requires external Redis</small> | ✅ **Built-in RAM Cache (Redis Mock)** | ⭐⭐⭐⭐⭐ **(10/10)** |
+| **Encrypted File Storage & Spoof Guard** | ❌ <small>Requires `multer` + custom crypto</small> | ❌ <small>Requires `@fastify/multipart`</small> | ✅ **Built-in (AES-256 + Magic Bytes Guard)** | ⭐⭐⭐⭐⭐ **(10/10)** |
 
 ---
 
@@ -273,63 +281,6 @@ Vexora.protect("full");
 Blocks direct browser URL address bar navigation (HTML document requests) with `404 Not Found`, but allows programmatic requests (like fetch, Axios, XHR, or client imports) to pass through safely:
 ```javascript
 Vexora.protect("browser"); // Or Vexora.protect("url");
-```
-
-### 5. CSRF Protection Middleware (`Vexora.csrf`)
-Vexora includes built-in, highly-configurable CSRF (Cross-Site Request Forgery) protection middleware.
-It automatically:
-- Generates and stores a cryptographically secure CSRF token in the user's session for safe methods (`GET`, `HEAD`, `OPTIONS`, `TRACE`).
-- Injects the token into the `x-csrf-token` response header and sets a cookie (defaulting to `XSRF-TOKEN`) allowing client application scripts (like Axios or Angular) to access it.
-- Verifies the presence of a matching token for state-changing HTTP methods (`POST`, `PUT`, `DELETE`, `PATCH`) using a constant-time comparison helper (`crypto.timingSafeEqual`) to prevent timing attack exploits.
-- Rejects unauthorized requests with an automatic `403 Forbidden` JSON response.
-
-#### A. Basic Usage
-To enable CSRF protection globally, call it inside the main server callback handler:
-
-```javascript
-const server = Vexora.Server(async (req, res) => {
-    // Enable CSRF protection middleware globally
-    const isCsrfBlocked = Vexora.csrf(req, res);
-    if (isCsrfBlocked) return; // Terminate request execution if verification fails
-
-    // Proceed to standard router mapping
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
-});
-```
-
-#### B. Advanced Configuration
-You can customize cookie settings, header/parameter mapping names, and exclude specific routes (e.g. Stripe/PayPal webhooks) from CSRF protection:
-
-```javascript
-// Configure CSRF Options
-Vexora.csrf.configure({
-    cookieName: "MY-XSRF-TOKEN",
-    headerName: "x-custom-csrf-token",
-    paramName: "csrf_token_field",
-    cookieOptions: {
-        httpOnly: false, // Must be false if client-side SPA needs to read it
-        secure: true,
-        sameSite: "Lax", // Or "Strict"
-        path: "/"
-    },
-    excludePaths: [
-        "/webhooks",           // Matches any path starting with /webhooks (e.g. /webhooks/stripe)
-        /^\/api\/v\d+\/hooks/  // RegEx match support for webhook APIs
-    ]
-});
-```
-
-#### C. CSRF Token Rotation (Mitigate Session Fixation)
-To defend against Session Fixation and token hijacking, regenerate the CSRF token on key state transitions (like user logging in):
-
-```javascript
-// Inside your login controller script
-if (isValidLogin) {
-    // Rotate the CSRF token
-    Vexora.csrf.rotate(req); 
-    Vexora.Response.success({ user }, "Welcome back!");
-}
 ```
 
 ---
@@ -1356,9 +1307,133 @@ Vexora.Scheduler.restart();
 
 ---
 
+<a id="file-upload"></a>
+### 📁 File Storage & Encryption Service (`Vexora.Storage`)
+Vexora includes a native, zero-dependency File Storage & Encryption Manager (`Vexora.Storage`). It supports both **Encrypted Storage (AES-256-CBC)** and **Normal Unencrypted Uploads**. It automatically enforces root directory security against `.Vexora/config`, verifies upload tokens, detects MIME types via magic bytes, and enforces file size limits.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure file storage settings:
+```ini
+# Maximum allowed upload file size in Megabytes (default: 5MB)
+UPLOAD_MAX_SIZE_MB=5
+
+# Allowed MIME types (comma-separated list)
+UPLOAD_ALLOWED_MIME_TYPES=image/jpeg,image/png,image/jpg,application/pdf
+
+# Base storage directory path (default: 'storage')
+UPLOAD_STORAGE_ROOT=storage
+
+# Permitted storage location roots (comma-separated)
+UPLOAD_ALLOWED_ROOTS=public,MyDrive,User,temporary
+```
+
+#### 2. Generating Token with Target Root & Options
+```javascript
+import Vexora from "vexora";
+
+// Generate signed upload token for target root folder
+const tokenObj = Vexora.Storage.createToken({
+    root: "User/my_documents", // Target root (must start with an allowed root in config)
+    encrypt: true,             // true for AES-256 encryption, false for normal upload
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    ttl: "1H"
+});
+
+console.log("Upload Token:", tokenObj.token);
+```
+
+#### 3. Upload Modes (Option A: Encrypted vs Option B: Normal)
+```javascript
+import Vexora from "vexora";
+
+const server = Vexora.Server(async (req, res) => {
+    if (req.method === "POST" && req.path === "/upload") {
+        // Option A: Encrypted Upload (AES-256-CBC)
+        const encResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: true });
+        
+        // Option B: Normal (Unencrypted) Upload
+        const normalResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: false });
+
+        return res.json(encResult);
+    }
+});
+```
+
+#### 4. Device & Session Binding for Upload Tokens
+```javascript
+// Generate upload token bound to the user's device/browser, IP, and single-use
+const tokenObj = Vexora.Storage.createToken({
+    root: "User/my_documents",
+    encrypt: true,
+    bindDevice: true,  // Binds token to User-Agent/Device (prevents token hijacking)
+    bindIp: true,      // Binds token to client IP address
+    bindSession: true, // Binds token to active session
+    maxUses: 1,        // Single-use token (invalidated after 1 upload)
+    ttl: "1H"
+});
+```
+
+#### 5. Programmatic Encryption & Decryption Usage
+```javascript
+import Vexora from "vexora";
+import fs from "node:fs";
+
+// 1. Create upload token for target root
+const token = Vexora.Storage.createToken({ root: "MyDrive/docs", encrypt: true }).token;
+
+// 2. Encrypt and store file
+const fileInput = {
+    buffer: Buffer.from("%PDF-1.4 sample PDF content..."),
+    original_name: "invoice.pdf",
+    mime: "application/pdf"
+};
+const uploadResult = await Vexora.Storage.handle({ body: { file_manager_token: token } }, fileInput);
+
+// 3. Decrypt stored .enc file back to original content
+const encryptedDiskBuffer = fs.readFileSync(`./storage/MyDrive/docs/${uploadResult.data.encrypted_name}`);
+const originalBuffer = Vexora.Storage.decrypt(encryptedDiskBuffer, uploadResult.data.user_key_part);
+console.log("Decrypted PDF Content:", originalBuffer.toString("utf8"));
+```
+
+---
+
+<a id="csrf-protection"></a>
+### 🛡️ CSRF Protection Manager (`Vexora.csrf`)
+Vexora includes a timing-safe, device-bound, session-bound CSRF token generator and verifier.
+
+#### 1. Generating CSRF Token (`Vexora.csrf.generate`)
+```javascript
+import Vexora from "vexora";
+
+// Generate a device-bound & timing-safe CSRF token
+const csrfToken = Vexora.csrf.generate({
+    bindDevice: true,  // Bind to User-Agent
+    bindIp: true,      // Bind to Client IP
+    bindSession: true, // Bind to User Session
+    maxUses: 1,        // Single-use Token Rotation
+    ttl: "1H"
+});
+```
+
+#### 2. Verifying CSRF Token (`Vexora.csrf.verify`)
+```javascript
+// Option A: Verify sealed TokenVault CSRF Token
+if (Vexora.csrf.verify(req.headers["x-csrf-token"])) {
+    console.log("✅ CSRF Verification Passed!");
+} else {
+    console.log("❌ Invalid, Stolen, or Expired CSRF Token");
+}
+
+// Option B: Constant-Time Direct Comparison
+if (Vexora.csrf.verify(clientToken, serverSessionToken)) {
+    console.log("✅ CSRF Token Matches!");
+}
+```
+
+---
+
 <a id="license"></a>
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 *Built with passion by Satyam Kumar (<satyam.ku9725@gmail.com>)* 🚀
-#
