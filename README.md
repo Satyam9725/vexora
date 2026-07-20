@@ -138,11 +138,17 @@ Vexora includes a native, secure, stream-based static asset server (`Vexora.stat
 ```javascript
 import Vexora from "vexora";
 
-// Create static handler mounting the "public" directory
-const serveStatic = Vexora.static("public", { maxAge: 86400 }); // maxAge in seconds
+// Create static handler mounting the "public" directory with built-in Rate Limiting
+const serveStatic = Vexora.static("public", { 
+    maxAge: 86400, // maxAge in seconds
+    rateLimit: {
+        maxRequests: 150,      // Max requests allowed for static assets
+        windowSeconds: 60      // Time window in seconds
+    }
+});
 
 const server = Vexora.Server(async (req, res) => {
-    // 1. Serve static files
+    // 1. Serve static files (checks rate limits automatically)
     const served = await serveStatic(req, res);
     if (served) return;
 
@@ -184,10 +190,44 @@ Connections are loaded on-the-fly and cached in a global pool map. Table and col
 
 ---
 
-<a id="routing"></a>
-## 🛣️ Routing & Controller System
+Vexora supports a secure **`.Vexora_Api` Directory-Based Routing** system. When the server boots, it automatically creates a `.Vexora_Api` directory in the project root. Any request starting with `/api` is routed exclusively to files and modules inside this directory.
 
-Vexora uses a **Directory-Based Autoloading Sub-Router** mapping mechanism. Any directory containing an `index.js` file (such as `auth/index.js`) is automatically mounted at a route matching the folder name (e.g., `/auth/*`).
+### 1. Direct File Execution (Zero-Boilerplate)
+You can drop JavaScript files directly into the `.Vexora_Api` directory. Vexora runs them as sandboxed raw scripts without requiring router imports or function wrappers.
+* Creating `.Vexora_Api/profile.js` automatically maps to:  
+  `GET http://localhost:3000/api/profile`
+
+### 2. Module-Based Folders & Sub-Routers
+For organized modular routes, you can create sub-folders containing an `index.js` file (such as `.Vexora_Api/auth/index.js`), which acts as a sub-router for that URL prefix (e.g. `/api/auth/*`).
+
+#### A. Define Sub-Router (`.Vexora_Api/auth/index.js`)
+Use `Vexora.RouteController` to declare endpoints and map them to local controller files:
+```javascript
+// .Vexora_Api/auth/index.js
+const authRouter = new Vexora.RouteController();
+
+// Map POST /api/auth/login -> .Vexora_Api/auth/login.js
+authRouter.post('/login', 'login'); 
+
+export default authRouter;
+```
+
+#### B. Create Action Script (`.Vexora_Api/auth/login.js`)
+Controller actions are zero-boilerplate, sandboxed script files. Crucial variables (`Vexora`, `req`, `res`, `db`, `params`) are pre-injected automatically:
+```javascript
+// .Vexora_Api/auth/login.js
+const username = req.body.username;
+
+// Run database query on pool
+const user = await Vexora.fetch("SELECT * FROM users WHERE username = ?", [username]);
+Vexora.Response.success(user, "Login successful!");
+```
+
+---
+
+<a id="routing"></a>
+## 🛣️ Standard Routing & Custom Controller System
+Apart from the `/api` prefix directory, Vexora also supports mounting sub-routers in custom directories (like `http/` or `controllers/`):
 
 ### 1. Define Sub-Router (`auth/index.js`)
 Use `Vexora.RouteController` to declare endpoints and map them to separate controller files in the same directory:
@@ -1025,6 +1065,35 @@ AUTO_BLOCK_DURATION=300
 }
 ```
 After the `AUTO_BLOCK_DURATION` expires, the IP is automatically unblocked and can make requests again.
+
+---
+
+### ⏳ Custom Rate Limiters (`Vexora.RateLimiterClass`)
+Apart from global rate limiting, Vexora allows you to instantiate multiple, independent rate limiters for different resources (e.g. separate limiters for API endpoints and static assets).
+
+#### 1. Instantiate a Custom Rate Limiter
+You can create separate limiters with their own maximum requests and time windows:
+```javascript
+// Allow 30 requests every 60 seconds
+const apiLimiter = new Vexora.RateLimiterClass({
+    isEnabled: true,
+    maxRequests: 30,
+    windowSeconds: 60
+});
+```
+
+#### 2. Check the Rate Limit
+Call `check(req)` to verify client rates inside your handlers:
+```javascript
+const rateCheck = apiLimiter.check(req);
+if (!rateCheck.allowed) {
+    res.statusCode = 429;
+    return res.json({
+        status: false,
+        message: `Too many requests. Please try again after ${rateCheck.retryAfter} seconds.`
+    });
+}
+```
 
 ---
 

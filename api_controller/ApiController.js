@@ -17,11 +17,13 @@
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
+import createRouter from "../http/Router.js";
 
 class ApiController {
     static pathCache = new Map();
     static routerCache = new Map();
     static handleCache = new Map();
+    static fallbackApiRouter = null;
 
     /**
      * Centralized router handler for modular routes dynamically.
@@ -51,6 +53,53 @@ class ApiController {
             return false;
         }
 
+        // 1. Direct file matching inside .Vexora_Api (high precedence)
+        if (req.path.startsWith('/api/') || req.path === '/api') {
+            let suffix = req.path.substring(4);
+            if (suffix.startsWith('/')) suffix = suffix.substring(1);
+            if (!suffix) suffix = 'index';
+
+            const vexoraApiDir = path.join(process.cwd(), '.Vexora_Api');
+            const fileCandidates = [
+                path.join(vexoraApiDir, suffix + '.js'),
+                path.join(vexoraApiDir, suffix, 'index.js')
+            ];
+
+            let matchedFile = null;
+            for (const cand of fileCandidates) {
+                if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+                    if (cand.endsWith('index.js')) {
+                        // Allow routing through .Vexora_Api/index.js if it's a Router, otherwise execute directly
+                        try {
+                            const fileContent = fs.readFileSync(cand, 'utf8');
+                            if (fileContent.includes('export default') || fileContent.includes('RouteController')) {
+                                continue; 
+                            }
+                        } catch {}
+                    }
+                    matchedFile = cand;
+                    break;
+                }
+            }
+
+            if (matchedFile) {
+                if (!this.fallbackApiRouter) {
+                    this.fallbackApiRouter = createRouter('/api');
+                }
+                const relPath = path.relative(process.cwd(), matchedFile);
+                const actionName = relPath.replace(/\.js$/, '');
+                try {
+                    await this.fallbackApiRouter._executeAction(req, res, actionName);
+                    return true;
+                } catch (err) {
+                    console.error(`❌ Fallback API load failed for: ${actionName}`, err);
+                    res.statusCode = 500;
+                    res.json({ status: false, message: "Internal Server Error" });
+                    return true;
+                }
+            }
+        }
+
         const searchDirs = [
             process.cwd(),
             path.join(process.cwd(), 'http'),
@@ -73,12 +122,28 @@ class ApiController {
 
         let moduleName = parts[0];
         let baseMount = `/${moduleName}`;
-        let indexFile = findIndexFile(moduleName);
+        let indexFile = undefined;
 
-        // If URL has /api/ prefix (e.g. /api/auth/register) and api/index.js wasn't found, try the next part
-        if (!indexFile && moduleName === 'api' && parts[1]) {
-            moduleName = parts[1];
-            baseMount = `/api/${moduleName}`;
+        // Check in .Vexora_Api first if moduleName is 'api'
+        if (moduleName === 'api') {
+            // Check for /api/auth/index.js inside .Vexora_Api
+            if (parts[1]) {
+                const vexoraSubApiIndex = path.join(process.cwd(), '.Vexora_Api', parts[1], 'index.js');
+                if (fs.existsSync(vexoraSubApiIndex)) {
+                    moduleName = parts[1];
+                    indexFile = vexoraSubApiIndex;
+                    baseMount = `/api/${moduleName}`;
+                }
+            }
+            // Check for /api/index.js inside .Vexora_Api
+            if (!indexFile) {
+                const vexoraApiIndex = path.join(process.cwd(), '.Vexora_Api', 'index.js');
+                if (fs.existsSync(vexoraApiIndex)) {
+                    indexFile = vexoraApiIndex;
+                    baseMount = '/api';
+                }
+            }
+        } else {
             indexFile = findIndexFile(moduleName);
         }
         

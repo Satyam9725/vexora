@@ -34,7 +34,7 @@ import SessionManager from "./session/SessionManager.js";
 import { requestContext } from "./core/Context.js";
 import TokenVault from "./security/TokenVault.js";
 import IpTracker from "./security/IpTracker.js";
-import RateLimiter from "./security/RateLimiter.js";
+import RateLimiter, { RateLimiterClass } from "./security/RateLimiter.js";
 import Request from "./http/Request.js";
 import GlobalResponse from "./http/GlobalResponse.js";
 import Validator from "./utils/Validator.js";
@@ -206,6 +206,7 @@ const Vexora = {
   TokenVault: TokenVault,
   IpTracker: IpTracker,
   RateLimiter: RateLimiter,
+  RateLimiterClass: RateLimiterClass,
   Request: Request,
   Response: GlobalResponse,
   Validator: Validator,

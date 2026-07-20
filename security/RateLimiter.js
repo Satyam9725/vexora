@@ -20,12 +20,12 @@ import Helper from "../utils/Helper.js";
 const ALLOWED = Object.freeze({ allowed: true });
 
 class RateLimiter {
-    constructor() {
+    constructor(options = {}) {
         this.requests = new Map();
-        this.isEnabled = null;
-        this.maxRequests = 100;
-        this.windowSeconds = 60;
-        this.windowMs = 60000;
+        this.isEnabled = options.isEnabled !== undefined ? options.isEnabled : null;
+        this.maxRequests = options.maxRequests || 100;
+        this.windowSeconds = options.windowSeconds || 60;
+        this.windowMs = this.windowSeconds * 1000;
 
         // Garbage collect old IP records every minute
         const cleanupInterval = setInterval(() => this._cleanup(), 60000);
@@ -122,4 +122,5 @@ class RateLimiter {
     }
 }
 
+export { RateLimiter as RateLimiterClass };
 export default new RateLimiter();

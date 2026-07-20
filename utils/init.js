@@ -30,6 +30,14 @@ class Init {
         });
       }
 
+      const vexoraApiDir = path.join(rootDir, ".Vexora_Api");
+      // Create .Vexora_Api directory if it does not exist
+      if (!fs.existsSync(vexoraApiDir)) {
+        fs.mkdirSync(vexoraApiDir, {
+          recursive: true,
+        });
+      }
+
       const configPath = path.join(vexoraDir, "config");
 
       // Essential configurations only

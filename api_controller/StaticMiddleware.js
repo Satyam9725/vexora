@@ -16,6 +16,7 @@
 
 import fs from "fs";
 import path from "path";
+import { RateLimiterClass } from "../security/RateLimiter.js";
 
 const MIME_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -49,6 +50,16 @@ class StaticMiddleware {
         const root = path.resolve(process.cwd(), staticDir);
         const maxAge = options.maxAge !== undefined ? options.maxAge : 86400; // Default 1 day caching
 
+        let limiter = null;
+        if (options.rateLimit) {
+            const limitOpts = typeof options.rateLimit === 'object' ? options.rateLimit : {};
+            limiter = new RateLimiterClass({
+                isEnabled: true,
+                maxRequests: limitOpts.maxRequests || 150,
+                windowSeconds: limitOpts.windowSeconds || 60
+            });
+        }
+
         return async (req, res) => {
             // Only handle GET and HEAD requests
             if (req.method !== "GET" && req.method !== "HEAD") {
@@ -74,6 +85,21 @@ class StaticMiddleware {
                 return false; // Skip traversal targets, let route handler handle 404
             }
 
+            const checkRateLimit = () => {
+                if (limiter) {
+                    const check = limiter.check(req);
+                    if (!check.allowed) {
+                        res.statusCode = 429;
+                        res.json({
+                            status: false,
+                            message: `Too many requests for static assets. Please try again after ${check.retryAfter} seconds.`
+                        });
+                        return false;
+                    }
+                }
+                return true;
+            };
+
             try {
                 const stats = await fs.promises.stat(targetFile);
                 
@@ -83,6 +109,7 @@ class StaticMiddleware {
                     try {
                         const indexStats = await fs.promises.stat(indexHtml);
                         if (indexStats.isFile()) {
+                            if (!checkRateLimit()) return true;
                             return await StaticMiddleware._sendFile(res, indexHtml, indexStats, maxAge);
                         }
                     } catch {
@@ -92,6 +119,7 @@ class StaticMiddleware {
                 }
 
                 if (stats.isFile()) {
+                    if (!checkRateLimit()) return true;
                     return await StaticMiddleware._sendFile(res, targetFile, stats, maxAge);
                 }
             } catch (err) {

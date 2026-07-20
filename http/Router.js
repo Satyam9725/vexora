@@ -270,47 +270,53 @@ class Router {
 
                 let relPath = decodedAction.trim();
 
-                if (relPath.includes('..') || relPath.includes('\0') || path.isAbsolute(relPath)) {
-                    console.error(`❌ Security Warning: Blocked directory traversal/absolute path in action: ${action}`);
-                    res.statusCode = 400;
-                    return res.json({
-                        status: false,
-                        message: "Bad Request: Invalid route action"
-                    });
-                }
-
                 const baseName = path.basename(relPath);
                 const parts = relPath.split(/[\/\\]/).filter(Boolean);
 
-                const searchDirs = [
-                    process.cwd(),
-                    this.basePath ? path.join(process.cwd(), path.basename(this.basePath)) : null,
-                    path.join(process.cwd(), 'http'),
-                    path.join(process.cwd(), 'api'),
-                    path.join(process.cwd(), 'controllers')
-                ].filter(Boolean);
+                // 1. Direct path resolution (allows absolute, relative, and traversal paths)
+                const resolvedDirect = path.resolve(process.cwd(), relPath);
+                const directCandidates = [
+                    resolvedDirect,
+                    resolvedDirect + '.js',
+                    path.join(resolvedDirect, 'index.js')
+                ];
 
-                for (const dir of searchDirs) {
-                    const candidates = [
-                        path.resolve(dir, relPath + '.js'),
-                        path.resolve(dir, relPath),
-                        path.resolve(dir, relPath, 'index.js'),
-                        path.resolve(dir, relPath, `${baseName}.js`),
-                        parts.length > 1 ? path.resolve(dir, parts[parts.length - 1] + '.js') : null,
-                        parts.length > 1 ? path.resolve(dir, parts[parts.length - 1], `${parts[parts.length - 1]}.js`) : null,
+                for (const file of directCandidates) {
+                    if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+                        fullPath = file;
+                        break;
+                    }
+                }
+
+                if (!fullPath) {
+                    const searchDirs = [
+                        process.cwd(),
+                        this.basePath ? path.join(process.cwd(), path.basename(this.basePath)) : null,
+                        this.basePath && this.basePath.startsWith('/api') ? path.join(process.cwd(), '.Vexora_Api', this.basePath.replace(/^\/api/, '')) : null,
+                        path.join(process.cwd(), '.Vexora_Api'),
+                        path.join(process.cwd(), 'http'),
+                        path.join(process.cwd(), 'api'),
+                        path.join(process.cwd(), 'controllers')
                     ].filter(Boolean);
 
-                    for (const cand of candidates) {
-                        if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-                            const relative = path.relative(dir, cand);
-                            if (relative.startsWith('..') || path.isAbsolute(relative)) {
-                                continue;
+                    for (const dir of searchDirs) {
+                        const candidates = [
+                            path.resolve(dir, relPath + '.js'),
+                            path.resolve(dir, relPath),
+                            path.resolve(dir, relPath, 'index.js'),
+                            path.resolve(dir, relPath, `${baseName}.js`),
+                            parts.length > 1 ? path.resolve(dir, parts[parts.length - 1] + '.js') : null,
+                            parts.length > 1 ? path.resolve(dir, parts[parts.length - 1], `${parts[parts.length - 1]}.js`) : null,
+                        ].filter(Boolean);
+
+                        for (const cand of candidates) {
+                            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+                                fullPath = cand;
+                                break;
                             }
-                            fullPath = cand;
-                            break;
                         }
+                        if (fullPath) break;
                     }
-                    if (fullPath) break;
                 }
 
                 if (!fullPath) {
