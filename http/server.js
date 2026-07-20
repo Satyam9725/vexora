@@ -305,8 +305,9 @@ export default function Server(callback, options = {}) {
           }
       }
 
-      // Global DDoS / Rate Limiting Protection (bypassed for static public assets)
-      if (Config.RATE_LIMIT_ENABLED && !isStaticFile) {
+      // Global DDoS / Rate Limiting Protection (bypassed for static public assets or when public folder is missing)
+      const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
+      if (Config.RATE_LIMIT_ENABLED && !isStaticFile && publicExists) {
         const rateCheck = RateLimiter.check(req);
         if (!rateCheck.allowed) {
             response.cookie("Retry-After", String(rateCheck.retryAfter));
