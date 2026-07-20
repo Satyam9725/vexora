@@ -59,28 +59,41 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 <a id="framework-comparison"></a>
 ## 📊 Framework Comparison (Vexora vs Express vs Fastify)
 
-How does Vexora stack up against other popular Node.js frameworks? Here is the complete head-to-head breakdown of performance, security, and built-in native engines out-of-the-box:
+How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
 
-### 🏆 Master Comparison & Star Ratings Matrix
+### ⚡ Core Features & Performance
 
-| Category / Feature | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
+| Feature / Criteria | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
 | :--- | :--- | :--- | :--- |
 | **Performance / Speed** | <small>Low-Medium (~15,000 req/sec)</small> | <small>High (~60,000 req/sec)</small> | <small>**Ultra-High (~90,000 req/sec)**</small> |
 | **Dependency Size** | <small>Heavy (Dozens of dependencies)</small> | <small>Medium (Several dependencies)</small> | <small>**Zero-Dependency Core** (Built entirely on Node.js core)</small> |
 | **Request Context** | <small>Requires parameter drilling (`req, res`)</small> | <small>Requires parameter drilling</small> | <small>**Thread-Safe Global Context** (`AsyncLocalStorage` - No drilling)</small> |
-| **Real-time WebSockets** | <small>⭐☆☆☆☆ (Requires `socket.io` or `ws`)</small> | <small>⭐⭐⭐☆☆ (Requires `@fastify/websocket` plugin)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Built-in TCP frame engine)</small> |
-| **Native SMTP Mail Client** | <small>❌ No (Requires `nodemailer`)</small> | <small>❌ No (Requires external plugin)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Zero-dependency TCP/TLS SMTP client)</small> |
-| **Queue & Cron Daemon** | <small>❌ No (Requires `bull`, `node-cron`)</small> | <small>❌ No (Requires external plugins)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Built-in concurrent Queue Worker & Cron Scheduler)</small> |
-| **Bot Jitter & Scanner Shield** | <small>❌ No (Vulnerable to bot loops/scanners)</small> | <small>❌ No (Requires custom middleware)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Automated Jitter tracking & 404 route scanner blocker)</small> |
-| **Sub-microsecond RAM Cache** | <small>❌ No (Requires external Redis server)</small> | <small>❌ No (Requires external Redis server)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (In-memory Redis-mock store with TTL GC)</small> |
-| **CSRF Protection** | <small>⭐⭐☆☆☆ (No default. Third-party deprecated)</small> | <small>⭐⭐⭐☆☆ (No default. Plugin `@fastify/csrf` is solid)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Timing-safe verification & token rotation built-in)</small> |
-| **SQL Injection Defense** | <small>⭐☆☆☆☆ (No default. Depends on external ORMs)</small> | <small>⭐☆☆☆☆ (No default. Depends on external ORMs)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Regex-based quoting and prepared queries built-in)</small> |
-| **Security Headers (Helmet)** | <small>⭐☆☆☆☆ (No default. Requires `helmet` plugin)</small> | <small>⭐⭐⭐☆☆ (Basic headers. Requires `@fastify/helmet`)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Helmet equivalent headers sent by default)</small> |
-| **DDoS & Rate Limiting** | <small>⭐☆☆☆☆ (No default. Easy to crash via spam)</small> | <small>⭐⭐⭐☆☆ (No default. Good external plugin available)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (In-built global Rate Limiter blocks spam IPs)</small> |
-| **Token & Session Hijacking** | <small>⭐⭐☆☆☆ (Requires manual security setups)</small> | <small>⭐⭐⭐☆☆ (Needs secure plugins config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (TokenVault binds tokens to IP, Device, and Session)</small> |
-| **Error Path Leakage** | <small>⭐☆☆☆☆ (Exposes internal folder paths)</small> | <small>⭐⭐⭐⭐☆ (Can hide paths in production)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Generates random Error UUID, hides server folder paths)</small> |
-| **Sensitive Field Masking** | <small>⭐☆☆☆☆ (No default. Logs passwords in plain text)</small> | <small>⭐⭐☆☆☆ (Needs manual serializers config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** (Automatically masks passwords/CVVs/tokens in logs)</small> |
-| **Overall Framework Grade** | <small>**C- (Vulnerable by default)**</small> | <small>**B (Safe with plugins)**</small> | <small>**A+ / S+ (9.9 / 10 - Hardened Engine)**</small> |
+| **Real-time WebSockets** | <small>Requires third-party packages (`socket.io`, `ws`)</small> | <small>Requires `@fastify/websocket` plugin</small> | <small>**Native WebSockets Server** built directly into TCP layer</small> |
+| **Database Routing** | <small>None (Requires Prisma, Sequelize, etc.)</small> | <small>None (Requires external plugins/ORMs)</small> | <small>**In-built Multi-Connection DB Multiplexer** (MySQL & Postgres)</small> |
+| **Security Defaults** | <small>Barebones (Needs manual configuration)</small> | <small>Medium (Plugins needed)</small> | <small>**Hardened by Default** (CSRF, Rate Limiting, Helmet Headers, CORS)</small> |
+| **Error Logging** | <small>Exposes full stack traces by default</small> | <small>Standard logging</small> | <small>**Silent Masked Logging** (UUIDs for clients, masked sensitive fields)</small> |
+
+### 🔒 Security Implementations & Star Ratings
+
+| Security Feature | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
+| :--- | :--- | :--- | :--- |
+| **CSRF Protection** | <small>⭐⭐☆☆☆ <br> (No default. Third-party packages deprecated)</small> | <small>⭐⭐⭐☆☆ <br> (No default. Plugin `@fastify/csrf` is solid)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Timing-safe verification & token rotation built-in)</small> |
+| **SQL Injection Defense** | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Regex-based quoting and prepared queries built-in)</small> |
+| **Security Headers (Helmet)** | <small>⭐☆☆☆☆ <br> (No default. Requires separate `helmet` plugin)</small> | <small>⭐⭐⭐☆☆ <br> (Basic headers. Requires `@fastify/helmet`)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Helmet equivalent headers sent by default)</small> |
+| **DDoS & Rate Limiting** | <small>⭐☆☆☆☆ <br> (No default. Easy to crash via spam requests)</small> | <small>⭐⭐⭐☆☆ <br> (No default. Good external plugin available)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (In-built global Rate Limiter blocks spam IPs)</small> |
+| **Token & Session Hijacking** | <small>⭐⭐☆☆☆ <br> (Requires manual security setups)</small> | <small>⭐⭐⭐☆☆ <br> (Needs secure plugins config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (TokenVault binds tokens to IP, Device, and Session)</small> |
+| **Error Path Leakage** | <small>⭐☆☆☆☆ <br> (Exposes internal folder paths to client)</small> | <small>⭐⭐⭐⭐☆ <br> (Can hide paths in production)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Generates random Error UUID, hides server folder paths)</small> |
+| **Sensitive Field Masking** | <small>⭐☆☆☆☆ <br> (No default. Logs passwords in plain text)</small> | <small>⭐⭐☆☆☆ <br> (Needs manual serializers config)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Automatically masks passwords/CVVs/tokens in logs)</small> |
+| **Overall Security Grade** | <small>**C- (Vulnerable by default)**</small> | <small>**B (Safe with plugins)**</small> | <small>**A+ (Hardened by default)**</small> |
+
+### 🚀 Exclusive Native Engines (Built into Vexora Core)
+
+| Exclusive Feature | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 | Rating |
+| :--- | :---: | :---: | :---: | :---: |
+| **Native SMTP Mail Client** | ❌ <small>Requires `nodemailer`</small> | ❌ <small>Requires external plugin</small> | ✅ **Built-in (Zero-dep TCP/TLS)** | ⭐⭐⭐⭐⭐ **(10/10)** |
+| **Background Queue & Cron Daemon** | ❌ <small>Requires `bull` / `node-cron`</small> | ❌ <small>Requires external plugins</small> | ✅ **Built-in Queue Worker & Scheduler** | ⭐⭐⭐⭐⭐ **(10/10)** |
+| **Bot Jitter & Route Scanner Shield** | ❌ <small>Vulnerable to bots</small> | ❌ <small>Requires custom scripts</small> | ✅ **Built-in Jitter & 404 Scanner Guard** | ⭐⭐⭐⭐⭐ **(10/10)** |
+| **Sub-microsecond RAM Cache** | ❌ <small>Requires external Redis</small> | ❌ <small>Requires external Redis</small> | ✅ **Built-in RAM Cache (Redis Mock)** | ⭐⭐⭐⭐⭐ **(10/10)** |
 
 ---
 
