@@ -1,0 +1,51 @@
+{
+  "name": "vexora",
+  "version": "1.1.4",
+  "description": "Vexora Framework - Advanced, Blazing-Fast, Zero-Dependency Backend Framework for Node.js",
+  "type": "module",
+  "main": "./Vexora.js",
+  "module": "./Vexora.js",
+  "exports": {
+    ".": {
+      "import": "./Vexora.js",
+      "require": "./Vexora.js",
+      "default": "./Vexora.js"
+    }
+  },
+  "scripts": {
+    "start": "node test.js",
+    "dev": "node --watch test.js",
+    "test": "node test/run.js"
+  },
+  "keywords": [
+    "vexora",
+    "framework",
+    "backend",
+    "zero-dependency",
+    "api",
+    "websocket",
+    "http",
+    "querybuilder",
+    "session",
+    "cache",
+    "rate-limiter",
+    "security"
+  ],
+  "author": "Satyam Kumar <satyam.ku9725@gmail.com> (https://github.com/Satyam9725)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Satyam9725/vexora.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Satyam9725/vexora/issues"
+  },
+  "homepage": "https://github.com/Satyam9725/vexora#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.23.0",
+    "pg": "^8.22.0"
+  }
+}

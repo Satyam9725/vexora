@@ -1,0 +1,40 @@
+# Ignore test and temporary folders from the published npm package
+test/
+scratch/
+
+package-lock.json
+*.log
+Vexora_test.js
+files/
+.gitignore
+node_modules
+
+
+# Node Modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.*
+
+# N.Vexora
+.Vexora/
+
+# Cache
+.cache/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# npm
+npm-debug.log*
+
