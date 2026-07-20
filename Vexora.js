@@ -11,6 +11,7 @@
  * @copyright   Copyright (c) 2026 Satyam Kumar
  * @license     MIT
  * up to date
+ * 1.2.2
  * ==========================================================
  */
 
