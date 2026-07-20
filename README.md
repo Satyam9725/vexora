@@ -8,14 +8,15 @@
 
 **Vexora** is the ultimate backend master framework for Node.js. It is an advanced, enterprise-grade, blazing-fast, and zero-dependency core backend engine. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
-[Key Features](#-key-features) • [Checklist](#-supported-features-checklist) • [Comparison](#-framework-comparison-vexora-vs-express-vs-fastify) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Architecture](#-vexora-internal-architecture) • [Routing](#-routing--controller-system) • [Database](#-multi-connection-database-routing--crud) • [API Reference](#%EF%B8%8F-api-reference)
+[Key Features](#key-features) • [Checklist](#supported-features-checklist) • [Comparison](#framework-comparison) • [Installation](#installation) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Routing](#routing) • [Database](#database) • [API Reference](#api-reference)
 
-[RAM Cache](#-ram-cache-vexoraredis--vexoracache) • [WebSockets](#-real-time-websockets-vexorawebsocket) • [Token Vault](#-token-vault-vexoratokenvault) • [SMTP Mail](#-native-smtp-mail-client-vexoramail) • [HTTP Client](#-native-http-client-vexorahttp) • [Queue Worker](#-queue--background-jobs-system) • [Cron Scheduler](#-task-scheduler--cron-jobs) • [Bot Shield](#-automated-humanbot-behavior-analyzer) • [CAPTCHA](#-captcha-verification-recaptcha--turnstile) • [License](#-license)
+[RAM Cache](#ram-cache) • [WebSockets](#websockets) • [Token Vault](#token-vault) • [SMTP Mail](#smtp-mail) • [HTTP Client](#http-client) • [Queue Worker](#queue-jobs) • [Cron Scheduler](#task-scheduler) • [Bot Shield](#bot-shield) • [CAPTCHA](#captcha) • [License](#license)
 
 </div>
 
 ---
 
+<a id="key-features"></a>
 ## ✨ Key Features
 
 - 📦 **Zero-Dependency Core**: Built 100% on top of Node.js native core libraries (`http`, `crypto`, `events`, `async_hooks`) — zero third-party package dependency bloat (only optional native db drivers `mysql2` and `pg` are used for DB connections).
@@ -31,6 +32,7 @@
 
 ---
 
+<a id="supported-features-checklist"></a>
 ## 🎯 Supported Features Checklist
 
 Vexora is packed with features to handle all aspects of a modern, secure, and fast backend:
@@ -54,6 +56,7 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 
 ---
 
+<a id="framework-comparison"></a>
 ## 📊 Framework Comparison (Vexora vs Express vs Fastify)
 
 How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
@@ -85,6 +88,7 @@ How does Vexora stack up against other popular Node.js frameworks? Here is a bre
 
 ---
 
+<a id="installation"></a>
 ## 📦 Installation
 
 Install Vexora in your project directory:
@@ -93,6 +97,7 @@ Install Vexora in your project directory:
 npm install vexora
 ```
 
+<a id="quick-start"></a>
 ## 🚀 Quick Start
 
 ### 1. Initialize Server & Configuration
@@ -145,6 +150,7 @@ server.listen(3000);
 
 ---
 
+<a id="architecture"></a>
 ## ⚙️ Vexora Internal Architecture
 
 ```mermaid
@@ -172,6 +178,7 @@ Connections are loaded on-the-fly and cached in a global pool map. Table and col
 
 ---
 
+<a id="routing"></a>
 ## 🛣️ Routing & Controller System
 
 Vexora uses a **Directory-Based Autoloading Sub-Router** mapping mechanism. Any directory containing an `index.js` file (such as `auth/index.js`) is automatically mounted at a route matching the folder name (e.g., `/auth/*`).
@@ -329,6 +336,7 @@ if (isValidLogin) {
 
 ---
 
+<a id="database"></a>
 ## 🗄️ Multi-Connection Database Routing & CRUD
 
 Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/config` using URL connection syntax:
@@ -427,8 +435,10 @@ try {
 
 ---
 
+<a id="api-reference"></a>
 ## 🛠️ API Reference
 
+<a id="ram-cache"></a>
 ### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
 Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
 ```javascript
@@ -464,6 +474,7 @@ const otp = Vexora.Helper.randomInt(100000, 999999); // Secure OTP integer
 const uuid = Vexora.Helper.uuid(); // UUID generator
 ```
 
+<a id="token-vault"></a>
 ### 🗝️ Token Vault (`Vexora.TokenVault`)
 The `TokenVault` provides a secure, cryptographically-hardened way to seal and unseal payloads (like authentication tokens or password reset tokens). It uses key derivation (HKDF) combined with a master key and a user-specific key (`uKey`) to generate AES-256-GCM encrypted tokens. It also supports optional environment bindings (Session, IP, User-Agent).
 
@@ -523,6 +534,7 @@ if (result.status) {
 }
 ```
 
+<a id="websockets"></a>
 ### 🔌 Real-Time WebSockets (`Vexora.WebSocket`)
 Vexora includes a highly-optimized, zero-dependency native WebSocket engine that runs directly over TCP stream layers.
 
@@ -909,6 +921,7 @@ if (validator.fails()) {
 }
 ```
 
+<a id="smtp-mail"></a>
 ### ✉️ Native SMTP Mail Client (`Vexora.mail`)
 Vexora includes a native, lightweight, zero-dependency SMTP client to send HTML and text emails over secure TLS or STARTTLS channels.
 
@@ -967,6 +980,7 @@ await Vexora.mail.send({
 
 ---
 
+<a id="http-client"></a>
 ### 🌐 Native HTTP Client (`Vexora.http`)
 Vexora includes a native, modern, lightweight wrapper to send HTTP/HTTPS requests (GET, POST, PUT, DELETE, etc.) directly from your backend using Node's native fetch API.
 
@@ -1065,6 +1079,7 @@ After the `AUTO_BLOCK_DURATION` expires, the IP is automatically unblocked and c
 
 ---
 
+<a id="bot-shield"></a>
 ### 🤖 Automated Human/Bot Behavior Analyzer
 Vexora features a state-of-the-art behavioral guard that distinguishes between normal human clients and automated bot scripts/scanners, automatically blocking malicious behaviors.
 
@@ -1091,6 +1106,7 @@ MAX_CONSECUTIVE_404S=15
 
 ---
 
+<a id="captcha"></a>
 ### 🛡️ CAPTCHA Verification (reCAPTCHA & Turnstile)
 Vexora provides native verification modules for both Google reCAPTCHA and Cloudflare Turnstile tokens. It allows direct verification calls as well as integration into route middleware.
 
@@ -1141,6 +1157,7 @@ const server = Vexora.Server(async (req, res) => {
 
 ---
 
+<a id="queue-jobs"></a>
 ### 🗂️ Queue & Background Jobs System
 Vexora includes a native, concurrent Queue and Background Worker system. This allows you to offload heavy, time-consuming tasks (like sending emails, processing uploads, or running data reports) to background queues, keeping your main server thread extremely fast and responsive.
 
@@ -1213,6 +1230,7 @@ server.listen(3000, () => {
 
 ---
 
+<a id="task-scheduler"></a>
 ### ⏰ Task Scheduler & Cron Jobs
 Vexora includes a built-in, lightweight, zero-dependency task scheduling manager that supports standard 5-field cron expressions. This enables running background maintenance operations (like cleaning databases, exporting reports, or triggering synchronizations) automatically at scheduled intervals.
 
@@ -1340,6 +1358,7 @@ Vexora.Scheduler.restart();
 
 ---
 
+<a id="license"></a>
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
