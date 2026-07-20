@@ -96,6 +96,9 @@ npm install vexora
 ### 1. Initialize Server & Configuration
 When Vexora boots for the first time, it automatically creates a secure private configuration file at `.Vexora/config` in your project root.
 
+<details>
+<summary><b>💻 Click to View Server Initialization Example (सर्वर स्टार्ट करने का कोड देखने के लिए क्लिक करें)</b></summary>
+
 ```javascript
 import Vexora from "vexora";
 
@@ -115,12 +118,16 @@ server.listen(3000, () => {
     console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
 });
 ```
+</details>
 
 ---
 
 ### 📁 Serving Static Files
 
 Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers and traversal checks:
+
+<details>
+<summary><b>💻 Click to View Serving Static Files Example (स्टैटिक फ़ाइलें सर्व करने का कोड देखने के लिए क्लिक करें)</b></summary>
 
 ```javascript
 import Vexora from "vexora";
@@ -140,6 +147,7 @@ const server = Vexora.Server(async (req, res) => {
 
 server.listen(3000);
 ```
+</details>
 
 ---
 
@@ -429,6 +437,9 @@ try {
 
 ### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
 Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
+<details>
+<summary><b>💻 Click to View RAM Cache / Redis Example (कैश स्टोरेज का कोड देखने के लिए क्लिक करें)</b></summary>
+
 ```javascript
 // 1. Store value with 60 seconds TTL
 Vexora.Redis.set("user:1001", { name: "Satyam Kumar" }, 60);
@@ -443,6 +454,7 @@ Vexora.Redis.decr("page_views");
 // 4. Check remaining TTL (in seconds)
 const remainingTtl = Vexora.Redis.ttl("user:1001");
 ```
+</details>
 
 ### 🔐 Cryptographic Helpers (`Vexora.Helper`)
 Secure cryptographically-sound hashing and encryption.
@@ -525,6 +537,9 @@ Vexora includes a highly-optimized, zero-dependency native WebSocket engine that
 
 #### 1. Server-Side Setup
 Initialize the WebSocket manager by passing the running HTTP server instance, then listen to events:
+<details>
+<summary><b>💻 Click to View WebSocket Server-Side Setup (वेबसॉकेट सर्वर-साइड कोड देखने के लिए क्लिक करें)</b></summary>
+
 ```javascript
 import Vexora from "vexora";
 
@@ -563,9 +578,13 @@ io.on("connection", (socket) => {
     });
 });
 ```
+</details>
 
 #### 2. Client-Side Setup (`index.html`)
 Here is a complete, beautifully-styled, single-file HTML & JS dashboard to connect to Vexora WebSockets from a browser. Create an `index.html` and open it:
+
+<details>
+<summary><b>💻 Click to View WebSocket Client-Side Setup / HTML Dashboard (क्लाइंट-साइड डैशबोर्ड कोड देखने के लिए क्लिक करें)</b></summary>
 
 ```html
 <!DOCTYPE html>
@@ -626,7 +645,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
         .status-indicator { display: flex; align-items: center; gap: 0.5rem; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; transition: background 0.3s; }
         .dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
-
+ 
         .chat-box {
             height: 250px;
             background: rgba(0, 0, 0, 0.3);
@@ -645,7 +664,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
         .msg.system { background: transparent; color: var(--text-muted); font-style: italic; max-width: 100%; padding: 0.25rem 0; }
         .msg.client { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #c084fc; align-self: flex-end; }
         .msg.server { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: #34d399; align-self: flex-start; }
-
+ 
         .input-group { display: flex; gap: 0.5rem; }
         input {
             flex: 1;
@@ -687,17 +706,17 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
             </div>
             <button class="btn btn-conn" id="connBtn" onclick="toggleConnection()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px;">Connect</button>
         </div>
-
+ 
         <div class="chat-box" id="chatBox">
             <div class="msg system">Click Connect to establish stream protocol.</div>
         </div>
-
+ 
         <div class="input-group">
             <input type="text" id="messageInput" placeholder="Type message..." disabled>
             <button class="btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
         </div>
     </div>
-
+ 
     <script>
         let ws = null;
         const chatBox = document.getElementById('chatBox');
@@ -706,7 +725,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
         const connBtn = document.getElementById('connBtn');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
-
+ 
         function appendMessage(text, sender = 'system') {
             const div = document.createElement('div');
             div.className = `msg ${sender}`;
@@ -714,19 +733,19 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
+ 
         function toggleConnection() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close();
                 return;
             }
-
+ 
             // Fallback URL: Uses same domain or localhost on port 3000
             const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + (window.location.host || 'localhost:3000');
             appendMessage(`Connecting to ${wsUrl}...`, 'system');
-
+ 
             ws = new WebSocket(wsUrl);
-
+ 
             ws.onopen = () => {
                 statusDot.classList.add('connected');
                 statusText.innerText = 'Connected';
@@ -736,7 +755,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
                 sendBtn.disabled = false;
                 appendMessage('Stream link established with Vexora server.', 'system');
             };
-
+ 
             ws.onmessage = (event) => {
                 let text = event.data;
                 try {
@@ -745,7 +764,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
                 } catch {}
                 appendMessage(text, 'server');
             };
-
+ 
             ws.onclose = () => {
                 statusDot.classList.remove('connected');
                 statusText.innerText = 'Disconnected';
@@ -756,12 +775,12 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
                 messageInput.value = '';
                 appendMessage('WebSocket link terminated.', 'system');
             };
-
+ 
             ws.onerror = () => {
                 appendMessage('WebSocket connection error.', 'system');
             };
         }
-
+ 
         function sendMessage() {
             const text = messageInput.value.trim();
             if (text && ws && ws.readyState === WebSocket.OPEN) {
@@ -770,7 +789,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
                 messageInput.value = '';
             }
         }
-
+ 
         // Support Enter key mapping
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendMessage();
@@ -779,6 +798,7 @@ Here is a complete, beautifully-styled, single-file HTML & JS dashboard to conne
 </body>
 </html>
 ```
+</details>
 
 ### 🧵 Global Request Context (`Vexora.Request`)
 Access active inputs recursively trimmed by default:
@@ -807,6 +827,70 @@ Vexora.Response.error("Invalid password!", 401);
 
 // C. Custom formatted JSON output
 Vexora.Response.json(true, "Custom message", { score: 99 }, 202);
+```
+
+### 💾 In-Memory Cache & Redis Mock (`Vexora.Redis` / `Vexora.Cache`)
+Vexora includes a sub-microsecond in-memory key-value store mapping to `Vexora.Redis` or `Vexora.Cache`. It supports standard Redis-style functions, time-to-live (TTL) expiration, automatic garbage collection, atomic counters, and strict RAM limit enforcement.
+
+#### 1. Limit Enforcement Config (`.Vexora/config`)
+You can define the maximum RAM size allowed for this store in your config file. If the limit is reached, any further storage requests will be rejected to protect the server from memory leaks or exhaustion.
+```ini
+# Redis Configuration
+REDIS_DATABASE_SIZE=500MB
+```
+*Note: Supported units are `B`, `KB`, `MB`, and `GB` (e.g., `500MB`, `1GB`, `10KB`).*
+
+#### 2. Storing and Retrieving Values
+```javascript
+// A. Set a persistent key-value pair
+Vexora.Redis.set("username", "satyam_kumar");
+
+// B. Set a key with Time-to-Live (TTL) in seconds (e.g., expires in 60 seconds)
+Vexora.Redis.set("temp_token", { auth: true }, 60);
+
+// C. Get a key's value (returns null or default value if expired/non-existent)
+const token = Vexora.Redis.get("temp_token", null);
+
+// D. Check key existence
+const hasToken = Vexora.Redis.has("temp_token");
+
+// E. Delete a key
+Vexora.Redis.del("temp_token");
+```
+
+#### 3. Atomic Counters (Redis-Style)
+```javascript
+// Set initial value
+Vexora.Redis.set("counter", 10);
+
+// Increment counter (returns new value, preserves remaining TTL if set)
+const inc = Vexora.Redis.incr("counter", 1); // returns 11
+
+// Decrement counter
+const dec = Vexora.Redis.decr("counter", 2); // returns 9
+```
+
+#### 4. Fetching Storage Diagnostics (`info_redis()`)
+You can view detailed real-time statistics of your in-memory database using the `info_redis()` (or alias `INFO_REDIS()`) function. This is available globally or through the Vexora namespace:
+```javascript
+// Call from anywhere
+const diagnostics = info_redis();
+console.log(diagnostics);
+```
+Output Structure:
+```json
+{
+  "status": "connected",
+  "total_keys": 4,
+  "persistent_keys": 3,
+  "ttl_keys": 1,
+  "used_memory_bytes": 1056,
+  "used_memory_human": "1.03 KB",
+  "max_memory_bytes": 524288000,
+  "max_memory_human": "500MB",
+  "memory_usage_percentage": "0.00%",
+  "keys": ["username", "counter", "large_data"]
+}
 ```
 
 ### 🪟 In-Memory Sessions (`Vexora.ss`)
@@ -894,6 +978,387 @@ await Vexora.mail.send({
     text: "Hello!"
 });
 ```
+
+---
+
+### 🌐 Native HTTP Client (`Vexora.http`)
+Vexora includes a native, modern, lightweight wrapper to send HTTP/HTTPS requests (GET, POST, PUT, DELETE, etc.) directly from your backend using Node's native fetch API.
+
+#### Making a POST Request (with Body and Headers)
+To send a POST request with payload data (Body) and custom headers (e.g., Auth Tokens):
+
+```javascript
+import Vexora from "vexora";
+
+const response = await Vexora.http.post(
+    "https://api.example.com/users", 
+    { 
+        name: "Satyam Kumar", 
+        role: "developer" 
+    }, // 1. Request Body (Object will auto-convert to JSON)
+    { 
+        headers: { 
+            "Authorization": "Bearer YOUR_ACCESS_TOKEN" 
+        } 
+    } // 2. Custom Options (e.g., Headers)
+);
+
+if (response.ok) {
+    console.log("Success data:", response.data);
+} else {
+    console.log("Error status:", response.status);
+}
+```
+
+#### Making a GET Request (with Query and Headers)
+```javascript
+const response = await Vexora.http.get("https://api.example.com/search", {
+    query: { q: "vexora", page: 1 }, // Auto-converts to ?q=vexora&page=1
+    headers: { "Accept": "application/json" }
+});
+```
+
+#### Making a DELETE Request
+```javascript
+const response = await Vexora.http.delete("https://api.example.com/users/1", {
+    headers: { "Authorization": "Bearer token" }
+});
+```
+
+---
+
+### 🚫 IP Address Blocking (`BLOCKED_IPS`)
+Vexora includes a secure, zero-overhead IP blocking middleware. You can specify a list of IP addresses to block in your configuration. Any requests originating from blocked IP addresses are intercepted at the very start of the server lifecycle and rejected immediately with an HTTP `403 Forbidden` response.
+
+#### 1. Configuration (`.Vexora/config`)
+Define your blocked IP addresses as a comma-separated list:
+```ini
+# Blocked IP Addresses (Comma-separated list)
+BLOCKED_IPS=192.168.1.50,10.0.0.99,8.8.8.8
+```
+
+#### 2. How it works
+If a client with a blocked IP address attempts to access the server, Vexora will reject the request immediately:
+```json
+{
+  "status": false,
+  "message": "Forbidden: Access Denied"
+}
+```
+No dynamic routing, controller, database pool connections, or session logic will be executed for blocked requests, ensuring maximum performance and resource protection.
+
+---
+
+### ⚠️ Suspicious Behavior Throttling & Auto-Blocking
+Vexora dynamically monitors client behaviors by tracking incoming request rates per IP. If any client starts sending requests beyond normal usage thresholds (e.g., spamming or DDoS attempts), Vexora immediately blocklists their IP temporarily in the memory cache.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure tracking metrics using the following parameters:
+```ini
+# Time window in seconds to monitor requests (default: 60)
+SUSPICIOUS_WINDOW=60
+
+# Max allowed requests within the time window before blocking (default: 30)
+SUSPICIOUS_THRESHOLD=30
+
+# Time duration in seconds to keep the IP blocked (default: 300 / 5 minutes)
+AUTO_BLOCK_DURATION=300
+```
+
+#### 2. How it works
+* **Normal Usage (e.g., 10-30 requests)**: Requests proceed normally to the handlers.
+* **Abusive Usage (e.g., 30+ requests)**: Once the threshold (`SUSPICIOUS_THRESHOLD`) is crossed within the window (`SUSPICIOUS_WINDOW`), the IP is auto-blocked in Vexora's RAM Cache (Redis mock) for `AUTO_BLOCK_DURATION` seconds.
+* During the block period, any further requests from the IP immediately return a `403 Forbidden` response:
+```json
+{
+  "status": false,
+  "message": "Forbidden: Temporarily blocked due to suspicious activity"
+}
+```
+After the `AUTO_BLOCK_DURATION` expires, the IP is automatically unblocked and can make requests again.
+
+---
+
+### 🤖 Automated Human/Bot Behavior Analyzer
+Vexora features a state-of-the-art behavioral guard that distinguishes between normal human clients and automated bot scripts/scanners, automatically blocking malicious behaviors.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure behavioral rules in your config file:
+```ini
+# Enable or disable advanced bot behavior analysis (default: true)
+DETECT_BOT_BEHAVIOR=true
+
+# Minimum allowed request interval variation (jitter) in milliseconds (default: 15)
+# Humans naturally have high request intervals variation (jitter > 100ms).
+# Bots using loops or setInterval make requests with exact intervals (jitter < 15ms).
+BOT_MIN_JITTER=15
+
+# Max consecutive 404 Not Found failures allowed before blocking (default: 15)
+# Helps block automated directory brute-forcing / route fuzzing scanners.
+MAX_CONSECUTIVE_404S=15
+```
+
+#### 2. Protection Layers
+1. **Regularity Analyzer (Jitter Tracking)**: Tracks time intervals between successive requests. If the standard deviation (jitter) of intervals is less than `BOT_MIN_JITTER` (e.g., exactly 100ms or 200ms intervals) over 6+ requests, Vexora detects a bot loop and blocklists the IP.
+2. **Headless Browser & Scraper User-Agent Filter**: Blocks common scraping/automation clients like `puppeteer`, `playwright`, `selenium`, `headlesschrome`, `curl`, `wget`, and `python-requests` immediately on their first request.
+3. **Brute-Force Route Scanner**: Tracks consecutive `404 Not Found` response status codes. If a client triggers `MAX_CONSECUTIVE_404S` failures consecutively, Vexora flags them as a vulnerability scanner and blocklists the IP.
+
+---
+
+### 🛡️ CAPTCHA Verification (reCAPTCHA & Turnstile)
+Vexora provides native verification modules for both Google reCAPTCHA and Cloudflare Turnstile tokens. It allows direct verification calls as well as integration into route middleware.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure the provider and secret key:
+```ini
+# Google reCAPTCHA / Cloudflare Turnstile Settings
+# Options: 'google' (default) or 'turnstile'
+CAPTCHA_PROVIDER=google
+
+# Your CAPTCHA secret key
+RECAPTCHA_SECRET=YOUR_SECRET_KEY
+```
+
+#### 2. Direct Verification (`verifyCaptcha`)
+To verify a client-side CAPTCHA token directly in your controllers:
+```javascript
+import Vexora from "vexora";
+
+// Within an API route callback
+const result = await Vexora.verifyCaptcha(req.body.captcha_token);
+
+if (result.success) {
+    console.log("Verified! Score (v3 only):", result.score);
+} else {
+    console.log("Verification failed, errors:", result.errorCodes);
+}
+```
+
+#### 3. Captcha Middleware (`captcha`)
+To protect specific routes, use the built-in `captcha` middleware:
+```javascript
+import Vexora from "vexora";
+
+const captchaGuard = Vexora.captcha({
+    tokenField: "captcha_token", // Field name to look for in request body/query (default: 'captcha_token')
+    headerName: "x-captcha-token", // Header name to look for in headers (default: 'x-captcha-token')
+});
+
+const server = Vexora.Server(async (req, res) => {
+    // Apply CAPTCHA protection middleware
+    const blocked = await captchaGuard(req, res);
+    if (blocked) return; // Request is automatically rejected with 403 or 422 if invalid
+
+    return res.success(null, "Access granted to secure resource!");
+});
+```
+
+---
+
+### 🗂️ Queue & Background Jobs System
+Vexora includes a native, concurrent Queue and Background Worker system. This allows you to offload heavy, time-consuming tasks (like sending emails, processing uploads, or running data reports) to background queues, keeping your main server thread extremely fast and responsive.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure queue parameters:
+```ini
+# Queue storage driver. Options: 'memory' (default, in-memory) or 'cache' (Vexora built-in persistent RAM Cache)
+QUEUE_DRIVER=memory
+
+# Auto-start the background worker daemon when the server starts (default: true)
+QUEUE_AUTO_START=true
+
+# Number of concurrent jobs to process at the same time (default: 2)
+QUEUE_CONCURRENCY=2
+
+# Interval in milliseconds to poll for new queued jobs (default: 1000)
+QUEUE_POLL_INTERVAL=1000
+```
+
+#### 2. Defining and Dispatching Jobs (Practical Example)
+To use Vexora's Queue system, define a background job handler first, and then dispatch jobs to it from your route callbacks or controllers.
+
+Below is a complete, copy-pasteable example of using background jobs to send welcome emails immediately after registering a user, keeping the API response time instant (Click to expand / देखने के लिए क्लिक करें):
+
+<details>
+<summary><b>💻 Click to View Complete Server & Queue Example (कोड देखने के लिए क्लिक करें)</b></summary>
+
+```javascript
+import Vexora from "vexora";
+
+// A. Define the Job Handler
+Vexora.Queue.define("send-welcome-email", async (data) => {
+    console.log(`[Queue Worker] Starting welcome email dispatch to: ${data.email}`);
+    
+    // Simulate a slow operation (e.g. SMTP sending, image processing) by delaying for 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    console.log(`[Queue Worker] Welcome email successfully sent to: ${data.email}`);
+});
+
+// B. Initialize the Server and Dispatch from Route
+const server = Vexora.Server(async (req, res) => {
+    
+    // API endpoint for User Registration
+    if (req.method === "POST" && req.path === "/register") {
+        const userEmail = req.body.email;
+
+        // Dispatch email sending task to background queue with options (delay: 0, retry attempts: 3)
+        await Vexora.Queue.dispatch("send-welcome-email", {
+            email: userEmail
+        }, {
+            attempts: 3 // Retry up to 3 times if the job fails
+        });
+
+        // Respond immediately (user doesn't have to wait for the email process)
+        return res.success(null, "Registration successful! Welcome email queued.");
+    }
+    
+    // Base Fallback Route
+    if (req.method === "GET" && req.path === "/") {
+        return res.success({ hello: "world" }, "Welcome to Vexora!");
+    }
+});
+
+server.listen(3000, () => {
+    console.log("🚀 Server running at http://localhost:3000");
+});
+```
+</details>
+
+#### 3. Driver Types
+* **Memory Driver (`QUEUE_DRIVER=memory`)**: Very fast, zero external dependency. Jobs are stored in an in-memory queue. Best for local development and unit tests.
+* **Cache Driver (`QUEUE_DRIVER=cache`)**: Jobs are serialized and saved in Vexora's built-in RAM Cache. Persistent across server restarts, ensuring jobs are not lost if the app crashes. (Note: `'redis'` can also be used as an alias for this driver).
+
+---
+
+### ⏰ Task Scheduler & Cron Jobs
+Vexora includes a built-in, lightweight, zero-dependency task scheduling manager that supports standard 5-field cron expressions. This enables running background maintenance operations (like cleaning databases, exporting reports, or triggering synchronizations) automatically at scheduled intervals.
+
+#### 1. Configuration (`.Vexora/config`)
+Configure schedule parameters:
+```ini
+# Auto-start the cron scheduler daemon when the server starts (default: true)
+CRON_AUTO_START=true
+```
+
+#### 2. How to Use & Schedule Tasks (Step-by-Step)
+To use Vexora's built-in Scheduler in your application:
+1. **Register Schedules**: Call `Vexora.Schedule(pattern, callback)` in your main entry file (e.g., `index.js`).
+2. **Choose Pattern Style**:
+   * Pass a **number string** (like `"1"` or `"10"`) to run a task continuously every X seconds.
+   * Pass a standard **5-field cron pattern** (like `0 0 * * *`) to run at a specific clock time.
+3. **Run Server**: The scheduler loop starts automatically when `Vexora.Server()` is initialized.
+
+Here is a complete, copy-pasteable example of registering tasks (Click to expand / देखने के लिए क्लिक करें):
+
+<details>
+<summary><b>💻 Click to View Complete Server & Scheduler Example (कोड देखने के लिए क्लिक करें)</b></summary>
+
+```javascript
+import Vexora from "vexora";
+
+// A. Schedule database sync every 5 minutes (using step intervals: */5)
+Vexora.Schedule("*/5 * * * *", async () => {
+    console.log("[Scheduler] 🔄 Syncing local cache with database...");
+    // Your sync logic here
+});
+
+// B. Schedule database cleanup every night at 12:00 AM (0 0 * * *)
+Vexora.Schedule("0 0 * * *", async () => {
+    console.log("[Scheduler] 🧹 Cleaning up expired session records...");
+    
+    // Deletes logs older than 30 days
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await Vexora.db.delete("logs", "created_at < ?", [cutoff]);
+    
+    console.log("[Scheduler] ✅ Cleanup complete.");
+});
+
+// C. Initialize and run Vexora Server
+const server = Vexora.Server(async (req, res) => {
+    if (req.method === "GET" && req.path === "/") {
+        return res.success({ hello: "world" }, "Vexora Scheduler Active");
+    }
+});
+
+server.listen(3000, () => {
+    console.log("🚀 Server running at http://localhost:3000");
+});
+```
+</details>
+
+#### 3. Cron Expression & Interval Syntax Reference
+Vexora's scheduler supports standard 5-field cron expressions as well as simple numeric strings representing execution intervals in **seconds**. 
+
+Here are all the formats you can write (e.g., to run a task every 5 minutes):
+
+##### A. Second-Level Interval Format (Numeric String)
+Pass the number of seconds directly. For example, to run every 5 minutes (5 * 60 = 300 seconds):
+```javascript
+Vexora.Schedule("300", async () => {
+    console.log("Runs every 300 seconds (5 minutes)");
+});
+```
+Other examples:
+* `"1"`: Runs every 1 second.
+* `"10"`: Runs every 10 seconds.
+* `"60"`: Runs every 60 seconds (1 minute).
+
+##### B. Step Interval Format (Cron Syntax)
+Pass standard step patterns to align with specific clock minutes:
+```javascript
+Vexora.Schedule("*/5 * * * *", async () => {
+    console.log("Runs every 5th minute (clock minutes: :00, :05, :10, :15...)");
+});
+```
+
+##### C. Specific Minute List Format (Cron Syntax)
+Pass specific comma-separated minutes on which the task should run:
+```javascript
+Vexora.Schedule("0,15,30,45 * * * *", async () => {
+    console.log("Runs at exactly 0, 15, 30, and 45 minutes past every hour");
+});
+```
+
+##### D. Range of Minutes Format (Cron Syntax)
+Pass a range of values (runs every minute within that range):
+```javascript
+Vexora.Schedule("1-5 * * * *", async () => {
+    console.log("Runs every minute, but only from minute 1 to 5 of every hour");
+});
+```
+
+##### E. Standard Cron Syntaxes (Common Real-World Examples / सामान्य व्यावहारिक उदाहरण)
+* `*/5 * * * *`: Runs every 5 minutes (हर 5 मिनट में चले)
+* `0 * * * *`: Runs every hour at minute 0 (हर घंटे में एक बार चले)
+* `0 0 * * *`: Runs daily at Midnight (12:00 AM) (हर दिन रात 12 बजे चले)
+* `0 12 * * *`: Runs daily at Noon (12:00 PM) (हर दिन दोपहर 12 बजे चले)
+* `0 0,12 * * *`: Runs twice a day (at midnight and noon) (हर दिन दो बार - रात 12 बजे और दोपहर 12 बजे चले)
+* `0 0 * * 0`: Runs weekly at midnight every Sunday (हफ्ते में एक बार - रविवार रात 12 बजे चले) (Note: `'0 0 * * 7'` is also supported for Sunday)
+* `0 9 * * 1`: Runs weekly every Monday at 9:00 AM (हर सोमवार सुबह 9 बजे चले)
+* `0 0 1 * *`: Runs monthly on the 1st day at midnight (महीने में एक बार - पहली तारीख रात 12 बजे चले)
+* `0 0 1 1 *`: Runs yearly on Jan 1st at midnight (साल में एक बार - 1 जनवरी रात 12 बजे चले)
+* `* * * * *`: Runs every minute (हर एक मिनट में चले)
+
+#### 4. Managing the Scheduler Loop
+The scheduler can be started, stopped, or restarted at runtime using the following methods:
+```javascript
+// Start the scheduler loop
+Vexora.Scheduler.start();
+
+// Stop the scheduler loop
+Vexora.Scheduler.stop();
+
+// Restart the scheduler loop (useful if configuration or task registrations change)
+Vexora.Scheduler.restart();
+```
+
+#### 5. Operational Notes (Rules & Robustness)
+* **24/7 Execution**: The scheduler runs entirely in background memory within Node's event loop. When deploying to production using process managers like `PM2`, Docker, or Systemd, the scheduler will run continuously 24/7.
+* **Code Placement**: Always define your schedules (`Vexora.Schedule`) in your main entry file (e.g. `index.js`, `server.js`) before calling `server.listen()`. If you have many schedules, you can write them in a separate file (e.g. `cron.js`) and import it (`import './cron.js'`) in your main entry file.
+* **Independence & Resilience**:
+  * **IP Blocking**: Since scheduled tasks execute locally and internally within the server's thread, they are completely unaffected by security layers or IP blocking rules.
+  * **Fault Tolerance**: If any scheduled task throws an error or fails, the error is safely caught and logged. The scheduler itself does NOT crash, and all other scheduled tasks will keep running on time.
 
 ---
 
