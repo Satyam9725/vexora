@@ -6,9 +6,9 @@
 
 **Vexora** is the ultimate backend master framework for Node.js. It is an advanced, enterprise-grade, blazing-fast, and zero-dependency core backend engine. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
-[Key Features](#key-features) • [Checklist](#supported-features-checklist) • [Comparison](#framework-comparison) • [Installation](#installation) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Routing](#routing) • [Database](#database) • [API Reference](#api-reference)
+[Key Features](#key-features) | [Checklist](#supported-features-checklist) | [Comparison](#framework-comparison) | [Installation](#installation) | [Quick Start](#quick-start) | [Architecture](#architecture) | [Routing](#routing) | [Database](#database) | [API Reference](#api-reference)
 
-[RAM Cache](#ram-cache) • [WebSockets](#websockets) • [Token Vault](#token-vault) • [SMTP Mail](#smtp-mail) • [HTTP Client](#http-client) • [Queue Worker](#queue-jobs) • [Cron Scheduler](#task-scheduler) • [Bot Shield](#bot-shield) • [CAPTCHA](#captcha) • [File Upload](#file-upload) • [License](#license)
+[RAM Cache](#ram-cache) | [WebSockets](#websockets) | [Token Vault](#token-vault) | [SMTP Mail](#smtp-mail) | [HTTP Client](#http-client) | [Queue Worker](#queue-jobs) | [Cron Scheduler](#task-scheduler) | [Bot Shield](#bot-shield) | [CAPTCHA](#captcha) | [File Upload](#file-upload) | [License](#license)
 
 ---
 
