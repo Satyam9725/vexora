@@ -8,7 +8,9 @@
 
 **Vexora** is the ultimate backend master framework for Node.js. It is an advanced, enterprise-grade, blazing-fast, and zero-dependency core backend engine. Build high-performance REST APIs, real-time WebSockets, and complex database-driven architectures without any NPM dependency bloat.
 
-[Key Features](#-key-features) • [Installation](#-installation) • [Architecture](#-vexora-internal-architecture) • [Routing](#-routing--controller-system) • [Database](#-multi-connection-database-routing--crud) • [API Reference](#%EF%B8%8F-api-reference)
+[Key Features](#-key-features) • [Checklist](#-supported-features-checklist) • [Comparison](#-framework-comparison-vexora-vs-express-vs-fastify) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Architecture](#-vexora-internal-architecture) • [Routing](#-routing--controller-system) • [Database](#-multi-connection-database-routing--crud) • [API Reference](#%EF%B8%8F-api-reference)
+
+[RAM Cache](#-ram-cache-vexoraredis--vexoracache) • [WebSockets](#-real-time-websockets-vexorawebsocket) • [Token Vault](#-token-vault-vexoratokenvault) • [SMTP Mail](#-native-smtp-mail-client-vexoramail) • [HTTP Client](#-native-http-client-vexorahttp) • [Queue Worker](#-queue--background-jobs-system) • [Cron Scheduler](#-task-scheduler--cron-jobs) • [Bot Shield](#-automated-humanbot-behavior-analyzer) • [CAPTCHA](#-captcha-verification-recaptcha--turnstile) • [License](#-license)
 
 </div>
 
