@@ -1,7 +1,5 @@
 # Vexora Framework 🚀 (The Backend Master)
 
-<div align="center">
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Dependencies](https://img.shields.io/badge/dependencies-2-brightgreen.svg?style=flat-square)](#)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](#)
@@ -11,8 +9,6 @@
 [Key Features](#key-features) • [Checklist](#supported-features-checklist) • [Comparison](#framework-comparison) • [Installation](#installation) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Routing](#routing) • [Database](#database) • [API Reference](#api-reference)
 
 [RAM Cache](#ram-cache) • [WebSockets](#websockets) • [Token Vault](#token-vault) • [SMTP Mail](#smtp-mail) • [HTTP Client](#http-client) • [Queue Worker](#queue-jobs) • [Cron Scheduler](#task-scheduler) • [Bot Shield](#bot-shield) • [CAPTCHA](#captcha) • [File Upload](#file-upload) • [License](#license)
-
-</div>
 
 ---
 
@@ -61,11 +57,22 @@ Vexora is packed with features to handle all aspects of a modern, secure, and fa
 
 How does Vexora stack up against other popular Node.js frameworks? Here is a breakdown of features and default security out-of-the-box:
 
-### 🔒 Performance & Security Star Ratings
+### ⚡ Core Features & Performance
 
 | Feature / Criteria | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
 | :--- | :--- | :--- | :--- |
 | **Performance / Speed** | <small>Low-Medium (~15,000 req/sec)</small> | <small>High (~60,000 req/sec)</small> | <small>**Ultra-High (~90,000 req/sec)**</small> |
+| **Dependency Size** | <small>Heavy (Dozens of dependencies)</small> | <small>Medium (Several dependencies)</small> | <small>**Zero-Dependency Core** (Built entirely on Node.js core)</small> |
+| **Request Context** | <small>Requires parameter drilling (`req, res`)</small> | <small>Requires parameter drilling</small> | <small>**Thread-Safe Global Context** (`AsyncLocalStorage` - No drilling)</small> |
+| **Real-time WebSockets** | <small>Requires third-party packages (`socket.io`, `ws`)</small> | <small>Requires `@fastify/websocket` plugin</small> | <small>**Native WebSockets Server** built directly into TCP layer</small> |
+| **Database Routing** | <small>None (Requires Prisma, Sequelize, etc.)</small> | <small>None (Requires external plugins/ORMs)</small> | <small>**In-built Multi-Connection DB Multiplexer** (MySQL & Postgres)</small> |
+| **Security Defaults** | <small>Barebones (Needs manual configuration)</small> | <small>Medium (Plugins needed)</small> | <small>**Hardened by Default** (CSRF, Rate Limiting, Helmet Headers, CORS)</small> |
+| **Error Logging** | <small>Exposes full stack traces by default</small> | <small>Standard logging</small> | <small>**Silent Masked Logging** (UUIDs for clients, masked sensitive fields)</small> |
+
+### 🔒 Security Implementations & Star Ratings
+
+| Feature / Criteria | **Express.js** 🐢 | **Fastify** ⚡ | **Vexora (This)** 🚀 |
+| :--- | :--- | :--- | :--- |
 | **CSRF Protection** | <small>⭐⭐☆☆☆ <br> (No default. Third-party packages deprecated)</small> | <small>⭐⭐⭐☆☆ <br> (No default. Plugin `@fastify/csrf` is solid)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Timing-safe verification & token rotation built-in)</small> |
 | **SQL Injection Defense** | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐☆☆☆☆ <br> (No default. Depends entirely on external ORMs)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Regex-based quoting and prepared queries built-in)</small> |
 | **Security Headers (Helmet)** | <small>⭐☆☆☆☆ <br> (No default. Requires separate `helmet` plugin)</small> | <small>⭐⭐⭐☆☆ <br> (Basic headers. Requires `@fastify/helmet`)</small> | <small>⭐⭐⭐⭐⭐ **(Best)** <br> (Helmet equivalent headers sent by default)</small> |
@@ -1430,6 +1437,3 @@ if (Vexora.csrf.verify(clientToken, serverSessionToken)) {
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 *Built with passion by Satyam Kumar (<satyam.ku9725@gmail.com>)* 🚀
-#   v e x o r a _ j s 
- 
- 
