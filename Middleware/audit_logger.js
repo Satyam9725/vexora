@@ -129,7 +129,7 @@ export function log(level, code, message, extra = {}) {
       break;
   }
 
-  const dir = path.join(ROOT, "logs", "Runtime", category);
+  const dir = path.join(ROOT, "logs", category);
 
   try {
     ensure(dir);
