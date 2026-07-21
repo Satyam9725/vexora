@@ -48,3 +48,15 @@ npm-debug.log*
 /index.js
 
 live_test/
+
+# Source Files (Only distribute compiled build)
+database/
+http/
+session/
+utils/
+core/
+cache/
+api_controller/
+Middleware/
+security/
+Vexora.js

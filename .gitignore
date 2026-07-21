@@ -2,3 +2,10 @@
 # N.Vexora
 .Vexora/
 .Vexora_Api/
+.Vexora_error/
+
+# Node Modules
+node_modules/
+
+# Logs
+*.log
