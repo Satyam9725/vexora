@@ -1,7 +1,7 @@
 import Vexora from "vexora";
 
 // Create static handler mounting the "public" directory with built-in Rate Limiting
-const serveStatic = Vexora.static("public", { 
+const serveStatic = Vexora.static("public", "home.html", {
     maxAge: 86400, // maxAge in seconds
     rateLimit: {
         maxRequests: 150,      // Static files are rate-limited to 150 requests/min
@@ -19,6 +19,6 @@ const server = Vexora.Server(async (req, res) => {
     if (handled) return;
 });
 
-server.listen(3000, () => {
-    console.log("🚀 Vexora Server is running at http://localhost:3000");
+server.listen(30000, () => {
+    console.log("🚀 Vexora Server is running at http://localhost:30000");
 });

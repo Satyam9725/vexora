@@ -13,6 +13,9 @@ export async function run() {
     const originalBlocked = Config.get("BLOCKED_IPS") || "";
     Config.set("BLOCKED_IPS", "127.0.0.1, ::1");
 
+    const originalBot = Config.get("DETECT_BOT_BEHAVIOR");
+    Config.set("DETECT_BOT_BEHAVIOR", "false");
+
     // Start a temporary Vexora server
     const server = Vexora.Server((req, res) => {
         return res.success({ hello: "world" }, "Accessible");
@@ -32,6 +35,7 @@ export async function run() {
 
         // Now clear the blocked IP list
         Config.set("BLOCKED_IPS", "");
+        Vexora.resetSuspiciousTracker();
 
         // Send request again - it should now succeed
         const res2 = await Vexora.http.get("http://localhost:3098/", {
@@ -45,5 +49,7 @@ export async function run() {
         await new Promise((resolve) => server.close(resolve));
         Config.set("SERVER_CLUSTER", originalCluster);
         Config.set("BLOCKED_IPS", originalBlocked);
+        Config.set("DETECT_BOT_BEHAVIOR", originalBot);
+        Vexora.resetSuspiciousTracker();
     }
 }

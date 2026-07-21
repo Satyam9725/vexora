@@ -128,9 +128,126 @@ export async function run() {
     const servedTraverse = await serveHandler(reqTraversal, resMock);
     assert.ok(!servedTraverse, "Should return false (skip execution) for dynamic directory traversal paths");
 
+    // Test running .php file via php-cgi
+    const phpFilePath = path.join(publicDir, "test.php");
+    fs.writeFileSync(phpFilePath, "<?php echo 'Hello PHP inside Vexora'; ?>");
+    const reqPhp = { method: "GET", path: "/test.php" };
+    const resMockPhp = {
+        statusCode: 200,
+        headers: {},
+        setHeader(name, value) {
+            this.headers[name] = value;
+        },
+        write(chunk) {
+            this.body = (this.body || "") + chunk.toString();
+            return true;
+        },
+        end(data) {
+            if (data) this.write(data);
+        },
+        on() { return this; },
+        once() { return this; },
+        emit() { return this; },
+        removeListener() { return this; },
+        destroy() { return this; }
+    };
+    resMockPhp.res = resMockPhp;
+    const servedPhp = await serveHandler(reqPhp, resMockPhp);
+    assert.ok(servedPhp, "Should handle .php file execution");
+    assert.ok(resMockPhp.body.includes("Hello PHP inside Vexora"), "Should contain PHP output");
+
+    // Test running .html file via php-cgi
+    const htmlFilePath = path.join(publicDir, "test_php.html");
+    fs.writeFileSync(htmlFilePath, "<h1><?php echo 'Dynamic HTML Output'; ?></h1>");
+    const reqHtml = { method: "GET", path: "/test_php.html" };
+    const resMockHtml = {
+        statusCode: 200,
+        headers: {},
+        setHeader(name, value) {
+            this.headers[name] = value;
+        },
+        write(chunk) {
+            this.body = (this.body || "") + chunk.toString();
+            return true;
+        },
+        end(data) {
+            if (data) this.write(data);
+        },
+        on() { return this; },
+        once() { return this; },
+        emit() { return this; },
+        removeListener() { return this; },
+        destroy() { return this; }
+    };
+    resMockHtml.res = resMockHtml;
+    const servedHtml = await serveHandler(reqHtml, resMockHtml);
+    assert.ok(servedHtml, "Should handle .html file execution");
+    assert.ok(resMockHtml.body.includes("<h1>Dynamic HTML Output</h1>"), "Should run PHP inside HTML file");
+
+    // Test directory request with missing index file (should return 404 with Index File Not Found)
+    const reqDir = { method: "GET", path: "/" };
+    const resMockDir = {
+        statusCode: 200,
+        headers: {},
+        setHeader(name, value) {
+            this.headers[name] = value;
+        },
+        write(chunk) {
+            this.body = (this.body || "") + chunk.toString();
+            return true;
+        },
+        end(data) {
+            if (data) this.write(data);
+        },
+        on() { return this; },
+        once() { return this; },
+        emit() { return this; },
+        removeListener() { return this; },
+        destroy() { return this; }
+    };
+    resMockDir.res = resMockDir;
+    const servedDir = await serveHandler(reqDir, resMockDir);
+    assert.ok(servedDir, "Should resolve true for directory handling (even if 404)");
+    assert.strictEqual(resMockDir.statusCode, 404, "Should return 404 for missing index file");
+    assert.ok(resMockDir.headers["Content-Type"].includes("text/html"), "Should return HTML content-type");
+    assert.ok(resMockDir.body.includes("Index File Not Found"), "Should contain error heading");
+    assert.ok(resMockDir.body.includes("/test_public/index.html"), "Should display expected index file path");
+
+    // Test configured custom defaultIndexFile
+    const customIndexFilePath = path.join(publicDir, "home.html");
+    fs.writeFileSync(customIndexFilePath, "<h1>Home Page</h1>");
+    const serveHandlerCustom = StaticMiddleware.serve("test_public", "home.html");
+    const resMockCustom = {
+        statusCode: 200,
+        headers: {},
+        setHeader(name, value) {
+            this.headers[name] = value;
+        },
+        write(chunk) {
+            this.body = (this.body || "") + chunk.toString();
+            return true;
+        },
+        end(data) {
+            if (data) this.write(data);
+        },
+        on() { return this; },
+        once() { return this; },
+        emit() { return this; },
+        removeListener() { return this; },
+        destroy() { return this; }
+    };
+    resMockCustom.res = resMockCustom;
+    const servedCustom = await serveHandlerCustom(reqDir, resMockCustom);
+    assert.ok(servedCustom, "Should serve custom index page");
+    assert.strictEqual(resMockCustom.statusCode, 200, "Should load custom index successfully");
+    assert.ok(resMockCustom.body.includes("<h1>Home Page</h1>"), "Should contain correct home page content");
+
     // Cleanup
     try {
         fs.unlinkSync(testFilePath);
+        fs.unlinkSync(phpFilePath);
+        fs.unlinkSync(htmlFilePath);
+        fs.unlinkSync(customIndexFilePath);
         fs.rmdirSync(publicDir);
     } catch {}
 

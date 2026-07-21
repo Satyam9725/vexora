@@ -92,6 +92,35 @@ function getBlockedIpsSet() {
   return cachedBlockedIpsSet;
 }
 
+const serveForbidden = (req, res, message) => {
+  const accept = req.headers['accept'] || '';
+  const isHtml = accept.includes('text/html');
+  let customErrorHtml = null;
+  if (isHtml) {
+    try {
+      const root = process.cwd();
+      const paths = [
+        path.join(root, '.Vexora_error', '403.html'),
+        path.join(root, '.vexora_error', '403.html')
+      ];
+      for (const p of paths) {
+        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+          customErrorHtml = fs.readFileSync(p, 'utf8');
+          break;
+        }
+      }
+    } catch (e) { }
+  }
+
+  if (customErrorHtml !== null) {
+    res.writeHead(403, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(customErrorHtml);
+  } else {
+    res.writeHead(403, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: false, message }));
+  }
+};
+
 const Server = (callback, options) => {
   if (Config.boolean("QUEUE_AUTO_START", true)) {
     QueueWorker.start();
@@ -106,15 +135,13 @@ const Server = (callback, options) => {
     // Run security shields globally regardless of public folder existence
     const blockedIps = getBlockedIpsSet();
     if (blockedIps.has(clientIp)) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: false, message: "Forbidden: Access Denied" }));
+      serveForbidden(req, res, "Forbidden: Access Denied");
       return;
     }
 
     // 2. Temporary Cache Block Check
     if (MemoryCache.has("temp_blocked_ip:" + clientIp)) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
+      serveForbidden(req, res, "Forbidden: Temporarily blocked due to suspicious activity");
       return;
     }
 
@@ -124,8 +151,7 @@ const Server = (callback, options) => {
       const autoBlockDuration = parseInt(Config.get("AUTO_BLOCK_DURATION")) || 300;
       MemoryCache.set("temp_blocked_ip:" + clientIp, true, autoBlockDuration);
       console.warn(`⚠️ Blocked IP ${clientIp} for ${autoBlockDuration}s: ${analysis.reason}`);
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
+      serveForbidden(req, res, "Forbidden: Temporarily blocked due to suspicious activity");
       return;
     }
 
@@ -269,7 +295,7 @@ const Vexora = {
       const store = requestContext.getStore();
       if (store && store.req && store.response) {
         const oldSessionId = store.sessionId;
-        
+
         const sessionLifetime = parseInt(Config.get("SESSION_LIFETIME")) || 3600;
         const newSessionId = SessionManager.start(null, sessionLifetime);
 
@@ -290,13 +316,13 @@ const Vexora = {
         const accessedAt = session._accessedAt || session._createdAt || now;
         const lifetimeMs = (session._lifetime || 3600) * 1000;
         const remainingMs = lifetimeMs - (now - accessedAt);
-        
+
         return {
-           id: store.sessionId,
-           lifetime: session._lifetime || 3600,
-           createdAt: new Date(session._createdAt || now),
-           lastAccessed: new Date(accessedAt),
-           expiresInSeconds: Math.max(0, Math.floor(remainingMs / 1000))
+          id: store.sessionId,
+          lifetime: session._lifetime || 3600,
+          createdAt: new Date(session._createdAt || now),
+          lastAccessed: new Date(accessedAt),
+          expiresInSeconds: Math.max(0, Math.floor(remainingMs / 1000))
         };
       }
       return null;
@@ -353,7 +379,7 @@ if (executionFile && (currentFile === executionFile || executionFile.endsWith("v
     console.log("⚙️ Scaffolding Vexora Project...");
     try {
       Init.setup();
-      
+
       const controllersDir = path.join(process.cwd(), "controllers");
       if (!fs.existsSync(controllersDir)) {
         fs.mkdirSync(controllersDir);
@@ -407,7 +433,7 @@ server.listen(3000, () => {
       if (!fs.existsSync(controllersDir)) {
         fs.mkdirSync(controllersDir);
       }
-      
+
       const file = path.join(controllersDir, `${controllerName}.js`);
       const parentDir = path.dirname(file);
       if (!fs.existsSync(parentDir)) {

@@ -59,43 +59,56 @@ class ApiController {
             if (suffix.startsWith('/')) suffix = suffix.substring(1);
             if (!suffix) suffix = 'index';
 
-            const vexoraApiDir = path.join(process.cwd(), '.Vexora_Api');
-            const fileCandidates = [
-                path.join(vexoraApiDir, suffix + '.js'),
-                path.join(vexoraApiDir, suffix, 'index.js')
-            ];
-
-            let matchedFile = null;
-            for (const cand of fileCandidates) {
-                if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-                    if (cand.endsWith('index.js')) {
-                        // Allow routing through .Vexora_Api/index.js if it's a Router, otherwise execute directly
-                        try {
-                            const fileContent = fs.readFileSync(cand, 'utf8');
-                            if (fileContent.includes('export default') || fileContent.includes('RouteController')) {
-                                continue; 
-                            }
-                        } catch {}
-                    }
-                    matchedFile = cand;
-                    break;
+            // Check if this path matches a sub-folder that has its own index.js (a sub-router)
+            // e.g. /api/auth/login where .Vexora_Api/auth/index.js exists
+            const suffixParts = suffix.split('/').filter(Boolean);
+            let hasSubRouter = false;
+            if (suffixParts.length > 1) {
+                const vexoraSubApiIndex = path.join(process.cwd(), '.Vexora_Api', suffixParts[0], 'index.js');
+                if (fs.existsSync(vexoraSubApiIndex)) {
+                    hasSubRouter = true;
                 }
             }
 
-            if (matchedFile) {
-                if (!this.fallbackApiRouter) {
-                    this.fallbackApiRouter = createRouter('/api');
+            if (!hasSubRouter) {
+                const vexoraApiDir = path.join(process.cwd(), '.Vexora_Api');
+                const fileCandidates = [
+                    path.join(vexoraApiDir, suffix + '.js'),
+                    path.join(vexoraApiDir, suffix, 'index.js')
+                ];
+
+                let matchedFile = null;
+                for (const cand of fileCandidates) {
+                    if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+                        if (cand.endsWith('index.js')) {
+                            // Allow routing through .Vexora_Api/index.js if it's a Router, otherwise execute directly
+                            try {
+                                const fileContent = fs.readFileSync(cand, 'utf8');
+                                if (fileContent.includes('export default') || fileContent.includes('RouteController')) {
+                                    continue; 
+                                }
+                            } catch {}
+                        }
+                        matchedFile = cand;
+                        break;
+                    }
                 }
-                const relPath = path.relative(process.cwd(), matchedFile);
-                const actionName = relPath.replace(/\.js$/, '');
-                try {
-                    await this.fallbackApiRouter._executeAction(req, res, actionName);
-                    return true;
-                } catch (err) {
-                    console.error(`❌ Fallback API load failed for: ${actionName}`, err);
-                    res.statusCode = 500;
-                    res.json({ status: false, message: "Internal Server Error" });
-                    return true;
+
+                if (matchedFile) {
+                    if (!this.fallbackApiRouter) {
+                        this.fallbackApiRouter = createRouter('/api');
+                    }
+                    const relPath = path.relative(process.cwd(), matchedFile);
+                    const actionName = relPath.replace(/\.js$/, '');
+                    try {
+                        await this.fallbackApiRouter._executeAction(req, res, actionName);
+                        return true;
+                    } catch (err) {
+                        console.error(`❌ Fallback API load failed for: ${actionName}`, err);
+                        res.statusCode = 500;
+                        res.json({ status: false, message: "Internal Server Error" });
+                        return true;
+                    }
                 }
             }
         }

@@ -107,26 +107,60 @@ function postExecute(req, response, res) {
   if (!res.headersSent && !res.writableEnded) {
       const accept = req.headers['accept'] || '';
       const isHtml = accept.includes('text/html');
+      const isApiRoute = req.path === '/api' || req.path.startsWith('/api/');
       
-      if (isHtml && req.method === 'GET') {
-          const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
-          const apiExists = fs.existsSync(path.join(process.cwd(), '.Vexora_Api'));
-          
-          let version = "1.2.2";
+      if (isHtml && req.method === 'GET' && !isApiRoute) {
+          let customErrorHtml = null;
           try {
-              const pkgPath = path.join(process.cwd(), 'package.json');
-              if (fs.existsSync(pkgPath)) {
-                  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-                  version = pkg.version || "1.2.2";
+              const root = process.cwd();
+              const paths = [
+                  path.join(root, '.Vexora_error', '404.html'),
+                  path.join(root, '.vexora_error', '404.html')
+              ];
+              for (const p of paths) {
+                  if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+                      customErrorHtml = fs.readFileSync(p, 'utf8');
+                      break;
+                  }
               }
           } catch (e) {}
-          
+
           res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(getDefaultLandingPage(publicExists, apiExists, version));
+          if (customErrorHtml !== null) {
+              res.end(customErrorHtml);
+          } else if (req.path === '/') {
+              const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
+              const apiExists = fs.existsSync(path.join(process.cwd(), '.Vexora_Api'));
+              
+              let version = "1.2.2";
+              try {
+                  const pkgPath = path.join(process.cwd(), 'package.json');
+                  if (fs.existsSync(pkgPath)) {
+                      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                      version = pkg.version || "1.2.2";
+                  }
+              } catch (e) {}
+              
+              res.end(getDefaultLandingPage(publicExists, apiExists, version));
+          } else {
+              res.end(getFileNotFoundPage(req.path));
+          }
       } else {
+          let message = "Route Not Found";
+          if (isApiRoute) {
+              message = "API Route Not Found";
+              const parts = req.path.split('/').filter(Boolean);
+              if (parts.length >= 2) {
+                  const folderName = parts[1];
+                  const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                  if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
+                      message = "Invalid endpoint";
+                  }
+              }
+          }
           response.status(404).json({
               status: false,
-              message: "Route Not Found"
+              message
           });
       }
   }
@@ -177,17 +211,42 @@ function handleRequestError(err, req, res) {
       });
 
       if (!res.headersSent) {
-        res.writeHead(500, {
-          "Content-Type": "application/json",
-        });
+        const accept = req.headers['accept'] || '';
+        const isHtml = accept.includes('text/html');
+        let customErrorHtml = null;
+        if (isHtml) {
+            try {
+                const root = process.cwd();
+                const paths = [
+                    path.join(root, '.Vexora_error', '500.html'),
+                    path.join(root, '.vexora_error', '500.html')
+                ];
+                for (const p of paths) {
+                    if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+                        customErrorHtml = fs.readFileSync(p, 'utf8');
+                        break;
+                    }
+                }
+            } catch (e) {}
+        }
 
-        res.end(
-          JSON.stringify({
-            success: false,
-            message,
-            error_id,
-          }),
-        );
+        if (customErrorHtml !== null) {
+            res.writeHead(500, {
+                "Content-Type": "text/html; charset=utf-8",
+            });
+            res.end(customErrorHtml);
+        } else {
+            res.writeHead(500, {
+                "Content-Type": "application/json",
+            });
+            res.end(
+                JSON.stringify({
+                    success: false,
+                    message,
+                    error_id,
+                }),
+            );
+        }
       }
 }
 
@@ -296,7 +355,7 @@ export default function Server(callback, options = {}) {
               const relative = path.relative(staticRoot, targetFile);
               if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
                   const stats = fs.statSync(targetFile);
-                  if (stats.isFile() || (stats.isDirectory() && fs.existsSync(path.join(targetFile, 'index.html')))) {
+                  if (stats.isFile() || stats.isDirectory()) {
                       isStaticFile = true;
                   }
               }
@@ -1436,6 +1495,134 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
             &copy; 2026 Satyam Kumar. All rights reserved.
         </div>
     </footer>
+</body>
+</html>`;
+}
+
+function getFileNotFoundPage(filePath) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404: File Not Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #0f172a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .content {
+            text-align: center;
+            max-width: 480px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.25;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        p {
+            color: #64748b;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .path-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 32px;
+        }
+        .method {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #ef4444;
+            background-color: #fef2f2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .path {
+            font-family: 'JetBrains Mono', monospace;
+            color: #334155;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 0.05em;
+        }
+        .brand span {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            404 Error
+        </div>
+        <h1>File Not Found</h1>
+        <p>The requested file could not be located on the server. Please verify the URL path or check the public directory.</p>
+        
+        <div class="path-container">
+            <span class="method">GET</span>
+            <span class="path">${filePath}</span>
+        </div>
+
+        <div class="brand">
+            ⚡ VEXORA <span>SERVER</span>
+        </div>
+    </div>
 </body>
 </html>`;
 }

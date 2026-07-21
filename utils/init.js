@@ -38,6 +38,14 @@ class Init {
         });
       }
 
+      const vexoraErrorDir = path.join(rootDir, ".Vexora_error");
+      // Create .Vexora_error directory if it does not exist
+      if (!fs.existsSync(vexoraErrorDir)) {
+        fs.mkdirSync(vexoraErrorDir, {
+          recursive: true,
+        });
+      }
+
       const configPath = path.join(vexoraDir, "config");
 
       // Essential configurations only
@@ -45,12 +53,6 @@ class Init {
         "# ==========================================================",
         "# Vexora Framework Configuration",
         "# ==========================================================",
-        "",
-        "# ----------------------------------------------------------",
-        "# Database Configuration",
-        "# ----------------------------------------------------------",
-        "# Primary MySQL database connection URL string",
-        "MYSQL_DB_URL=mysql://u978749416_eformx_it:3+Lkd@P9@82.25.121.48:3306/u978749416_eformx_it",
         "",
         "# ----------------------------------------------------------",
         "# RAM Cache Configuration",
@@ -202,6 +204,29 @@ class Init {
         });
 
         console.log("✅ .Vexora/config created");
+      }
+
+      // Create db_config.json file
+      const dbConfigPath = path.join(vexoraDir, "db_config.json");
+      const defaultDbConfig = {
+        "auth": {
+          "DB_HOST": "127.0.0.1",
+          "DB_NAME": "u978749416_eformx_it",
+          "DB_USER": "root",
+          "DB_PASS": "",
+          "MSG": "auth",
+          "DB_DRIVER": "mysql",
+          "driver": "mysql"
+        }
+      };
+
+      if (!fs.existsSync(dbConfigPath)) {
+        fs.writeFileSync(dbConfigPath, JSON.stringify(defaultDbConfig, null, 2), {
+          encoding: "utf8",
+          mode: 0o600,
+        });
+
+        console.log("✅ .Vexora/db_config.json created");
       }
     } catch (err) {
       console.warn("⚠️ Warning: Failed to run framework Init.setup() (filesystem might be read-only):", err.message);

@@ -24,6 +24,7 @@ import Helper from "../utils/Helper.js";
 import { requestContext } from "../core/Context.js";
 
 const EMPTY_PARAMS = Object.freeze({});
+const controllerCache = new Map();
 
 class Router {
     static ALL = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
@@ -94,7 +95,20 @@ class Router {
             const action = params && params.action ? params.action : '';
             if (!action) {
                 res.statusCode = 404;
-                return res.json({ status: false, message: "Route Not Found" });
+                let message = "Route Not Found";
+                const isApiRoute = req && req.path && (req.path === '/api' || req.path.startsWith('/api/'));
+                if (isApiRoute) {
+                    message = "API Route Not Found";
+                    const parts = req.path.split('/').filter(Boolean);
+                    if (parts.length >= 2) {
+                        const folderName = parts[1];
+                        const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                        if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
+                            message = "Invalid endpoint";
+                        }
+                    }
+                }
+                return res.json({ status: false, message });
             }
             return await this._executeAction(req, res, `${targetDir}/${action}`, params);
         });
@@ -322,27 +336,47 @@ class Router {
                 if (!fullPath) {
                     console.error(`❌ Controller Not Found for action: ${action}`);
                     res.statusCode = 404;
+                    let message = "Route Not Found";
+                    const isApiRoute = req && req.path && (req.path === '/api' || req.path.startsWith('/api/'));
+                    if (isApiRoute) {
+                        message = "API Route Not Found";
+                        const parts = req.path.split('/').filter(Boolean);
+                        if (parts.length >= 2) {
+                            const folderName = parts[1];
+                            const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                            if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
+                                message = "Invalid endpoint";
+                            }
+                        }
+                    }
                     return res.json({
                         status: false,
-                        message: "Route Not Found"
+                        message
                     });
+                }
+
+                let cachedController = controllerCache.get(fullPath);
+                if (cachedController) {
+                    if (cachedController.isEsModule) {
+                        if (typeof cachedController.handler === 'function') {
+                            return await cachedController.handler(req, res, params);
+                        } else {
+                            return res.json(cachedController.handler);
+                        }
+                    } else {
+                        return await cachedController.handler(Vexora, Vexora, Vexora, req, res, Vexora.db, params);
+                    }
                 }
 
                 const fileContent = fs.readFileSync(fullPath, 'utf8');
 
-                // If file uses ES Module exports or imports, use dynamic import()
+                let cachedEntry;
                 if (fileContent.includes('export default') || fileContent.includes('export const') || (fileContent.includes('import ') && !fileContent.includes('//import'))) {
                     const fileUrl = pathToFileURL(fullPath).href;
                     const module = await import(fileUrl);
                     const handler = module.default || module;
-
-                    if (typeof handler === 'function') {
-                        return await handler(req, res, params);
-                    } else {
-                        return res.json(handler);
-                    }
+                    cachedEntry = { isEsModule: true, handler };
                 } else {
-                    // Raw script execution (PHP-style zero-boilerplate!)
                     let processedContent = fileContent.trim();
                     const scriptLines = processedContent.split('\n').map(l => l.trim()).filter(Boolean);
                     const lastLine = scriptLines[scriptLines.length - 1] || '';
@@ -353,8 +387,20 @@ class Router {
                     }
 
                     const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-                    const runner = new AsyncFunction('Vexora', 'Zentrox', 'Nyvora', 'req', 'res', 'db', 'params', processedContent);
-                    return await runner(Vexora, Vexora, Vexora, req, res, Vexora.db, params);
+                    const handler = new AsyncFunction('Vexora', 'Zentrox', 'Nyvora', 'req', 'res', 'db', 'params', processedContent);
+                    cachedEntry = { isEsModule: false, handler };
+                }
+
+                controllerCache.set(fullPath, cachedEntry);
+
+                if (cachedEntry.isEsModule) {
+                    if (typeof cachedEntry.handler === 'function') {
+                        return await cachedEntry.handler(req, res, params);
+                    } else {
+                        return res.json(cachedEntry.handler);
+                    }
+                } else {
+                    return await cachedEntry.handler(Vexora, Vexora, Vexora, req, res, Vexora.db, params);
                 }
             } catch (err) {
                 let errorId = "N/A";
@@ -366,16 +412,24 @@ class Router {
                 } catch (logErr) {
                     console.error("❌ Failed to write audit log:", logErr.message);
                 }
-                console.error(`❌ Controller Execution Failed (Error ID: ${errorId})`);
+                console.error(`❌ Controller Execution Failed (Error ID: ${errorId}): ${err.message}`);
                 
                 if (res.headersSent || res.writableEnded) {
                     return false;
                 }
 
                 res.statusCode = 500;
+                let errMsg = `Internal Server Error (Error ID: ${errorId})`;
+                if (err.message) {
+                    if (err.message.includes("connect ETIMEDOUT") || err.message.includes("ECONNREFUSED") || err.message.includes("Access denied")) {
+                        errMsg = `Database Connection Failed: ${err.message} (Error ID: ${errorId})`;
+                    } else {
+                        errMsg = `${err.message} (Error ID: ${errorId})`;
+                    }
+                }
                 return res.json({
                     status: false,
-                    message: `Internal Server Error (Error ID: ${errorId})`
+                    message: errMsg
                 });
             }
         }
@@ -441,9 +495,22 @@ class Router {
 
         // 6. Handle Route Not Found (404)
         res.statusCode = 404;
+        let message = "Route Not Found";
+        const isApiRoute = req && req.path && (req.path === '/api' || req.path.startsWith('/api/'));
+        if (isApiRoute) {
+            message = "API Route Not Found";
+            const parts = req.path.split('/').filter(Boolean);
+            if (parts.length >= 2) {
+                const folderName = parts[1];
+                const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
+                    message = "Invalid endpoint";
+                }
+            }
+        }
         return res.json({
             status: false,
-            message: "Route Not Found"
+            message
         });
     }
 

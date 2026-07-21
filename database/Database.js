@@ -16,6 +16,8 @@
  * ==========================================================
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import mysql from "./mysql.js";
 import postgres from "./postgres.js";
 import Config from "../core/config.js";
@@ -33,6 +35,18 @@ class Database {
     }
 
     let input = connectionInput;
+
+    // Standardize PHP-style database keys to Vexora keys
+    if (typeof input === "object" && input !== null) {
+        input = {
+            host: input.host || input.DB_HOST || "localhost",
+            user: input.user || input.username || input.DB_USER || "root",
+            password: input.password || input.pass || input.DB_PASS || "",
+            database: input.database || input.dbname || input.DB_NAME || "",
+            port: parseInt(input.port || input.DB_PORT) || 3306,
+            driver: input.driver || input.DB_DRIVER || "mysql"
+        };
+    }
 
     // If no argument is passed, auto-detect from Config
     if (!input) {
@@ -120,47 +134,40 @@ class Database {
       return Database.connections[key];
     }
 
-    // 1. Direct configuration match: If key exists exactly in config (e.g. MYSQL_DB_AUTH)
-    let url = Config.get(key);
+    // Load from db_config.json if it exists and has the key
+    let dbConfig = null;
+    try {
+        const root = process.cwd();
+        const configPaths = [
+            path.join(root, 'db_config.json'),
+            path.join(root, '.Vexora', 'db_config.json')
+        ];
+        for (const p of configPaths) {
+            if (fs.existsSync(p)) {
+                dbConfig = JSON.parse(fs.readFileSync(p, 'utf8'));
+                break;
+            }
+        }
+    } catch (e) {}
 
-    if (!url) {
-      // Look for key-specific environment configurations
-      const upperKey = String(key).toUpperCase();
-      const configCandidates = [
-        `${upperKey}_DB_URL`,
-        `DB_${upperKey}_URL`,
-        `${upperKey}_URL`,
-        `MYSQL_DB_${upperKey}`,
-        `POSTGRES_DB_${upperKey}`,
-        `MYSQL_DB_${upperKey}_URL`,
-        `POSTGRES_DB_${upperKey}_URL`,
-      ];
-
-      for (const cand of configCandidates) {
-        url = Config.get(cand);
-        if (url) break;
-      }
+    let configData = null;
+    if (dbConfig) {
+        if (dbConfig[key]) {
+            configData = dbConfig[key];
+        } else if (key === "default") {
+            const keys = Object.keys(dbConfig);
+            if (keys.length > 0) {
+                configData = dbConfig[keys[0]];
+            }
+        }
     }
 
-    // Dynamic defaults fallback based on query identifier name
-    if (!url) {
-      if (key === "postgres" || key === "postgresql") {
-        url = Config.get("POSTGRES_DB_URL") || Config.get("POSTGRESQL_DB_URL");
-      } else if (key === "mysql") {
-        url = Config.get("MYSQL_DB_URL");
-      }
+    if (configData) {
+        return await Database.connect(configData, key);
     }
 
-    // Global default connection configuration fallback
-    if (!url) {
-      url = Config.get("MYSQL_DB_URL") || Config.get("DB_URL");
-    }
-
-    if (!url) {
-      throw new Error(`Database configuration missing for key: ${key}`);
-    }
-
-    return await Database.connect(url, key);
+    // 1. Throw error if configuration is not found in db_config.json
+    throw new Error(`Database configuration missing for key: ${key}`);
   }
 
   /* ================= STATIC CONNECTION ENGINES DELEGATORS ================= */

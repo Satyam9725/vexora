@@ -29,6 +29,7 @@ function buildPoolOptions(input) {
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
     namedPlaceholders: true,
+    connectTimeout: 1000, // Time out after 2 seconds if database is unreachable
   };
 
   if (typeof input === "object" && input !== null) {

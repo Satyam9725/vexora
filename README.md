@@ -133,13 +133,18 @@ server.listen(3000, () => {
 
 ### 📁 Serving Static Files
 
-Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers and traversal checks:
+Vexora includes a native, secure, stream-based static asset server (`Vexora.static`) to serve frontend files (HTML, CSS, JS, images, PDFs, fonts) with caching headers, traversal checks, and CGI script execution capabilities.
+
+#### ⚙️ Features
+1. **Dynamic Script Execution (PHP-CGI)**: Any requested `.php`, `.html`, or `.htm` files containing embedded PHP tags inside the static directory are automatically executed via `php-cgi`.
+2. **Custom Default Index**: You can specify a custom default index file (e.g., `index.html`, `home.php`) as the second parameter.
+3. **Missing Index 404**: If the static folder exists but the requested directory path (like `/`) lacks the configured index file, the server returns a `404` status code with `"Index File Not Found"` payload.
 
 ```javascript
 import Vexora from "vexora";
 
-// Create static handler mounting the "public" directory with built-in Rate Limiting
-const serveStatic = Vexora.static("public", { 
+// Create static handler mounting the "public" directory, choosing "home.html" as the index, with built-in Rate Limiting
+const serveStatic = Vexora.static("public", "home.html", { 
     maxAge: 86400, // maxAge in seconds
     rateLimit: {
         maxRequests: 150,      // Max requests allowed for static assets
@@ -148,7 +153,7 @@ const serveStatic = Vexora.static("public", {
 });
 
 const server = Vexora.Server(async (req, res) => {
-    // 1. Serve static files (checks rate limits automatically)
+    // 1. Serve static files and run php/html scripts (checks rate limits automatically)
     const served = await serveStatic(req, res);
     if (served) return;
 
@@ -159,6 +164,14 @@ const server = Vexora.Server(async (req, res) => {
 
 server.listen(3000);
 ```
+
+#### ⚠️ Custom Error Pages
+
+Vexora supports user-defined custom error pages. If a client expects an HTML response (e.g., standard browser requests), Vexora will check for a folder named `.Vexora_error` in the root directory. If a file named `<status-code>.html` is present inside that directory, Vexora will automatically serve it instead of the built-in pages.
+
+- `.Vexora_error/404.html` - Served for Route/File Not Found errors.
+- `.Vexora_error/403.html` - Served for blocked IPs / security denials.
+- `.Vexora_error/500.html` - Served for runtime internal server errors.
 
 ---
 
@@ -340,43 +353,92 @@ POSTGREE_DB_AUTH=postgres://auth_user:pass123@localhost:5432/auth_db
 
 To switch database pools, pass the configuration key (or simple aliases like `"auth"`, `"user"`) as the first parameter. If omitted, Vexora routes the query to `MYSQL_DB_URL` by default.
 
-### 1. Raw Queries
-```javascript
-// Run query on primary MySQL database
-const users = await Vexora.query("SELECT * FROM users WHERE status = ?", ["active"]);
+### 1. Raw Queries & Fetching Data
 
-// Run query on Postgres database using config key
-const logs = await Vexora.query("POSTGREE_DB_AUTH", "SELECT * FROM logs WHERE level = $1", ["error"]);
+Vexora provides raw query utilities to fetch data from the database.
+
+#### 🔍 Fetching a Single Row (`Vexora.fetch`)
+Returns the first matching row as an object, or `null` if no records are found.
+```javascript
+// A. Using default connection
+const user = await Vexora.fetch("SELECT * FROM users WHERE email = ? LIMIT 1", ["john@example.com"]);
+console.log(user?.username); // "john_doe"
+
+// B. Using a specific database connection key (e.g., "auth")
+const project = await Vexora.fetch("auth", "SELECT * FROM projects WHERE id = ?", [1]);
 ```
 
-### 2. Standard CRUD Helpers
-Table and column identifiers are auto-sanitized and quoted matching engine schemas (``` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection.
-
+#### 🗃️ Fetching All Rows (`Vexora.fetchAll`)
+Returns an array containing all matched rows. If no rows match, it returns an empty array `[]`.
 ```javascript
-// Insert
-const userId = await Vexora.insert("POSTGREE_DB_AUTH", "users", {
+// A. Using default connection
+const activeUsers = await Vexora.fetchAll("SELECT * FROM users WHERE status = ?", ["active"]);
+
+// B. Using a specific database connection key (e.g., "auth")
+const allProjects = await Vexora.fetchAll("auth", "SELECT * FROM projects");
+```
+
+#### ⚡ Execute Raw Statements (`Vexora.execute` / `Vexora.query`)
+- Use `Vexora.query` for fetching rows with raw queries.
+- Use `Vexora.execute` for running DDL statements (like creating tables) or non-select queries.
+```javascript
+const rows = await Vexora.query("SELECT * FROM users");
+```
+
+---
+
+### 2. Standard CRUD Helpers (Insert, Update, Delete)
+
+Table and column identifiers are auto-sanitized and quoted matching engine schemas (`` ` `` for MySQL, `"` for PostgreSQL) dynamically to block SQL injection.
+
+#### 📥 Insert Data (`Vexora.insert`)
+Inserts a new record into the specified table. Returns the auto-increment primary key ID.
+```javascript
+// Insert row using default connection
+const userId = await Vexora.insert("users", {
     email: "john@example.com",
     username: "john_doe",
     status: "active"
 });
 
-// Update (Returns affected rows count)
+// Insert row using a specific database connection key (e.g., "auth")
+const projectId = await Vexora.insert("auth", "projects", {
+    name: "My SaaS Application",
+    status: "active"
+});
+```
+
+#### ✏️ Update Data (`Vexora.update`)
+Updates records in the database matching a `where` condition. Returns the count of affected rows.
+```javascript
+// Update using default connection
 const affectedRows = await Vexora.update(
-    "POSTGREE_DB_AUTH", 
     "users", 
     { status: "suspended" }, 
     "id = ?", 
     [userId]
 );
 
-// Delete
-await Vexora.delete("POSTGREE_DB_AUTH", "users", "id = ?", [userId]);
+// Update using a specific database connection key (e.g., "auth")
+await Vexora.update("auth", "projects", { status: "completed" }, "id = ?", [projectId]);
 ```
+
+#### 🗑️ Delete Data (`Vexora.delete`)
+Deletes records matching a `where` condition.
+```javascript
+// Delete using default connection
+await Vexora.delete("users", "id = ?", [userId]);
+
+// Delete using a specific database connection key (e.g., "auth")
+await Vexora.delete("auth", "projects", "id = ?", [projectId]);
+```
+
+---
 
 ### 3. Exists, Counts & Column Grabs
 ```javascript
 // Check existence
-const exists = await Vexora.exists("POSTGREE_DB_AUTH", "users", "email = ?", ["test@email.com"]);
+const exists = await Vexora.exists("users", "email = ?", ["test@email.com"]);
 
 // Count elements
 const total = await Vexora.count("users", "status = ?", ["active"]);
@@ -385,7 +447,38 @@ const total = await Vexora.count("users", "status = ?", ["active"]);
 const balance = await Vexora.fetchColumn("SELECT balance FROM users WHERE id = ?", [1]);
 ```
 
-### 4. Advanced Pagination
+---
+
+### 4. Database & Table Creation (CreateTable)
+
+To create tables in your database, run a raw `CREATE TABLE` query using `Vexora.execute()`. 
+
+#### 🏗️ Creating a Table Example
+```javascript
+// Define SQL schema
+const createTableSql = `
+    CREATE TABLE IF NOT EXISTS projects (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        public_id VARCHAR(255) NULL,
+        user_id INT NULL,
+        name VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+// Run table creation on the default database connection
+await Vexora.execute(createTableSql);
+
+// Or run table creation on a specific connection key (e.g., "auth")
+await Vexora.execute("auth", createTableSql);
+```
+
+> [!TIP]
+> For all database setups, configuration, connection pooling, and multi-database setups, please refer directly to the main [Database & CRUD Section](#database).
+
+
+### 5. Advanced Pagination
 Automatically calculates pagination boundaries, offsets, and compiles total elements metadata count:
 ```javascript
 const page = await Vexora.paginate(
@@ -401,7 +494,7 @@ console.log(page.total_pages);   // Total pages count
 console.log(page.has_next);      // true / false
 ```
 
-### 5. Nested Savepoint Transactions
+### 6. Nested Savepoint Transactions
 Vexora manages nested savepoint levels (`SAVEPOINT trans{level}`) automatically:
 ```javascript
 await Vexora.begin(); // Level 1 transaction

@@ -15,7 +15,7 @@ export async function run() {
     Config.set("SERVER_CLUSTER", "false");
     Config.set("AUTO_BLOCK_DURATION", "2");
     Config.set("DETECT_BOT_BEHAVIOR", "true");
-    Config.set("BOT_MIN_JITTER", "15");
+    Config.set("BOT_MIN_JITTER", "50");
     Config.set("MAX_CONSECUTIVE_404S", "3");
 
     // Clear caches
