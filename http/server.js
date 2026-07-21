@@ -1430,7 +1430,7 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
             ⚡ VEXORA<span>ENGINE</span>
         </div>
         <div>
-            Vexora v${version} • Powered by Hostinger template style
+            Vexora v${version}
         </div>
         <div>
             &copy; 2026 Satyam Kumar. All rights reserved.
