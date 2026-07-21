@@ -13,7 +13,6 @@
     }
   },
   "scripts": {
-    "build": "rollup -c",
     "start": "node test.js",
     "dev": "node --watch test.js",
     "test": "node test/run.js"
@@ -48,12 +47,5 @@
   "dependencies": {
     "mysql2": "^3.23.1",
     "pg": "^8.22.0"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^29.0.3",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "rollup": "^4.62.2",
-    "rollup-obfuscator": "^4.1.1",
-    "rollup-plugin-javascript-obfuscator": "^1.0.4"
   }
 }
