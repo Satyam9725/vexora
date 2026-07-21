@@ -333,23 +333,14 @@ Vexora.protect("browser"); // Or Vexora.protect("url");
 Vexora provides raw query utilities to fetch data from the database.
 
 #### 🔍 Fetching a Single Row (`Vexora.fetch`)
-Returns the first matching row as an object, or `null` if no records are found.
+Returns the first matching row as an object, or `null` if no records are found. Pass the connection key (e.g., `"auth"`) as the first argument:
 ```javascript
-// A. Using default connection
-const user = await Vexora.fetch("SELECT * FROM users WHERE email = ? LIMIT 1", ["john@example.com"]);
-console.log(user?.username); // "john_doe"
-
-// B. Using a specific database connection key (e.g., "auth")
 const project = await Vexora.fetch("auth", "SELECT * FROM projects WHERE id = ?", [1]);
 ```
 
 #### 🗃️ Fetching All Rows (`Vexora.fetchAll`)
 Returns an array containing all matched rows. If no rows match, it returns an empty array `[]`.
 ```javascript
-// A. Using default connection
-const activeUsers = await Vexora.fetchAll("SELECT * FROM users WHERE status = ?", ["active"]);
-
-// B. Using a specific database connection key (e.g., "auth")
 const allProjects = await Vexora.fetchAll("auth", "SELECT * FROM projects");
 ```
 
@@ -357,7 +348,7 @@ const allProjects = await Vexora.fetchAll("auth", "SELECT * FROM projects");
 - Use `Vexora.query` for fetching rows with raw queries.
 - Use `Vexora.execute` for running DDL statements (like creating tables) or non-select queries.
 ```javascript
-const rows = await Vexora.query("SELECT * FROM users");
+const rows = await Vexora.query("auth", "SELECT * FROM users");
 ```
 
 ---
@@ -369,13 +360,6 @@ Table and column identifiers are auto-sanitized and quoted matching engine schem
 #### 📥 Insert Data (`Vexora.insert`)
 Inserts a new record into the specified table. Returns the auto-increment primary key ID.
 ```javascript
-// Insert row using default connection
-const userId = await Vexora.insert("users", {
-    email: "john@example.com",
-    username: "john_doe",
-    status: "active"
-});
-
 // Insert row using a specific database connection key (e.g., "auth")
 const projectId = await Vexora.insert("auth", "projects", {
     name: "My SaaS Application",
@@ -386,24 +370,19 @@ const projectId = await Vexora.insert("auth", "projects", {
 #### ✏️ Update Data (`Vexora.update`)
 Updates records in the database matching a `where` condition. Returns the count of affected rows.
 ```javascript
-// Update using default connection
-const affectedRows = await Vexora.update(
-    "users", 
-    { status: "suspended" }, 
-    "id = ?", 
-    [userId]
-);
-
 // Update using a specific database connection key (e.g., "auth")
-await Vexora.update("auth", "projects", { status: "completed" }, "id = ?", [projectId]);
+const affectedRows = await Vexora.update(
+    "auth",
+    "projects", 
+    { status: "completed" }, 
+    "id = ?", 
+    [projectId]
+);
 ```
 
 #### 🗑️ Delete Data (`Vexora.delete`)
 Deletes records matching a `where` condition.
 ```javascript
-// Delete using default connection
-await Vexora.delete("users", "id = ?", [userId]);
-
 // Delete using a specific database connection key (e.g., "auth")
 await Vexora.delete("auth", "projects", "id = ?", [projectId]);
 ```
@@ -412,14 +391,14 @@ await Vexora.delete("auth", "projects", "id = ?", [projectId]);
 
 ### 3. Exists, Counts & Column Grabs
 ```javascript
-// Check existence
-const exists = await Vexora.exists("users", "email = ?", ["test@email.com"]);
+// Check existence (using connection key "auth")
+const exists = await Vexora.exists("auth", "users", "email = ?", ["test@email.com"]);
 
-// Count elements
-const total = await Vexora.count("users", "status = ?", ["active"]);
+// Count elements (using connection key "auth")
+const total = await Vexora.count("auth", "users", "status = ?", ["active"]);
 
-// Fetch a single column value directly
-const balance = await Vexora.fetchColumn("SELECT balance FROM users WHERE id = ?", [1]);
+// Fetch a single column value directly (using connection key "auth")
+const balance = await Vexora.fetchColumn("auth", "SELECT balance FROM users WHERE id = ?", [1]);
 ```
 
 ---
@@ -442,10 +421,7 @@ const createTableSql = `
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 
-// Run table creation on the default database connection
-await Vexora.execute(createTableSql);
-
-// Or run table creation on a specific connection key (e.g., "auth")
+// Run table creation on a specific connection key (e.g., "auth")
 await Vexora.execute("auth", createTableSql);
 ```
 
@@ -457,6 +433,7 @@ await Vexora.execute("auth", createTableSql);
 Automatically calculates pagination boundaries, offsets, and compiles total elements metadata count:
 ```javascript
 const page = await Vexora.paginate(
+    "auth",
     "SELECT * FROM users WHERE status = ?",
     ["active"],
     1,   // Page number
@@ -472,21 +449,21 @@ console.log(page.has_next);      // true / false
 ### 6. Nested Savepoint Transactions
 Vexora manages nested savepoint levels (`SAVEPOINT trans{level}`) automatically:
 ```javascript
-await Vexora.begin(); // Level 1 transaction
+await Vexora.begin("auth"); // Level 1 transaction
 try {
-    await Vexora.insert("logs", { log_type: "parent" });
+    await Vexora.insert("auth", "logs", { log_type: "parent" });
 
-    await Vexora.begin(); // Level 2 transaction (Savepoint)
+    await Vexora.begin("auth"); // Level 2 transaction (Savepoint)
     try {
-        await Vexora.update("users", { balance: 100 }, "id = ?", [1]);
-        await Vexora.commit(); // Release inner savepoint
+        await Vexora.update("auth", "users", { balance: 100 }, "id = ?", [1]);
+        await Vexora.commit("auth"); // Release inner savepoint
     } catch (innerErr) {
-        await Vexora.rollback(); // Rollback specifically to outer savepoint safely
+        await Vexora.rollback("auth"); // Rollback specifically to outer savepoint safely
     }
 
-    await Vexora.commit(); // Commit all
+    await Vexora.commit("auth"); // Commit all
 } catch (err) {
-    await Vexora.rollback(); // Rollback parent transaction
+    await Vexora.rollback("auth"); // Rollback parent transaction
 }
 ```
 
@@ -495,23 +472,7 @@ try {
 <a id="api-reference"></a>
 ## 🛠️ API Reference
 
-<a id="ram-cache"></a>
-### 💾 RAM Cache (`Vexora.Redis` / `Vexora.Cache`)
-Sub-microsecond memory store directly in RAM. Zero Redis server installation required!
-```javascript
-// 1. Store value with 60 seconds TTL
-Vexora.Redis.set("user:1001", { name: "Satyam Kumar" }, 60);
 
-// 2. Retrieve cached value
-const user = Vexora.Redis.get("user:1001");
-
-// 3. Atomic Increment & Decrement
-Vexora.Redis.incr("page_views");
-Vexora.Redis.decr("page_views");
-
-// 4. Check remaining TTL (in seconds)
-const remainingTtl = Vexora.Redis.ttl("user:1001");
-```
 
 ### 🔐 Cryptographic Helpers (`Vexora.Helper`)
 Secure cryptographically-sound hashing and encryption.
@@ -1227,8 +1188,11 @@ const captchaGuard = Vexora.captcha({
     headerName: "x-captcha-token", // Header name to look for in headers (default: 'x-captcha-token')
 });
 
-const server = Vexora.Server(async (req, res) => {
-    // Apply CAPTCHA protection middleware
+// Start Vexora Server
+const app = Vexora.start(3000);
+
+// Apply CAPTCHA protection middleware to a custom route
+app.post("/secure-endpoint", async (req, res) => {
     const blocked = await captchaGuard(req, res);
     if (blocked) return; // Request is automatically rejected with 403 or 422 if invalid
 
@@ -1276,32 +1240,22 @@ Vexora.Queue.define("send-welcome-email", async (data) => {
     console.log(`[Queue Worker] Welcome email successfully sent to: ${data.email}`);
 });
 
-// B. Initialize the Server and Dispatch from Route
-const server = Vexora.Server(async (req, res) => {
-    
-    // API endpoint for User Registration
-    if (req.method === "POST" && req.path === "/register") {
-        const userEmail = req.body.email;
+// B. Start Vexora Server (Auto-connects API controllers)
+const app = Vexora.start(3000);
 
-        // Dispatch email sending task to background queue with options (delay: 0, retry attempts: 3)
-        await Vexora.Queue.dispatch("send-welcome-email", {
-            email: userEmail
-        }, {
-            attempts: 3 // Retry up to 3 times if the job fails
-        });
+// C. Dispatch background job from POST route
+app.post("/register", async (req, res) => {
+    const userEmail = req.input("email");
 
-        // Respond immediately (user doesn't have to wait for the email process)
-        return res.success(null, "Registration successful! Welcome email queued.");
-    }
-    
-    // Base Fallback Route
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" }, "Welcome to Vexora!");
-    }
-});
+    // Dispatch email sending task to background queue with options (retry attempts: 3)
+    await Vexora.Queue.dispatch("send-welcome-email", {
+        email: userEmail
+    }, {
+        attempts: 3 // Retry up to 3 times if the job fails
+    });
 
-server.listen(3000, () => {
-    console.log("🚀 Server running at http://localhost:3000");
+    // Respond immediately (user doesn't have to wait for the email process)
+    return res.success(null, "Registration successful! Welcome email queued.");
 });
 ```
 
@@ -1328,7 +1282,7 @@ To use Vexora's built-in Scheduler in your application:
 2. **Choose Pattern Style**:
    * Pass a **number string** (like `"1"` or `"10"`) to run a task continuously every X seconds.
    * Pass a standard **5-field cron pattern** (like `0 0 * * *`) to run at a specific clock time.
-3. **Run Server**: The scheduler loop starts automatically when `Vexora.Server()` is initialized.
+3. **Run Server**: The scheduler loop starts automatically when Vexora is started via `Vexora.start()`.
 
 Here is a complete, copy-pasteable example of registering tasks (Click to expand):
 
@@ -1352,15 +1306,11 @@ Vexora.Schedule("0 0 * * *", async () => {
     console.log("[Scheduler] ✅ Cleanup complete.");
 });
 
-// C. Initialize and run Vexora Server
-const server = Vexora.Server(async (req, res) => {
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" }, "Vexora Scheduler Active");
-    }
-});
+// C. Start Vexora Server (Auto-connects API controllers)
+const app = Vexora.start(3000);
 
-server.listen(3000, () => {
-    console.log("🚀 Server running at http://localhost:3000");
+app.get("/", (req, res) => {
+    return res.success({ hello: "world" }, "Vexora Scheduler Active");
 });
 ```
 
@@ -1478,16 +1428,16 @@ console.log("Upload Token:", tokenObj.token);
 ```javascript
 import Vexora from "vexora";
 
-const server = Vexora.Server(async (req, res) => {
-    if (req.method === "POST" && req.path === "/upload") {
-        // Option A: Encrypted Upload (AES-256-CBC)
-        const encResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: true });
-        
-        // Option B: Normal (Unencrypted) Upload
-        const normalResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: false });
+const app = Vexora.start(3000);
 
-        return res.json(encResult);
-    }
+app.post("/upload", async (req, res) => {
+    // Option A: Encrypted Upload (AES-256-CBC)
+    const encResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: true });
+    
+    // Option B: Normal (Unencrypted) Upload
+    const normalResult = await Vexora.Storage.handle(req, req.file, null, { encrypt: false });
+
+    return res.json(encResult);
 });
 ```
 
