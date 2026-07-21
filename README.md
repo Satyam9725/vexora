@@ -128,10 +128,10 @@ app.Vexora(post, "/submit", (req, res) => {
 ```
 
 > [!NOTE]
-> **Routing Precedence Rules (प्राथमिकता नियम):**
-> 1. **Static Files (`public/`)**: Highest Precedence (सबसे पहले एक्सेस होगा). यदि `/` पाथ पर `public/index.html` फ़ाइल मौजूद है, तो वह पहले लोड होगी.
-> 2. **API Controllers (`.Vexora_Api/`)**: Second Precedence (दूसरा स्थान).
-> 3. **Custom Routes (`app.Vexora`)**: Lowest Precedence (सबसे अंत में फॉलबैक के रूप में).
+> **Routing Precedence Rules:**
+> 1. **Static Files (`public/`)**: Highest Precedence. If a file like `public/index.html` exists at the `/` path, it will be loaded first.
+> 2. **API Controllers (`.Vexora_Api/`)**: Second Precedence.
+> 3. **Custom Routes (`app.Vexora`)**: Lowest Precedence (served as fallback).
 
 ---
 
@@ -251,8 +251,8 @@ authRouter.post('/login', 'login');          // Maps POST /auth/login -> auth/lo
 // B. Match multiple HTTP verbs
 authRouter.match(['GET', 'POST'], '/register', 'register'); // Maps to auth/register.js
 
-// C. Dynamic Parameters Mapping
-authRouter.get('/users/:id', 'view_user');   // Maps GET /auth/users/:id -> auth/view_user.js
+// C. Query Parameters Mapping (Highly recommended for flexibility)
+authRouter.get('/users', 'view_user');   // Maps GET /auth/users -> auth/view_user.js (Access via /auth/users?id=42)
 
 // D. Catch-all routing handler
 authRouter.any('/:any', (req, res) => {
@@ -268,8 +268,8 @@ Controller actions are zero-boilerplate, sandboxed script files. Crucial variabl
 ```javascript
 // auth/view_user.js - NO imports needed!
 
-// Access dynamic parameters mapped from URL (/auth/users/:id)
-const userId = params.id; 
+// Access query parameters from URL (e.g., /auth/users?id=42)
+const userId = req.query.id; // Recommended: Query parameters are highly flexible
 
 // Run queries on the configured database pool
 const user = await Vexora.fetch("SELECT * FROM users WHERE id = ? LIMIT 1", [userId]);
@@ -281,40 +281,14 @@ if (!user) {
 }
 ```
 
-### 3. Route Protection & Guards
-To restrict access to specific route paths (e.g., admin panels or profile pages), you can write middleware-style route guards inside the main HTTP server callback:
+> [!TIP]
+> **Why Query Parameters (`?id=value`) are Recommended:**
+> Using query strings (e.g., `?id=42&sort=desc`) is the recommended way to pass dynamic parameters in REST APIs because:
+> 1. **High Flexibility**: You can pass any number of parameters (filtering, sorting, searching, paging) dynamically without needing to alter your route paths.
+> 2. **Scalability**: Your route mapping stays clean and static (like `/users` or `/products`), avoiding complex regex matching overhead.
+> *Note: Vexora also supports path-based parameters (`/users/:id` mapped to `params.id`) out of the box if your design demands strict URL hierarchies.*
 
-```javascript
-const server = Vexora.Server(async (req, res) => {
-    // 1. Secure Route Guard: Protect all "/admin/*" routes
-    if (req.path.startsWith("/admin")) {
-        const token = req.headers["authorization"];
-        if (!token) {
-            return res.status(401).json({ status: false, message: "Authorization Token Required" });
-        }
-        
-        // Decrypt and verify token via TokenVault
-        const verify = Vexora.TokenVault.unseal(token, "userKeySecret", "auth");
-        if (!verify.status) {
-            return res.status(403).json({ status: false, message: "Invalid or Expired Token" });
-        }
-        
-        // Inject user identity into request parameters for the controller
-        req.user = verify.payload; 
-    }
-
-    // 2. Fallback to API routing
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
-
-    // 3. Fallback Route
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" });
-    }
-});
-```
-
-### 4. Global Server Lockdown (`Vexora.protect`)
+### 3. Global Server Lockdown (`Vexora.protect`)
 To trigger an emergency lockdown or maintenance mode globally, Vexora supports two protection options:
 
 #### A. Full Lockdown (Blocks Absolutely Everything)
@@ -336,15 +310,7 @@ Vexora.protect("browser"); // Or Vexora.protect("url");
 <a id="database"></a>
 ## 🗄️ Multi-Connection Database Routing & CRUD
 
-Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/config` using URL connection syntax:
-
-```ini
-# Default MySQL Database
-MYSQL_DB_URL=mysql://db_user:password@localhost:3306/primary_db
-
-# PostgreSQL Auth Connection Key
-POSTGREE_DB_AUTH=postgres://auth_user:pass123@localhost:5432/auth_db
-```
+Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/config` using URL connection syntax (for example: `MYSQL_DB_URL=mysql://db_user:password@localhost:3306/primary_db`).
 
 To switch database pools, pass the configuration key (or simple aliases like `"auth"`, `"user"`) as the first parameter. If omitted, Vexora routes the query to `MYSQL_DB_URL` by default.
 
@@ -1281,7 +1247,7 @@ QUEUE_POLL_INTERVAL=1000
 #### 2. Defining and Dispatching Jobs (Practical Example)
 To use Vexora's Queue system, define a background job handler first, and then dispatch jobs to it from your route callbacks or controllers.
 
-Below is a complete, copy-pasteable example of using background jobs to send welcome emails immediately after registering a user, keeping the API response time instant (Click to expand / देखने के लिए क्लिक करें):
+Below is a complete, copy-pasteable example of using background jobs to send welcome emails immediately after registering a user, keeping the API response time instant (Click to expand):
 
 ```javascript
 import Vexora from "vexora";
@@ -1350,7 +1316,7 @@ To use Vexora's built-in Scheduler in your application:
    * Pass a standard **5-field cron pattern** (like `0 0 * * *`) to run at a specific clock time.
 3. **Run Server**: The scheduler loop starts automatically when `Vexora.Server()` is initialized.
 
-Here is a complete, copy-pasteable example of registering tasks (Click to expand / देखने के लिए क्लिक करें):
+Here is a complete, copy-pasteable example of registering tasks (Click to expand):
 
 ```javascript
 import Vexora from "vexora";
