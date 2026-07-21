@@ -32,6 +32,7 @@
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
+- [Absolute Imports & Named Exports](#absolute-imports)
 
 #### Core Systems
 - [API Routing](#api-routing)
