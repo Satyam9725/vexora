@@ -1340,21 +1340,25 @@ const app = Vexora.start(3000);
 
 ### Cron Expression Reference
 
-| Expression | Schedule |
-|:-----------|:---------|
-| `*/5 * * * *` | Every 5 minutes |
-| `0 * * * *` | Every hour at :00 |
-| `0 0 * * *` | Daily at midnight |
-| `0 12 * * *` | Daily at noon |
-| `0 0,12 * * *` | Twice daily (midnight & noon) |
-| `0 0 * * 0` | Weekly on Sunday at midnight |
-| `0 9 * * 1` | Weekly on Monday at 9:00 AM |
-| `0 0 1 * *` | Monthly on the 1st at midnight |
-| `0 0 1 1 *` | Yearly on Jan 1st at midnight |
-| `* * * * *` | Every minute |
-| `"1"` | Every 1 second (interval) |
-| `"60"` | Every 60 seconds (interval) |
-| `"300"` | Every 300 seconds (interval) |
+| Expression | Schedule | Details & Examples |
+|:-----------|:---------|:-------------------|
+| `* * * * *` | Every minute | Runs every 60 seconds continuously |
+| `*/5 * * * *` | Every 5 minutes | `00:05`, `00:10`, `00:15` etc. |
+| `0 * * * *` | Every hour | Exact start of every hour (`01:00`, `02:00`) |
+| `0 0 * * *` | Daily at midnight | Runs exactly at `12:00 AM` every day |
+| `0 12 * * *` | Daily at noon | Runs exactly at `12:00 PM` every day |
+| `0 8 * * *` | Daily at 8:00 AM | Good for sending morning digest emails |
+| `30 18 * * *` | Daily at 6:30 PM | Runs at evening 6:30 PM exactly |
+| `0 0,12 * * *` | Twice a day | Runs at Midnight (`12:00 AM`) and Noon (`12:00 PM`) |
+| `0 0 * * 0` | Every Sunday | Weekly task, runs Sunday at `12:00 AM` |
+| `0 9 * * 1` | Every Monday morning | Weekly task, runs Monday at `9:00 AM` |
+| `0 0 1 * *` | 1st of every month | Monthly task, runs exactly on the 1st day |
+| `0 15 15 * *` | 15th of every month | Runs on the 15th of the month at `3:00 PM` |
+| `0 0 1 1 *` | 1st January | Yearly task, runs on Jan 1st at `12:00 AM` |
+| `0 0 1 6 *` | 1st June | Yearly task, runs on June 1st at `12:00 AM` |
+| `"1"` | Every 1 second | Custom Interval in Seconds (Non-cron syntax) |
+| `"60"` | Every 60 seconds | Custom Interval in Seconds (Non-cron syntax) |
+| `"3600"` | Every 1 hour | Custom Interval in Seconds (Non-cron syntax) |
 
 ### Managing the Scheduler
 
