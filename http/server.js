@@ -460,20 +460,24 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vexora Engine - Server is Ready</title>
+    <title>Website is Ready - Vexora Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f8fafc;
+            --bg: #f5f6fa;
             --surface: #ffffff;
-            --primary: #4f46e5;
-            --primary-hover: #3730a3;
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --border: #e2e8f0;
-            --success: #059669;
+            --primary: #673ab7;
+            --primary-hover: #512da8;
+            --primary-light: rgba(103, 58, 183, 0.08);
+            --text-main: #1e2022;
+            --text-muted: #677788;
+            --border: #e7eaf3;
+            --success: #00c9db;
+            --success-bg: rgba(0, 201, 219, 0.1);
+            --danger: #de4437;
+            --danger-bg: rgba(222, 68, 55, 0.1);
         }
 
         * {
@@ -486,229 +490,243 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
-            line-height: 1.5;
-            padding: 40px 20px;
+            line-height: 1.6;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Header Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .navbar-brand span {
+            color: #2f2f2f;
+        }
+
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-text-mobile {
+            display: none;
+        }
+
+        .nav-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            box-shadow: 0 0 6px var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        /* Main Container */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px 20px;
         }
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 35px;
         }
 
-        header {
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(103, 58, 183, 0.05);
+            width: 100%;
+            padding: 40px;
             text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
         }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(5, 150, 105, 0.1);
-            color: var(--success);
-            padding: 6px 16px;
-            border-radius: 9999px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border: 1px solid rgba(5, 150, 105, 0.2);
-            margin-bottom: 15px;
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #673ab7, #00c9db);
         }
 
-        .badge .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--success);
-            box-shadow: 0 0 6px rgba(5, 150, 105, 0.5);
+        .rocket-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.25rem;
             font-weight: 800;
-            letter-spacing: -0.025em;
-            margin-bottom: 15px;
-            color: #0f172a;
+            color: #1e2022;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            font-size: 1.15rem;
             color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .directory-status {
-            display: flex;
-            gap: 20px;
+            font-size: 1.05rem;
             margin-bottom: 30px;
+            max-width: 580px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .dir-card {
-            flex: 1;
-            background: var(--surface);
+        /* Status Panels */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .status-item {
+            background-color: #fafbfe;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        .dir-info h3 {
-            font-size: 1rem;
+        .status-name {
             font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 4px;
+            font-size: 0.9rem;
+            color: #2f3e46;
         }
 
-        .dir-info p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .status-indicator {
-            font-size: 0.85rem;
+        .status-badge {
+            font-size: 0.75rem;
             font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 6px;
+            padding: 4px 10px;
+            border-radius: 5px;
             text-transform: uppercase;
         }
 
         .status-active {
-            background: rgba(16, 185, 129, 0.15);
-            color: #047857;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background-color: var(--success-bg);
+            color: #00a5b5;
         }
 
         .status-missing {
-            background: rgba(239, 68, 68, 0.15);
-            color: #b91c1c;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background-color: var(--danger-bg);
+            color: #bd2d1e;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
+        /* Next Steps Box */
+        .instruction-box {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .grid-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .grid-card h2 {
-            font-size: 1.25rem;
+        .instruction-box h3 {
+            font-size: 0.95rem;
             font-weight: 700;
+            color: #38bdf8;
             margin-bottom: 10px;
-            color: #0f172a;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .grid-card p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        .comparison-section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .comparison-section h2 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--text-main);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 8px;
-            display: inline-block;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background-color: rgba(99, 102, 241, 0.05);
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        tr:hover {
-            background-color: rgba(0,0,0,0.01);
-        }
-
-        td code {
+        .instruction-box code {
             font-family: 'Fira Code', monospace;
-            background: #f1f5f9;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: block;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
-        .banner {
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 16px;
-            padding: 35px;
-            text-align: center;
-            margin-bottom: 40px;
+        .instruction-box .comment {
+            color: #64748b;
         }
 
-        .banner h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #0f172a;
+        .instruction-box .command {
+            color: #f43f5e;
         }
 
-        .banner p {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-bottom: 20px;
-        }
-
+        /* Buttons */
         .btn-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            max-width: 540px;
+            margin: 0 auto 30px auto;
+        }
+
+        .btn-group a:first-child {
+            grid-column: span 2;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 12px 30px;
+            padding: 12px 24px;
             border-radius: 8px;
             font-weight: 600;
             font-size: 0.95rem;
@@ -721,303 +739,703 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
         .btn-primary {
             background-color: var(--primary);
             color: #ffffff;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            box-shadow: 0 4px 12px rgba(103, 58, 183, 0.2);
         }
 
         .btn-primary:hover {
             background-color: var(--primary-hover);
-            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 6px 16px rgba(103, 58, 183, 0.3);
+            transform: translateY(-1px);
         }
 
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background-color: #fafafa;
+            border-color: #cbd5e0;
+        }
+
+        .btn-youtube {
+            background-color: #ff4757;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+        }
+
+        .btn-youtube:hover {
+            background-color: #ff2e44;
+            box-shadow: 0 6px 16px rgba(255, 71, 87, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-dev {
+            background-color: #05c46b;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(5, 196, 107, 0.2);
+        }
+
+        .btn-dev:hover {
+            background-color: #04a95c;
+            box-shadow: 0 6px 16px rgba(5, 196, 107, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Comparison Tables Section */
+        .tables-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .comparison-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(103, 58, 183, 0.03);
+            padding: 30px;
+        }
+
+        .comparison-card h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1e2022;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid var(--primary);
+            padding-left: 12px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #fafbfe;
+            color: #2f3e46;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(103, 58, 183, 0.01);
+        }
+
+        .vexora-col {
+            background-color: rgba(103, 58, 183, 0.015);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .star-rating {
+            color: #ff9800;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .text-success-custom {
+            color: #00a5b5;
+            font-weight: 600;
+        }
+
+        .text-danger-custom {
+            color: #de4437;
+            font-weight: 500;
+        }
+
+        .badge-framework {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-express {
+            background-color: #f1f3f5;
+            color: #495057;
+        }
+        .badge-fastify {
+            background-color: #e8f4fd;
+            color: #1d88e5;
+        }
+        .badge-vexora {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Footer */
         footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 1000;
+            background-color: #1e2022;
+            color: #a9b4c0;
+            padding: 20px 40px;
             text-align: center;
             font-size: 0.85rem;
+            border-top: 1px solid #2d3238;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .footer-logo span {
+            color: var(--primary);
+        }
+
+        /* Responsive layout rules */
+        .comparison-cards-mobile {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .feature-mobile-card {
+            background-color: #fafbfe;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feature-mobile-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e2022;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .framework-val {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
-            width: 100%;
+            gap: 10px;
+        }
+
+        .framework-val > span {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .framework-val.vexora-val {
+            background-color: var(--primary-light);
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: var(--primary);
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
-            .directory-status {
-                flex-direction: column;
-                gap: 15px;
+            .navbar {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 15px;
             }
-            .grid {
+            .star-rating {
+                font-size: 0.75rem;
+                letter-spacing: -1.2px;
+            }
+            .badge-framework {
+                padding: 3px 6px;
+                font-size: 0.7rem;
+            }
+            .framework-val {
+                gap: 6px;
+            }
+            .brand-sub-desktop {
+                display: none;
+            }
+            .status-text-desktop {
+                display: none;
+            }
+            .status-text-mobile {
+                display: inline;
+            }
+            .navbar-brand {
+                font-size: 1.05rem;
+            }
+            .nav-status {
+                width: auto;
+                justify-content: center;
+                font-size: 0.72rem;
+                padding: 4px 8px;
+            }
+            .card {
+                padding: 30px 20px;
+            }
+            .status-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 10px;
             }
-            h1 {
-                font-size: 2rem;
+            .btn-group {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 25px;
             }
-            body {
-                padding: 20px 10px;
+            .btn {
+                padding: 10px 8px;
+                font-size: 0.8rem;
+                justify-content: center;
+                gap: 4px;
+            }
+            .comparison-card {
+                padding: 20px 15px;
+            }
+            .table-responsive {
+                display: none;
+            }
+            .comparison-cards-mobile {
+                display: flex;
+            }
+            footer {
+                flex-direction: column;
+                gap: 6px;
+                padding: 12px;
+                font-size: 0.75rem;
+            }
+            .footer-logo {
+                font-size: 0.85rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="badge">
-                <div class="dot"></div>
-                <span>Vexora Server is Ready (v${version})</span>
-            </div>
-            <h1>Vexora Engine Ready</h1>
-            <p class="subtitle">
-                Your high-performance microservices environment is successfully configured and listening for connections.
-            </p>
-            <div style="margin-top: 20px;">
-                <a href="https://github.com/Satyam9725/vexora" class="btn btn-primary" target="_blank">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                    </svg>
-                    View GitHub Docs
-                </a>
-            </div>
-        </header>
+    <!-- Top Header -->
+    <header class="navbar">
+        <a href="/" class="navbar-brand">
+            ⚡ VEXORA <span class="brand-sub-desktop">ENGINE</span>
+        </a>
+        <div class="nav-status">
+            <span class="dot"></span>
+            <span class="status-text-desktop">Vexora Server is Ready</span>
+            <span class="status-text-mobile">Server Ready</span>
+        </div>
+    </header>
 
-        <div class="directory-status">
-            <div class="dir-card">
-                <div class="dir-info">
-                    <h3>📁 public/ directory</h3>
-                    <p>For static web files (HTML, CSS, JS, Images)</p>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Hero Card -->
+            <div class="card">
+                <span class="rocket-icon">🚀</span>
+                <h1>Your Website is Ready!</h1>
+                <p class="subtitle">
+                    The high-performance microservices environment is successfully configured and active. Start hosting your content by creating static pages.
+                </p>
+
+                <!-- Action buttons -->
+                <div class="btn-group">
+                    <a href="https://github.com/Satyam9725/vexora" class="btn btn-primary" target="_blank">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                        </svg>
+                        View Documentation
+                    </a>
+                    <a href="https://youtube.com/@vexora-engine" class="btn btn-youtube" target="_blank">
+                        🎥 Learn on YouTube
+                    </a>
+                    <a href="mailto:satyam9725.work@gmail.com?subject=Inquiry%20for%20Web%20Development" class="btn btn-dev">
+                        💼 Hire Web Developer
+                    </a>
                 </div>
-                <span class="status-indicator ${publicStatus}">${publicText}</span>
-            </div>
-            <div class="dir-card">
-                <div class="dir-info">
-                    <h3>⚙️ .Vexora_Api directory</h3>
-                    <p>For zero-boilerplate API controllers</p>
+
+                <!-- Status Indicators -->
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-name">📁 public/ folder</span>
+                        <span class="status-badge ${publicStatus}">${publicText}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-name">⚙️ .Vexora_Api/ folder</span>
+                        <span class="status-badge ${apiStatus}">${apiText}</span>
+                    </div>
                 </div>
-                <span class="status-indicator ${apiStatus}">${apiText}</span>
+
+                <!-- Quick Guide -->
+                <div class="instruction-box">
+                    <h3>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        How to serve your static pages?
+                    </h3>
+                    <code>
+                        <span class="comment"># 1. Create a public folder at your project root</span><br>
+                        <span class="command">mkdir</span> public<br><br>
+                        <span class="comment"># 2. Create index.html inside the public folder</span><br>
+                        <span class="comment"># and add your HTML code (e.g. &lt;h1&gt;Welcome to My Website&lt;/h1&gt;)</span>
+                    </code>
+                </div>
+            </div>
+
+            <!-- Comparison Tables Section -->
+            <div class="tables-section">
+                <!-- 1. Core Features & Performance -->
+                <div class="comparison-card">
+                    <h2>⚡ Core Features & Performance</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature / Criteria</th>
+                                    <th><span class="badge-framework badge-express">Express.js 🐢</span></th>
+                                    <th><span class="badge-framework badge-fastify">Fastify ⚡</span></th>
+                                    <th><span class="badge-framework badge-vexora">Vexora (This) 🚀</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Performance / Speed</strong></td>
+                                    <td>Low-Medium (~15,000 req/sec)</td>
+                                    <td>High (~60,000 req/sec)</td>
+                                    <td class="vexora-col">✨ Ultra-High (~90,000 req/sec)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dependency Size</strong></td>
+                                    <td>Heavy (Dozens of dependencies)</td>
+                                    <td>Medium (Several dependencies)</td>
+                                    <td class="vexora-col">Zero-Dependency Core</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Request Context</strong></td>
+                                    <td>Requires parameter drilling</td>
+                                    <td>Requires parameter drilling</td>
+                                    <td class="vexora-col">Thread-Safe Global Context</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Real-time WebSockets</strong></td>
+                                    <td>Requires third-party packages</td>
+                                    <td>Requires plugin</td>
+                                    <td class="vexora-col">Native WebSockets Server</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Database Routing</strong></td>
+                                    <td>None (Requires external ORM)</td>
+                                    <td>None (Requires plugins)</td>
+                                    <td class="vexora-col">Built-in Multi-Connection Pool</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Security Defaults</strong></td>
+                                    <td>Barebones (Manual setup)</td>
+                                    <td>Medium (Plugins needed)</td>
+                                    <td class="vexora-col">Hardened by Default</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Error Logging</strong></td>
+                                    <td>Exposes full stack traces</td>
+                                    <td>Standard logging</td>
+                                    <td class="vexora-col">Silent Masked Logging</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards Layout -->
+                    <div class="comparison-cards-mobile">
+                        <div class="feature-mobile-card">
+                            <h4>Performance / Speed</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Low-Medium (~15K/s)</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>High (~60K/s)</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>✨ Ultra-High (~90K/s)</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Dependency Size</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Heavy</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>Medium</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Zero-Dependency</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Request Context</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Param drilling</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>Param drilling</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Thread-Safe Global</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Real-time WebSockets</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Needs packages</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>Needs plugin</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Native Server</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Database Routing</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>None (Needs ORM)</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>None (Needs plugin)</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Built-in Pool</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Security Defaults</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Barebones</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>Medium (Needs plugins)</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Hardened by Default</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Error Logging</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span>Exposes stack traces</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span>Standard logging</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span>Silent Masked</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Security Implementations & Star Ratings -->
+                <div class="comparison-card">
+                    <h2>🔒 Security Implementations & Ratings</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Security Checklist</th>
+                                    <th>Express.js 🐢</th>
+                                    <th>Fastify ⚡</th>
+                                    <th>Vexora (This) 🚀</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>CSRF Protection</strong></td>
+                                    <td><span class="star-rating">⭐⭐☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐⭐☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SQL Injection Defense</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Security Headers (Helmet)</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐⭐☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DDoS & Rate Limiting</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐⭐☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Token & Session Hijacking</strong></td>
+                                    <td><span class="star-rating">⭐⭐☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐⭐☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Error Path Leakage</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐⭐⭐☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sensitive Field Masking</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span></td>
+                                    <td><span class="star-rating">⭐⭐☆☆☆</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> (Best)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Overall Security Grade</strong></td>
+                                    <td><strong class="text-danger-custom">C-</strong></td>
+                                    <td><strong style="color: #ff9800;">B</strong></td>
+                                    <td class="vexora-col"><strong style="color: #4caf50; font-size: 1.1rem;">A+ (Hardened)</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards Layout -->
+                    <div class="comparison-cards-mobile">
+                        <div class="feature-mobile-card">
+                            <h4>CSRF Protection</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐⭐☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐⭐☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>SQL Injection Defense</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Security Headers (Helmet)</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐⭐☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>DDoS & Rate Limiting</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐⭐☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Token & Session Hijacking</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐⭐☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐⭐☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Error Path Leakage</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐⭐⭐☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Sensitive Field Masking</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span class="star-rating">⭐☆☆☆☆</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span class="star-rating">⭐⭐☆☆☆</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span class="star-rating">⭐⭐⭐⭐⭐</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Overall Security Grade</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <strong class="text-danger-custom">C-</strong></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <strong style="color: #ff9800;">B</strong></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <strong style="color: #4caf50;">A+</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Exclusive Native Engines -->
+                <div class="comparison-card">
+                    <h2>🚀 Exclusive Native Engines</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Exclusive Feature</th>
+                                    <th>Express.js 🐢</th>
+                                    <th>Fastify ⚡</th>
+                                    <th>Vexora (This) 🚀</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Native SMTP Mail Client</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires package</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires plugin</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> <span class="text-success-custom">✅ Built-in (TCP/TLS)</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Background Queue & Cron</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires packages</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires plugins</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> <span class="text-success-custom">✅ Built-in Daemon</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Route Scanner Shield</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Vulnerable</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Needs custom code</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> <span class="text-success-custom">✅ Built-in Shield</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sub-microsecond RAM Cache</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires Redis</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires Redis</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> <span class="text-success-custom">✅ Built-in MemoryCache</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Encrypted File Storage</strong></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires Multer</span></td>
+                                    <td><span class="star-rating">⭐☆☆☆☆</span> <span class="text-danger-custom">❌ Requires Multipart</span></td>
+                                    <td class="vexora-col"><span class="star-rating">⭐⭐⭐⭐⭐</span> <span class="text-success-custom">✅ Built-in AES-256</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards Layout -->
+                    <div class="comparison-cards-mobile">
+                        <div class="feature-mobile-card">
+                            <h4>Native SMTP Mail Client</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span><span class="star-rating">⭐</span> Requires package</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span><span class="star-rating">⭐</span> Requires plugin</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span><span class="star-rating">⭐⭐⭐⭐⭐</span> Built-in</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Background Queue & Cron</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span><span class="star-rating">⭐</span> Requires packages</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span><span class="star-rating">⭐</span> Requires plugins</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span><span class="star-rating">⭐⭐⭐⭐⭐</span> Built-in</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Route Scanner Shield</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span><span class="star-rating">⭐</span> Vulnerable</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span><span class="star-rating">⭐</span> Needs custom code</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span><span class="star-rating">⭐⭐⭐⭐⭐</span> Built-in</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Sub-microsecond RAM Cache</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span><span class="star-rating">⭐</span> Requires Redis</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span><span class="star-rating">⭐</span> Requires Redis</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span><span class="star-rating">⭐⭐⭐⭐⭐</span> Built-in</span></div>
+                        </div>
+                        <div class="feature-mobile-card">
+                            <h4>Encrypted File Storage</h4>
+                            <div class="framework-val"><span class="badge-framework badge-express">Express.js 🐢</span> <span><span class="star-rating">⭐</span> Requires Multer</span></div>
+                            <div class="framework-val"><span class="badge-framework badge-fastify">Fastify ⚡</span> <span><span class="star-rating">⭐</span> Requires Multipart</span></div>
+                            <div class="framework-val vexora-val"><span class="badge-framework badge-vexora">Vexora 🚀</span> <span><span class="star-rating">⭐⭐⭐⭐⭐</span> Built-in</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </main>
 
-        <div class="grid">
-            <div class="grid-card">
-                <h2>🔌 Zero-Boilerplate Sandbox</h2>
-                <p>Place controller files directly in the <code>.Vexora_Api</code> folder. Script variables like <code>Vexora</code>, <code>req</code>, <code>res</code>, and <code>db</code> are pre-injected automatically for PHP-style rapid execution.</p>
-            </div>
-            <div class="grid-card">
-                <h2>⏳ Hardened Shield</h2>
-                <p>Built-in automatic rate limiting, DDoS protection, bot analysis, Turnstile verification, and secure context-aware request storage via AsyncLocalStorage.</p>
-            </div>
-            <div class="grid-card">
-                <h2>🗄️ Database Multiplexer</h2>
-                <p>Dynamic connection pool mapping supporting MySQL, PostgreSQL, and SQLite. Automatic schema-level sanitization blocks SQL injection seamlessly.</p>
-            </div>
-            <div class="grid-card">
-                <h2>💾 In-Memory Cache</h2>
-                <p>Sub-microsecond key-value storage mapping to MemoryCache or Redis client. Supports TTLs, counters, and RAM limits protection.</p>
-            </div>
-            <div class="grid-card">
-                <h2>✉️ SMTP Mailer & HTTP Client</h2>
-                <p>Built-in secure SMTP mail client and optimized HTTP fetch client for clean outbound communications without adding external npm dependencies.</p>
-            </div>
-            <div class="grid-card">
-                <h2>⏰ Scheduler & Queue Worker</h2>
-                <p>Native Task Scheduler supporting Cron formats and asynchronous Job Queue execution with failover retry loops built directly into the core.</p>
-            </div>
+    <!-- Professional Footer -->
+    <footer>
+        <div class="footer-logo">
+            ⚡ VEXORA<span>ENGINE</span>
         </div>
-
-        <div class="comparison-section">
-            <h2>⚡ Core Features & Performance</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature / Criteria</th>
-                            <th>Express.js 🐢</th>
-                            <th>Fastify ⚡</th>
-                            <th>Vexora (This) 🚀</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Performance / Speed</strong></td>
-                            <td>Low-Medium (~15,000 req/sec)</td>
-                            <td>High (~60,000 req/sec)</td>
-                            <td><strong>Ultra-High (~90,000 req/sec)</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Dependency Size</strong></td>
-                            <td>Heavy (Dozens of dependencies)</td>
-                            <td>Medium (Several dependencies)</td>
-                            <td><strong>Zero-Dependency Core</strong> (Built entirely on Node.js core)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Request Context</strong></td>
-                            <td>Requires parameter drilling (<code>req, res</code>)</td>
-                            <td>Requires parameter drilling</td>
-                            <td><strong>Thread-Safe Global Context</strong> (<code>AsyncLocalStorage</code>)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Real-time WebSockets</strong></td>
-                            <td>Requires third-party packages (<code>socket.io</code>, <code>ws</code>)</td>
-                            <td>Requires <code>@fastify/websocket</code> plugin</td>
-                            <td><strong>Native WebSockets Server</strong> built directly into TCP layer</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Database Routing</strong></td>
-                            <td>None (Requires Prisma, Sequelize, etc.)</td>
-                            <td>None (Requires external plugins/ORMs)</td>
-                            <td><strong>In-built Multi-Connection DB Multiplexer</strong> (MySQL & Postgres)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Security Defaults</strong></td>
-                            <td>Barebones (Needs manual configuration)</td>
-                            <td>Medium (Plugins needed)</td>
-                            <td><strong>Hardened by Default</strong> (CSRF, Rate Limiting, Helmet Headers, CORS)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Error Logging</strong></td>
-                            <td>Exposes full stack traces by default</td>
-                            <td>Standard logging</td>
-                            <td><strong>Silent Masked Logging</strong> (UUIDs for clients, masked sensitive fields)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div>
+            Vexora v${version} • Powered by Hostinger template style
         </div>
-
-        <div class="comparison-section">
-            <h2>🔒 Security Implementations & Star Ratings</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature / Criteria</th>
-                            <th>Express.js 🐢</th>
-                            <th>Fastify ⚡</th>
-                            <th>Vexora (This) 🚀</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>CSRF Protection</strong></td>
-                            <td>⭐⭐☆☆☆<br><small>No default. Third-party packages deprecated</small></td>
-                            <td>⭐⭐⭐☆☆<br><small>No default. Plugin <code>@fastify/csrf</code> is solid</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>Timing-safe verification & token rotation built-in</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>SQL Injection Defense</strong></td>
-                            <td>⭐☆☆☆☆<br><small>No default. Depends entirely on external ORMs</small></td>
-                            <td>⭐☆☆☆☆<br><small>No default. Depends entirely on external ORMs</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>Regex-based quoting and prepared queries built-in</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Security Headers (Helmet)</strong></td>
-                            <td>⭐☆☆☆☆<br><small>No default. Requires separate <code>helmet</code> plugin</small></td>
-                            <td>⭐⭐⭐☆☆<br><small>Basic headers. Requires <code>@fastify/helmet</code></small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>Helmet equivalent headers sent by default</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>DDoS & Rate Limiting</strong></td>
-                            <td>⭐☆☆☆☆<br><small>No default. Easy to crash via spam requests</small></td>
-                            <td>⭐⭐⭐☆☆<br><small>No default. Good external plugin available</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>In-built global Rate Limiter blocks spam IPs</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Token & Session Hijacking</strong></td>
-                            <td>⭐⭐☆☆☆<br><small>Requires manual security setups</small></td>
-                            <td>⭐⭐⭐☆☆<br><small>Needs secure plugins config</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>TokenVault binds tokens to IP, Device, and Session</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Error Path Leakage</strong></td>
-                            <td>⭐☆☆☆☆<br><small>Exposes internal folder paths to client</small></td>
-                            <td>⭐⭐⭐⭐☆<br><small>Can hide paths in production</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>Generates random Error UUID, hides server folder paths</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Sensitive Field Masking</strong></td>
-                            <td>⭐☆☆☆☆<br><small>No default. Logs passwords in plain text</small></td>
-                            <td>⭐⭐☆☆☆<br><small>Needs manual serializers config</small></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(Best)</strong><br><small>Automatically masks passwords/CVVs/tokens in logs</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Overall Security Grade</strong></td>
-                            <td><strong>C- (Vulnerable by default)</strong></td>
-                            <td><strong>B (Safe with plugins)</strong></td>
-                            <td><strong>A+ (Hardened by default)</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div>
+            &copy; 2026 Satyam Kumar. All rights reserved.
         </div>
-
-        <div class="comparison-section">
-            <h2>🚀 Exclusive Native Engines</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Exclusive Feature</th>
-                            <th>Express.js 🐢</th>
-                            <th>Fastify ⚡</th>
-                            <th>Vexora (This) 🚀</th>
-                            <th>Rating</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Native SMTP Mail Client</strong></td>
-                            <td>❌ <small>Requires <code>nodemailer</code></small></td>
-                            <td>❌ <small>Requires external plugin</small></td>
-                            <td>✅ <strong>Built-in (Zero-dep TCP/TLS)</strong></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(10/10)</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Background Queue & Cron Daemon</strong></td>
-                            <td>❌ <small>Requires <code>bull</code> / <code>node-cron</code></small></td>
-                            <td>❌ <small>Requires external plugins</small></td>
-                            <td>✅ <strong>Built-in Queue & Scheduler</strong></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(10/10)</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Bot Jitter & Route Scanner Shield</strong></td>
-                            <td>❌ <small>Vulnerable to bots</small></td>
-                            <td>❌ <small>Requires custom scripts</small></td>
-                            <td>✅ <strong>Built-in Jitter & 404 Guard</strong></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(10/10)</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Sub-microsecond RAM Cache</strong></td>
-                            <td>❌ <small>Requires external Redis</small></td>
-                            <td>❌ <small>Requires external Redis</small></td>
-                            <td>✅ <strong>Built-in RAM Cache (Redis Mock)</strong></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(10/10)</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Encrypted File Storage & Spoof Guard</strong></td>
-                            <td>❌ <small>Requires <code>multer</code> + crypto</small></td>
-                            <td>❌ <small>Requires <code>@fastify/multipart</code></small></td>
-                            <td>✅ <strong>Built-in (AES-256 + Magic Guard)</strong></td>
-                            <td>⭐⭐⭐⭐⭐ <strong>(10/10)</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="banner">
-            <h2>Explore the Documentation</h2>
-            <p>Read the comprehensive documentation on GitHub to configure modular routes, queries, tasks, and shields.</p>
-            <div class="btn-group">
-                <a href="https://github.com/Satyam9725/vexora" class="btn btn-primary" target="_blank">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                    </svg>
-                    View GitHub Docs
-                </a>
-            </div>
-        </div>
-
-        <footer>
-            Vexora Engine v${version} • Created by Satyam Kumar
-        </footer>
-    </div>
+    </footer>
 </body>
 </html>`;
 }

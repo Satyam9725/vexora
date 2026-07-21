@@ -103,79 +103,73 @@ const Server = (callback, options) => {
     const clientIp = Helper.getClientIp(req);
     const publicExists = fs.existsSync(path.join(process.cwd(), "public"));
 
-    if (publicExists) {
-      // 1. Permanent Block Check
-      const blockedIps = getBlockedIpsSet();
-      if (blockedIps.has(clientIp)) {
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: false, message: "Forbidden: Access Denied" }));
-        return;
-      }
+    // Run security shields globally regardless of public folder existence
+    const blockedIps = getBlockedIpsSet();
+    if (blockedIps.has(clientIp)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: false, message: "Forbidden: Access Denied" }));
+      return;
+    }
 
-      // 2. Temporary Cache Block Check
-      if (MemoryCache.has("temp_blocked_ip:" + clientIp)) {
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
-        return;
-      }
+    // 2. Temporary Cache Block Check
+    if (MemoryCache.has("temp_blocked_ip:" + clientIp)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
+      return;
+    }
 
-      // 3. Automated Advanced Behavior Analysis (Bot detection & user regularity)
-      const analysis = BehaviorAnalyzer.analyze(req, clientIp);
-      if (analysis.blocked) {
-        const autoBlockDuration = parseInt(Config.get("AUTO_BLOCK_DURATION")) || 300;
-        MemoryCache.set("temp_blocked_ip:" + clientIp, true, autoBlockDuration);
-        console.warn(`⚠️ Blocked IP ${clientIp} for ${autoBlockDuration}s: ${analysis.reason}`);
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
-        return;
-      }
+    // 3. Automated Advanced Behavior Analysis (Bot detection & user regularity)
+    const analysis = BehaviorAnalyzer.analyze(req, clientIp);
+    if (analysis.blocked) {
+      const autoBlockDuration = parseInt(Config.get("AUTO_BLOCK_DURATION")) || 300;
+      MemoryCache.set("temp_blocked_ip:" + clientIp, true, autoBlockDuration);
+      console.warn(`⚠️ Blocked IP ${clientIp} for ${autoBlockDuration}s: ${analysis.reason}`);
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
+      return;
     }
 
     // Track response status codes (e.g. consecutive 404 route fuzzing)
     res.on("finish", () => {
-      if (publicExists) {
-        BehaviorAnalyzer.trackResponse(clientIp, res.statusCode);
-      }
+      BehaviorAnalyzer.trackResponse(clientIp, res.statusCode);
     });
 
-    if (publicExists) {
-      // 4. Track and Monitor Behavior for Suspicious Activity (rate based)
-      const now = Date.now();
-      const suspiciousWindow = parseInt(Config.get("SUSPICIOUS_WINDOW")) || 60;
-      const suspiciousThreshold = parseInt(Config.get("SUSPICIOUS_THRESHOLD")) || 30;
-      const autoBlockDuration = parseInt(Config.get("AUTO_BLOCK_DURATION")) || 300;
-      const cutoff = now - (suspiciousWindow * 1000);
+    // 4. Track and Monitor Behavior for Suspicious Activity (rate based)
+    const now = Date.now();
+    const suspiciousWindow = parseInt(Config.get("SUSPICIOUS_WINDOW")) || 60;
+    const suspiciousThreshold = parseInt(Config.get("SUSPICIOUS_THRESHOLD")) || 30;
+    const autoBlockDuration = parseInt(Config.get("AUTO_BLOCK_DURATION")) || 300;
+    const cutoff = now - (suspiciousWindow * 1000);
 
-      let record = suspiciousTracker.get(clientIp);
-      if (!record) {
-        record = { timestamps: [], head: 0 };
-        suspiciousTracker.set(clientIp, record);
-      }
+    let record = suspiciousTracker.get(clientIp);
+    if (!record) {
+      record = { timestamps: [], head: 0 };
+      suspiciousTracker.set(clientIp, record);
+    }
 
-      const timestamps = record.timestamps;
-      while (record.head < timestamps.length && timestamps[record.head] <= cutoff) {
-        record.head++;
-      }
+    const timestamps = record.timestamps;
+    while (record.head < timestamps.length && timestamps[record.head] <= cutoff) {
+      record.head++;
+    }
 
-      if (record.head > 32 && record.head > (timestamps.length >> 1)) {
-        record.timestamps = timestamps.slice(record.head);
-        record.head = 0;
-      }
+    if (record.head > 32 && record.head > (timestamps.length >> 1)) {
+      record.timestamps = timestamps.slice(record.head);
+      record.head = 0;
+    }
 
-      timestamps.push(now);
-      const activeCount = timestamps.length - record.head;
+    timestamps.push(now);
+    const activeCount = timestamps.length - record.head;
 
-      if (activeCount > suspiciousThreshold) {
-        // Exceeded threshold -> Temporary Block in Memory Cache (Redis Mock)
-        MemoryCache.set("temp_blocked_ip:" + clientIp, true, autoBlockDuration);
-        suspiciousTracker.delete(clientIp);
+    if (activeCount > suspiciousThreshold) {
+      // Exceeded threshold -> Temporary Block in Memory Cache (Redis Mock)
+      MemoryCache.set("temp_blocked_ip:" + clientIp, true, autoBlockDuration);
+      suspiciousTracker.delete(clientIp);
 
-        console.warn(`⚠️ Suspicious activity detected from IP ${clientIp}: ${activeCount} requests in ${suspiciousWindow}s. Auto-blocking for ${autoBlockDuration}s.`);
+      console.warn(`⚠️ Suspicious activity detected from IP ${clientIp}: ${activeCount} requests in ${suspiciousWindow}s. Auto-blocking for ${autoBlockDuration}s.`);
 
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
-        return;
-      }
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: false, message: "Forbidden: Temporarily blocked due to suspicious activity" }));
+      return;
     }
 
     return callback(req, res);

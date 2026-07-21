@@ -48,7 +48,7 @@ class StaticMiddleware {
      */
     static serve(staticDir = "public", options = {}) {
         const root = path.resolve(process.cwd(), staticDir);
-        const maxAge = options.maxAge !== undefined ? options.maxAge : 86400; // Default 1 day caching
+        const maxAge = options.maxAge !== undefined ? options.maxAge : 0; // Default 0 (no cache / validate every time)
 
         let limiter = null;
         if (options.rateLimit) {
@@ -110,7 +110,7 @@ class StaticMiddleware {
                         const indexStats = await fs.promises.stat(indexHtml);
                         if (indexStats.isFile()) {
                             if (!checkRateLimit()) return true;
-                            return await StaticMiddleware._sendFile(res, indexHtml, indexStats, maxAge);
+                            return await StaticMiddleware._sendFile(res, indexHtml, indexStats, maxAge, req);
                         }
                     } catch {
                         // index.html doesn't exist, skip directory
@@ -120,7 +120,7 @@ class StaticMiddleware {
 
                 if (stats.isFile()) {
                     if (!checkRateLimit()) return true;
-                    return await StaticMiddleware._sendFile(res, targetFile, stats, maxAge);
+                    return await StaticMiddleware._sendFile(res, targetFile, stats, maxAge, req);
                 }
             } catch (err) {
                 // File does not exist, let route controller continue
@@ -130,20 +130,64 @@ class StaticMiddleware {
         };
     }
 
-    static async _sendFile(res, filePath, stats, maxAge) {
+    static async _sendFile(res, filePath, stats, maxAge, req = null) {
         const ext = path.extname(filePath).toLowerCase();
         const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
         const nativeRes = res.res || res;
-        nativeRes.statusCode = 200;
+        const nativeReq = req ? (req.req || req) : null;
+
+        // Generate ETag and Last-Modified headers
+        const etag = `W/"${stats.size.toString(16)}-${stats.mtime.getTime().toString(16)}"`;
+        const lastModified = stats.mtime.toUTCString();
+
         nativeRes.setHeader("Content-Type", contentType);
         nativeRes.setHeader("Content-Length", stats.size);
+        nativeRes.setHeader("ETag", etag);
+        nativeRes.setHeader("Last-Modified", lastModified);
 
         if (maxAge > 0) {
             nativeRes.setHeader("Cache-Control", `public, max-age=${maxAge}`);
         } else {
             nativeRes.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         }
+
+        // Handle conditional requests (304 Not Modified)
+        if (nativeReq && nativeReq.headers) {
+            const ifNoneMatch = nativeReq.headers["if-none-match"];
+            const ifModifiedSince = nativeReq.headers["if-modified-since"];
+            let notModified = false;
+
+            if (ifNoneMatch) {
+                const cleanIfNoneMatch = ifNoneMatch.trim();
+                if (cleanIfNoneMatch === etag || cleanIfNoneMatch === etag.replace(/^W\//, '')) {
+                    notModified = true;
+                }
+            } else if (ifModifiedSince) {
+                try {
+                    const ifModifiedSinceTime = Date.parse(ifModifiedSince);
+                    if (!isNaN(ifModifiedSinceTime) && Math.floor(stats.mtime.getTime() / 1000) <= Math.floor(ifModifiedSinceTime / 1000)) {
+                        notModified = true;
+                    }
+                } catch (e) {
+                    // Ignore date parsing errors
+                }
+            }
+
+            if (notModified) {
+                nativeRes.statusCode = 304;
+                nativeRes.end();
+                return true;
+            }
+        }
+
+        if (nativeReq && nativeReq.method === "HEAD") {
+            nativeRes.statusCode = 200;
+            nativeRes.end();
+            return true;
+        }
+
+        nativeRes.statusCode = 200;
 
         return new Promise((resolve) => {
             const stream = fs.createReadStream(filePath);
