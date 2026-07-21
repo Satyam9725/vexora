@@ -442,6 +442,8 @@ const Vexora = {
   Scheduler: Scheduler,
 };
 
+Object.freeze(Vexora);
+
 export const Nyvora = Vexora;
 globalThis.Nyvora = Vexora;
 export const Zentrox = Vexora;
