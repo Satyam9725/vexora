@@ -1439,3 +1439,4 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
 </body>
 </html>`;
 }
+
