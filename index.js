@@ -1,24 +1,25 @@
 import Vexora from "vexora";
 
-// Create static handler mounting the "public" directory with built-in Rate Limiting
-const serveStatic = Vexora.static("public", "home.html", {
-    maxAge: 86400, // maxAge in seconds
+// 1. Start Vexora Server (Auto-connects API Controllers)
+const app = Vexora.start(30000);
+
+// Enable CORS globally for all requests
+
+
+// 2. Configure static files directory and settings (Required to serve static files)
+app.static("public", "home.html", {
+    maxAge: 86400,
     rateLimit: {
-        maxRequests: 150,      // Static files are rate-limited to 150 requests/min
+        maxRequests: 150,
         windowSeconds: 60
     }
 });
 
-const server = Vexora.Server(async (req, res) => {
-    // 1. Serve static files (checks built-in rate limit automatically)
-    const served = await serveStatic(req, res);
-    if (served) return;
-
-    // 2. Fallback to API routing (automatically checked by global rate limits in config)
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
+app.Vexora(any, "/", (req, res) => {
+    return res.success({ hello: "world" }, "Welcome to Vexora!");
 });
 
-server.listen(30000, () => {
-    console.log("🚀 Vexora Server is running at http://localhost:30000");
+// Example of a POST route:
+app.Vexora(post, "/submit", (req, res) => {
+    return res.success(req.all(), "Data processed successfully!");
 });

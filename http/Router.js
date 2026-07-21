@@ -486,32 +486,16 @@ class Router {
         for (const m in this.routes) {
             if (this.routes[m][uri]) {
                 res.statusCode = 405;
-                return res.json({
+                res.json({
                     status: false,
                     message: "Method Not Allowed"
                 });
+                return true;
             }
         }
 
-        // 6. Handle Route Not Found (404)
-        res.statusCode = 404;
-        let message = "Route Not Found";
-        const isApiRoute = req && req.path && (req.path === '/api' || req.path.startsWith('/api/'));
-        if (isApiRoute) {
-            message = "API Route Not Found";
-            const parts = req.path.split('/').filter(Boolean);
-            if (parts.length >= 2) {
-                const folderName = parts[1];
-                const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
-                if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
-                    message = "Invalid endpoint";
-                }
-            }
-        }
-        return res.json({
-            status: false,
-            message
-        });
+        // 6. Return false to let fallback handlers execute
+        return false;
     }
 
     run(req, res) {

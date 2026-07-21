@@ -112,22 +112,26 @@ When Vexora boots for the first time, it automatically creates a secure private 
 ```javascript
 import Vexora from "vexora";
 
-// Start Vexora Server
-const server = Vexora.Server(async (req, res) => {
-    // 1. Dynamic route router mapping
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
+// Start Vexora Server (Auto-connects API controllers)
+const app = Vexora.start(3000);
 
-    // 2. Base Fallback Route
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" }, "Welcome to Vexora!");
-    }
+// Define custom routes using Vexora signature.
+// Supports verbs: get, post, put, patch, delete, any
+app.Vexora(get, "/", (req, res) => {
+    return res.success({ hello: "world" }, "Welcome to Vexora!");
 });
 
-server.listen(3000, () => {
-    console.log("🚀 Vexora Framework Server is running at http://localhost:3000");
+// Example of a POST route:
+app.Vexora(post, "/submit", (req, res) => {
+    return res.success(req.all(), "Data processed successfully!");
 });
 ```
+
+> [!NOTE]
+> **Routing Precedence Rules (प्राथमिकता नियम):**
+> 1. **Static Files (`public/`)**: Highest Precedence (सबसे पहले एक्सेस होगा). यदि `/` पाथ पर `public/index.html` फ़ाइल मौजूद है, तो वह पहले लोड होगी.
+> 2. **API Controllers (`.Vexora_Api/`)**: Second Precedence (दूसरा स्थान).
+> 3. **Custom Routes (`app.Vexora`)**: Lowest Precedence (सबसे अंत में फॉलबैक के रूप में).
 
 ---
 
@@ -143,26 +147,17 @@ Vexora includes a native, secure, stream-based static asset server (`Vexora.stat
 ```javascript
 import Vexora from "vexora";
 
-// Create static handler mounting the "public" directory, choosing "home.html" as the index, with built-in Rate Limiting
-const serveStatic = Vexora.static("public", "home.html", { 
+// 1. Start Vexora Server (Auto-connects static files and API controllers)
+const app = Vexora.start(3000);
+
+// 2. Configure static files directory and settings on the app
+app.static("public", "home.html", { 
     maxAge: 86400, // maxAge in seconds
     rateLimit: {
         maxRequests: 150,      // Max requests allowed for static assets
         windowSeconds: 60      // Time window in seconds
     }
 });
-
-const server = Vexora.Server(async (req, res) => {
-    // 1. Serve static files and run php/html scripts (checks rate limits automatically)
-    const served = await serveStatic(req, res);
-    if (served) return;
-
-    // 2. Fallback to API routing...
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
-});
-
-server.listen(3000);
 ```
 
 #### ⚠️ Custom Error Pages
@@ -625,15 +620,10 @@ Initialize the WebSocket manager by passing the running HTTP server instance, th
 ```javascript
 import Vexora from "vexora";
 
-const server = Vexora.Server(async (req, res) => {
-    // Normal HTTP routing...
-});
+// 1. Start Vexora Server
+const app = Vexora.start(3000);
 
-const app = server.listen(3000, () => {
-    console.log("🚀 Server running on http://localhost:3000");
-});
-
-// Bind WebSocket Engine to the Server
+// 2. Bind WebSocket Engine to the Server
 const io = Vexora.WebSocket(app);
 
 io.on("connection", (socket) => {

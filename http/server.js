@@ -125,10 +125,8 @@ function postExecute(req, response, res) {
               }
           } catch (e) {}
 
-          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-          if (customErrorHtml !== null) {
-              res.end(customErrorHtml);
-          } else if (req.path === '/') {
+          if (req.path === '/') {
+              res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
               const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
               const apiExists = fs.existsSync(path.join(process.cwd(), '.Vexora_Api'));
               
@@ -143,7 +141,12 @@ function postExecute(req, response, res) {
               
               res.end(getDefaultLandingPage(publicExists, apiExists, version));
           } else {
-              res.end(getFileNotFoundPage(req.path));
+              res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+              if (customErrorHtml !== null) {
+                  res.end(customErrorHtml);
+              } else {
+                  res.end(getFileNotFoundPage(req.path));
+              }
           }
       } else {
           let message = "Route Not Found";

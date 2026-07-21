@@ -337,6 +337,99 @@ const Vexora = {
   db: Database,
   Server,
   http: Http,
+  start(port = null, options = {}) {
+    const actualPort = port || parseInt(Config.get("PORT")) || 30000;
+
+    let serveStatic = null;
+    if (options.staticDir) {
+      serveStatic = StaticMiddleware.serve(
+        options.staticDir,
+        options.defaultIndexFile || "home.html",
+        options.staticOptions || {}
+      );
+    }
+
+    let enableCors = true;
+    let corsOrigins = '*';
+    if (options.cors !== undefined) {
+      if (options.cors === false) {
+        enableCors = false;
+      } else {
+        enableCors = true;
+        if (options.cors !== true) {
+          corsOrigins = options.cors;
+        }
+      }
+    }
+
+    const customRouter = createRouter();
+
+    const server = Server(async (req, res) => {
+      // Handle CORS headers and options preflight
+      if (enableCors) {
+        const preflightHandled = CorsMiddleware.handle(req, res, corsOrigins);
+        if (preflightHandled) return;
+      }
+
+      const isApiRoute = req.path === '/api' || req.path.startsWith('/api/');
+
+      if (isApiRoute) {
+        // 1. ApiController autoload routes
+        const handled = await ApiController.handle(req, res);
+        if (handled) return;
+
+        // 2. Custom routes defined on app
+        const customHandled = await customRouter.handle(req, res);
+        if (customHandled) return;
+      } else {
+        // 3. Serve static files (only for non-API routes)
+        if (serveStatic) {
+          const served = await serveStatic(req, res);
+          if (served) return;
+        }
+      }
+    });
+
+    // Attach app.cors() to let users enable CORS manually
+    server.cors = (origins = '*') => {
+      enableCors = true;
+      corsOrigins = origins;
+      return server;
+    };
+
+    // Attach app.static() to let users override static files configuration manually
+    server.static = (staticDir, defaultIndexFile = "index.html", staticOpts = {}) => {
+      serveStatic = StaticMiddleware.serve(staticDir, defaultIndexFile, staticOpts);
+      return server;
+    };
+
+    // Helper to enforce /api prefix on all dynamic app routes
+    const getFinalUri = (uri) => {
+      return uri.startsWith("/api") ? uri : "/api" + (uri.startsWith("/") ? uri : "/" + uri);
+    };
+
+    // Attach route verbs to the returned server object so users can write app.get(), app.post() etc.
+    server.get = (uri, action) => { customRouter.match('GET', getFinalUri(uri), action); return server; };
+    server.post = (uri, action) => { customRouter.match('POST', getFinalUri(uri), action); return server; };
+    server.put = (uri, action) => { customRouter.match('PUT', getFinalUri(uri), action); return server; };
+    server.patch = (uri, action) => { customRouter.match('PATCH', getFinalUri(uri), action); return server; };
+    server.delete = (uri, action) => { customRouter.match('DELETE', getFinalUri(uri), action); return server; };
+    server.any = (uri, action) => { customRouter.match(Router.ALL, getFinalUri(uri), action); return server; };
+    server.match = (methods, uri, action) => { customRouter.match(methods, getFinalUri(uri), action); return server; };
+
+    // Unique Vexora routing syntax: app.Vexora(get, "/path", handler)
+    server.Vexora = (method, uri, action) => {
+      const m = String(method).toUpperCase();
+      customRouter.match(m === "ANY" ? Router.ALL : m, getFinalUri(uri), action);
+      return server;
+    };
+
+    server.listen(actualPort, () => {
+      console.log(`🚀 Vexora Server is running at http://localhost:${actualPort}`);
+    });
+
+    return server;
+  },
   resetSuspiciousTracker: () => {
     suspiciousTracker.clear();
     BehaviorAnalyzer.reset();
@@ -355,6 +448,14 @@ export const Zentrox = Vexora;
 globalThis.Zentrox = Vexora;
 export const VexoraNamespace = Vexora;
 globalThis.Vexora = Vexora;
+
+// Global HTTP Verb Helpers for app.Vexora()
+globalThis.get = "GET";
+globalThis.post = "POST";
+globalThis.put = "PUT";
+globalThis.patch = "PATCH";
+globalThis.delete = "DELETE";
+globalThis.any = "ANY";
 globalThis.info_redis = () => MemoryCache.info_redis();
 globalThis.INFO_REDIS = () => MemoryCache.INFO_REDIS();
 globalThis.captcha = (options) => Recaptcha.middleware(options);
@@ -402,17 +503,12 @@ Vexora.Response.success({
       if (!fs.existsSync(appScript)) {
         fs.writeFileSync(appScript, `import Vexora from "./Vexora.js";
 
-const server = Vexora.Server(async (req, res) => {
-    const handled = await Vexora.ApiController(req, res);
-    if (handled) return;
+// Start Vexora Server (Auto-connects static serving and API controllers)
+const app = Vexora.start(3000);
 
-    if (req.method === "GET" && req.path === "/") {
-        return res.success({ hello: "world" }, "Vexora Server is Running!");
-    }
-});
-
-server.listen(3000, () => {
-    console.log("🚀 Vexora server running at http://localhost:3000");
+// Define custom routes directly using app
+app.get("/", (req, res) => {
+    return res.success({ hello: "world" }, "Vexora Server is Running!");
 });
 `, "utf8");
       }
