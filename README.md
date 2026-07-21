@@ -1502,7 +1502,7 @@ To enable the `#` import prefix, simply add this to your `package.json`:
 Now you can import specific functions anywhere (like in your controllers) using the `#` prefix:
 
 ```javascript
-// login.js में (सिर्फ़ helloUser इम्पोर्ट करें)
+// In login.js (Import only what you need)
 import { helloUser } from "#test_emport.js";
 
 console.log(helloUser("Vexora")); // Output: Hello Vexora! Welcome to Vexora Engine.
