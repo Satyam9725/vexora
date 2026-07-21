@@ -310,9 +310,23 @@ Vexora.protect("browser"); // Or Vexora.protect("url");
 <a id="database"></a>
 ## 🗄️ Multi-Connection Database Routing & CRUD
 
-Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/config` using URL connection syntax (for example: `MYSQL_DB_URL=mysql://db_user:password@localhost:3306/primary_db`).
-
-To switch database pools, pass the configuration key (or simple aliases like `"auth"`, `"user"`) as the first parameter. If omitted, Vexora routes the query to `MYSQL_DB_URL` by default.
+> [!IMPORTANT]
+> **Database Multi-Connection Routing & Setup:**
+> Vexora handles separate connection pools simultaneously. Set your credentials in `.Vexora/db_config.json` (or `db_config.json` in the root) using JSON configuration:
+> 
+> ```json
+> {
+>   "auth": {
+>     "DB_HOST": "127.0.0.1",
+>     "DB_NAME": "auth_db",
+>     "DB_USER": "root",
+>     "DB_PASS": "secure_password",
+>     "DB_DRIVER": "mysql"
+>   }
+> }
+> ```
+> 
+> To switch database pools, pass the configuration key (like `"auth"`) as the first parameter. If omitted, Vexora routes the query to the first connection pool in `db_config.json` by default.
 
 ### 1. Raw Queries & Fetching Data
 
