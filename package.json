@@ -3,13 +3,13 @@
   "version": "1.2.9",
   "description": "Vexora Framework - Advanced, Blazing-Fast, Zero-Dependency Backend Framework for Node.js",
   "type": "module",
-  "main": "./dist/vexora.min.js",
-  "module": "./dist/vexora.min.js",
+  "main": "./Vexora.js",
+  "module": "./Vexora.js",
   "exports": {
     ".": {
-      "import": "./dist/vexora.min.js",
-      "require": "./dist/vexora.min.js",
-      "default": "./dist/vexora.min.js"
+      "import": "./Vexora.js",
+      "require": "./Vexora.js",
+      "default": "./Vexora.js"
     }
   },
   "scripts": {
