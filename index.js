@@ -17,11 +17,11 @@ app.static("public", "home.html", {
     }
 });
 
-app.Vexora(any, "/", (req, res) => {
+app.Vexora("ANY", "/", (req, res) => {
     return res.success({ hello: "world" }, "Welcome to Vexora!");
 });
 
 // Example of a POST route:
-app.Vexora(post, "/submit", (req, res) => {
+app.Vexora("POST", "/submit", (req, res) => {
     return res.success(req.all(), "Data processed successfully!");
 });

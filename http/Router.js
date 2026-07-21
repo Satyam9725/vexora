@@ -195,6 +195,14 @@ class Router {
         return { allowed: true };
     }
 
+    _cacheRouteMatch(key, value) {
+        // Security: Bound cache size to prevent memory exhaustion
+        if (this.routeMatchCache.size > 10000) {
+            this.routeMatchCache.clear();
+        }
+        this.routeMatchCache.set(key, value);
+    }
+
     /**
      * Find matching route including parameterized routes like /auth/:action
      */
@@ -219,12 +227,12 @@ class Router {
 
         if (this.routes[method] && this.routes[method][uri]) {
             const result = { action: this.routes[method][uri], params: EMPTY_PARAMS, routeUri: uri };
-            this.routeMatchCache.set(cacheKey, result);
+            this._cacheRouteMatch(cacheKey, result);
             return result;
         }
 
         if (!this.routes[method]) {
-            this.routeMatchCache.set(cacheKey, null);
+            this._cacheRouteMatch(cacheKey, null);
             return null;
         }
 
@@ -251,14 +259,14 @@ class Router {
                     }
 
                     if (matched) {
-                        this.routeMatchCache.set(cacheKey, { action: this.routes[method][routeUri], routeUri, paramKeys });
+                        this._cacheRouteMatch(cacheKey, { action: this.routes[method][routeUri], routeUri, paramKeys });
                         return { action: this.routes[method][routeUri], params, routeUri };
                     }
                 }
             }
         }
 
-        this.routeMatchCache.set(cacheKey, null);
+        this._cacheRouteMatch(cacheKey, null);
         return null;
     }
 
@@ -287,18 +295,28 @@ class Router {
                 const baseName = path.basename(relPath);
                 const parts = relPath.split(/[\/\\]/).filter(Boolean);
 
-                // 1. Direct path resolution (allows absolute, relative, and traversal paths)
-                const resolvedDirect = path.resolve(process.cwd(), relPath);
-                const directCandidates = [
-                    resolvedDirect,
-                    resolvedDirect + '.js',
-                    path.join(resolvedDirect, 'index.js')
-                ];
+                const projectRoot = process.cwd();
 
-                for (const file of directCandidates) {
-                    if (fs.existsSync(file) && fs.statSync(file).isFile()) {
-                        fullPath = file;
-                        break;
+                // Security: Path Traversal Guard — validates resolved path stays within project root
+                const _isInsideProject = (filePath) => {
+                    const resolved = path.resolve(filePath);
+                    return resolved.startsWith(projectRoot + path.sep) || resolved === projectRoot;
+                };
+
+                // 1. Direct path resolution
+                const resolvedDirect = path.resolve(projectRoot, relPath);
+                if (_isInsideProject(resolvedDirect)) {
+                    const directCandidates = [
+                        resolvedDirect,
+                        resolvedDirect + '.js',
+                        path.join(resolvedDirect, 'index.js')
+                    ];
+
+                    for (const file of directCandidates) {
+                        if (_isInsideProject(file) && fs.existsSync(file) && fs.statSync(file).isFile()) {
+                            fullPath = file;
+                            break;
+                        }
                     }
                 }
 
@@ -324,7 +342,7 @@ class Router {
                         ].filter(Boolean);
 
                         for (const cand of candidates) {
-                            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+                            if (_isInsideProject(cand) && fs.existsSync(cand) && fs.statSync(cand).isFile()) {
                                 fullPath = cand;
                                 break;
                             }
@@ -356,7 +374,12 @@ class Router {
                 }
 
                 let cachedController = controllerCache.get(fullPath);
-                if (cachedController) {
+                let currentMtime = 0;
+                try {
+                    currentMtime = fs.statSync(fullPath).mtimeMs;
+                } catch (e) {}
+
+                if (cachedController && cachedController.mtimeMs === currentMtime) {
                     if (cachedController.isEsModule) {
                         if (typeof cachedController.handler === 'function') {
                             return await cachedController.handler(req, res, params);
@@ -364,7 +387,7 @@ class Router {
                             return res.json(cachedController.handler);
                         }
                     } else {
-                        return await cachedController.handler(Vexora, Vexora, Vexora, req, res, Vexora.db, params);
+                        return await cachedController.handler(Vexora, req, res, Vexora.db, params);
                     }
                 }
 
@@ -381,16 +404,17 @@ class Router {
                     const scriptLines = processedContent.split('\n').map(l => l.trim()).filter(Boolean);
                     const lastLine = scriptLines[scriptLines.length - 1] || '';
 
-                    if (lastLine && !lastLine.startsWith('return ') && (lastLine.startsWith('Vexora.Response') || lastLine.startsWith('Zentrox.Response') || lastLine.startsWith('Nyvora.Response') || lastLine.startsWith('res.') || lastLine.startsWith('Response.'))) {
+                    if (lastLine && !lastLine.startsWith('return ') && (lastLine.startsWith('Vexora.Response') || lastLine.startsWith('res.') || lastLine.startsWith('Response.'))) {
                         const lastLineIdx = processedContent.lastIndexOf(lastLine);
                         processedContent = processedContent.substring(0, lastLineIdx) + 'return ' + lastLine;
                     }
 
                     const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-                    const handler = new AsyncFunction('Vexora', 'Zentrox', 'Nyvora', 'req', 'res', 'db', 'params', processedContent);
+                    const handler = new AsyncFunction('Vexora', 'req', 'res', 'db', 'params', processedContent);
                     cachedEntry = { isEsModule: false, handler };
                 }
 
+                cachedEntry.mtimeMs = currentMtime;
                 controllerCache.set(fullPath, cachedEntry);
 
                 if (cachedEntry.isEsModule) {
@@ -400,36 +424,40 @@ class Router {
                         return res.json(cachedEntry.handler);
                     }
                 } else {
-                    return await cachedEntry.handler(Vexora, Vexora, Vexora, req, res, Vexora.db, params);
+                    return await cachedEntry.handler(Vexora, req, res, Vexora.db, params);
                 }
             } catch (err) {
                 let errorId = "N/A";
+                let location = "";
+                if (err.stack) {
+                    // Extract line number from AsyncFunction eval
+                    const evalMatch = err.stack.match(/<anonymous>:(\d+):(\d+)/) || err.stack.match(/eval.*?:(\d+):(\d+)/) || err.stack.match(/at .*?:(\d+):(\d+)/);
+                    if (evalMatch) {
+                        // AsyncFunction wraps code in 2 lines of signature
+                        const lineNum = Math.max(1, parseInt(evalMatch[1]) - 2); 
+                        location = ` [Line ${lineNum}]`;
+                    }
+                }
+
                 try {
                     const relativeFile = fullPath ? path.relative(process.cwd(), fullPath) : action;
-                    errorId = auditLog("ERROR", "RUNTIME_ERROR", err.message, {
+                    errorId = auditLog("ERROR", "RUNTIME_ERROR", err.message + location, {
                         file: relativeFile
                     });
                 } catch (logErr) {
                     console.error("❌ Failed to write audit log:", logErr.message);
                 }
-                console.error(`❌ Controller Execution Failed (Error ID: ${errorId}): ${err.message}`);
+                console.error(`❌ Controller Execution Failed (Error ID: ${errorId})${location}: ${err.message}`);
                 
                 if (res.headersSent || res.writableEnded) {
                     return false;
                 }
 
                 res.statusCode = 500;
-                let errMsg = `Internal Server Error (Error ID: ${errorId})`;
-                if (err.message) {
-                    if (err.message.includes("connect ETIMEDOUT") || err.message.includes("ECONNREFUSED") || err.message.includes("Access denied")) {
-                        errMsg = `Database Connection Failed: ${err.message} (Error ID: ${errorId})`;
-                    } else {
-                        errMsg = `${err.message} (Error ID: ${errorId})`;
-                    }
-                }
+                // Security: Do NOT leak internal error details to clients
                 return res.json({
                     status: false,
-                    message: errMsg
+                    message: `Internal Server Error (Error ID: ${errorId})`
                 });
             }
         }

@@ -174,7 +174,9 @@ function postExecute(req, response, res) {
       
       // Sliding session lifetime expiration - Keep cookie alive in browser
       const sessionLifetime = Config.SESSION_LIFETIME;
-      response.cookie("VEXORA_SESSID", req._sessionId, { httpOnly: true, secure: true, sameSite: "Lax", maxAge: sessionLifetime, path: "/" });
+      // Security: Only set secure: true if the connection is encrypted or forwarded as HTTPS
+      const isSecure = req.socket && req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
+      response.cookie("VEXORA_SESSID", req._sessionId, { httpOnly: true, secure: isSecure, sameSite: "Lax", maxAge: sessionLifetime, path: "/" });
   }
 }
 
@@ -270,6 +272,8 @@ function executeRequest(callback, req, response, res) {
   }
 }
 
+const PUBLIC_DIR_EXISTS = fs.existsSync(path.join(process.cwd(), 'public'));
+
 export default function Server(callback, options = {}) {
   const fastPaths = new Map();
   if (options.fastPaths) {
@@ -319,6 +323,9 @@ export default function Server(callback, options = {}) {
         res.setHeader('Referrer-Policy', 'no-referrer');
         res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
         res.setHeader('X-XSS-Protection', '1; mode=block');
+        // Security: Add CSP and HSTS headers
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self';");
       }
 
       req.method = req.method || "GET";
@@ -368,7 +375,7 @@ export default function Server(callback, options = {}) {
       }
 
       // Global DDoS / Rate Limiting Protection (bypassed for static public assets or when public folder is missing)
-      const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
+      const publicExists = PUBLIC_DIR_EXISTS;
       if (Config.RATE_LIMIT_ENABLED && !isStaticFile && publicExists) {
         const rateCheck = RateLimiter.check(req);
         if (!rateCheck.allowed) {

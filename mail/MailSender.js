@@ -81,8 +81,12 @@ class MailSender {
       };
 
       // Connect using TLS directly if secure and port 465, or net for plain/STARTTLS
+      const rejectUnauthorized = options.rejectUnauthorized !== undefined
+          ? Boolean(options.rejectUnauthorized)
+          : Config.boolean("SMTP_REJECT_UNAUTHORIZED", true);
+
       if (secure && port === 465) {
-        socket = tls.connect({ host, port, rejectUnauthorized: false }, onConnect);
+        socket = tls.connect({ host, port, rejectUnauthorized }, onConnect);
       } else {
         socket = net.connect({ host, port }, onConnect);
       }

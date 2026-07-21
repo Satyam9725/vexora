@@ -42,7 +42,10 @@ class SessionManager {
     }
 
     _isValid(sessionId) {
-        if (!sessionId) return false;
+        if (!sessionId || typeof sessionId !== 'string') return false;
+        // Security: Reject oversized or malformed session IDs before cache lookup
+        if (sessionId.length > 64) return false;
+        if (!/^[a-f0-9\-]{36,64}$/.test(sessionId)) return false;
         return MemoryCache.has(`sess:${sessionId}`);
     }
 

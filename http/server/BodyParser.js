@@ -15,6 +15,24 @@
  */
 import Config from "../../core/config.js";
 
+/**
+ * Recursively strips prototype pollution keys from parsed JSON objects
+ */
+function _sanitizeProto(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    const dangerous = ['__proto__', 'constructor', 'prototype'];
+    for (const key of dangerous) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            delete obj[key];
+        }
+    }
+    for (const key of Object.keys(obj)) {
+        if (obj[key] && typeof obj[key] === 'object') {
+            _sanitizeProto(obj[key]);
+        }
+    }
+}
+
 export async function parseBody(req) {
     req.body = {};
     req.rawBody = "";
@@ -51,10 +69,17 @@ export async function parseBody(req) {
             const contentType = req.headers['content-type'] || '';
             
             if (contentType.includes('application/json')) {
-                try { req.body = JSON.parse(req.rawBody); } catch(e) {}
+                try {
+                    req.body = JSON.parse(req.rawBody);
+                    // Prototype Pollution Guard — strip dangerous keys
+                    if (req.body && typeof req.body === 'object') {
+                        _sanitizeProto(req.body);
+                    }
+                } catch(e) {}
             } else if (contentType.includes('application/x-www-form-urlencoded')) {
                 const params = new URLSearchParams(req.rawBody);
                 for (const [k, v] of params.entries()) {
+                    if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
                     req.body[k] = v;
                 }
             }

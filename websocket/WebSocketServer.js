@@ -17,6 +17,7 @@
 import crypto from "crypto";
 import EventEmitter from "events";
 import SocketClient from "./SocketClient.js";
+import Config from "../core/config.js";
 
 const WS_MAGIC_STRING = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -34,6 +35,17 @@ class WebSocketServer extends EventEmitter {
         if (req.headers["upgrade"] !== "websocket") {
             socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
             return;
+        }
+
+        // Security: WebSocket Origin Validation (CSWSH Prevention)
+        const origin = req.headers["origin"];
+        const allowedOriginsStr = Config.get("CORS_ORIGINS") || "";
+        if (allowedOriginsStr) {
+            const allowedOrigins = allowedOriginsStr.split(',').map(s => s.trim());
+            if (origin && !allowedOrigins.includes(origin)) {
+                socket.end("HTTP/1.1 403 Forbidden\r\n\r\n");
+                return;
+            }
         }
 
         const clientKey = req.headers["sec-websocket-key"];

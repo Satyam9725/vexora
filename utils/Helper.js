@@ -81,15 +81,16 @@ class Helper {
     const keyToUse = secretKey || Config.get("AES_SECRET") || Config.get("APP_KEY");
     if (!keyToUse) throw new Error("Encryption key not configured. Set AES_SECRET or APP_KEY in .Vexora/config");
 
+    const salt = crypto.randomBytes(16);
     const iv = crypto.randomBytes(12);
-    const key = crypto.scryptSync(keyToUse, "VexoraSaltVal", 32);
+    const key = crypto.scryptSync(keyToUse, salt, 32);
     const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
     
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
     const authTag = cipher.getAuthTag().toString("hex");
     
-    return `${iv.toString("hex")}:${authTag}:${encrypted}`;
+    return `${salt.toString("hex")}:${iv.toString("hex")}:${authTag}:${encrypted}`;
   }
 
   /**
@@ -103,10 +104,23 @@ class Helper {
     if (!keyToUse) throw new Error("Decryption key not configured. Set AES_SECRET or APP_KEY in .Vexora/config");
 
     try {
-      const [ivHex, authTagHex, encryptedData] = encryptedText.split(":");
+      const parts = encryptedText.split(":");
+      let salt, ivHex, authTagHex, encryptedData;
+
+      if (parts.length === 4) {
+        [salt, ivHex, authTagHex, encryptedData] = parts;
+        salt = Buffer.from(salt, "hex");
+      } else if (parts.length === 3) {
+        // Backward compatibility for old static salt
+        [ivHex, authTagHex, encryptedData] = parts;
+        salt = "VexoraSaltVal";
+      } else {
+        return null;
+      }
+
       const iv = Buffer.from(ivHex, "hex");
       const authTag = Buffer.from(authTagHex, "hex");
-      const key = crypto.scryptSync(keyToUse, "VexoraSaltVal", 32);
+      const key = crypto.scryptSync(keyToUse, salt, 32);
       
       const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
       decipher.setAuthTag(authTag);

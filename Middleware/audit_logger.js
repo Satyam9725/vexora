@@ -137,23 +137,17 @@ export function log(level, code, message, extra = {}) {
     console.warn(`⚠️ Warning: Failed to create log directory: ${err.message}`);
   }
 
-  const file = path.join(dir, `${new Date().toISOString().slice(0, 10)}.json`);
-  let logs = [];
+  const localIsoDate = `${year}-${month}-${day}`;
+  const file = path.join(dir, `${localIsoDate}.json`);
+  // Format as pretty JSON for readability, but append to avoid performance bottleneck
+  const logLine = JSON.stringify(logItem, null, 4) + ",\n\n";
 
-  try {
-    if (fs.existsSync(file)) {
-      logs = JSON.parse(fs.readFileSync(file, "utf8"));
+  fs.appendFile(file, logLine, "utf8", (err) => {
+    if (err) {
+      console.error(`❌ Failed to write runtime logs to disk: ${err.message}`);
+      console.log(`[${level}] ${code}: ${message}`, extra);
     }
-  } catch {}
-
-  logs.push(logItem);
-
-  try {
-    fs.writeFileSync(file, JSON.stringify(logs, null, 4));
-  } catch (err) {
-    console.error(`❌ Failed to write runtime logs to disk: ${err.message}`);
-    console.log(`[${level}] ${code}: ${message}`, extra);
-  }
+  });
   
   return error_id;
 }

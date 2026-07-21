@@ -18,6 +18,7 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 import createRouter from "../http/Router.js";
+import { log as auditLog } from "../Middleware/audit_logger.js";
 
 class ApiController {
     static pathCache = new Map();
@@ -178,9 +179,19 @@ class ApiController {
                     return true; // Successfully matched and handled
                 }
             } catch (err) {
-                console.error(`❌ Dynamic Router load failed for: ${moduleName}`, err);
+                let errorId = "N/A";
+                let location = "";
+                if (err.stack) {
+                    const match = err.stack.match(/at file:.*?:(\d+):(\d+)/) || err.stack.match(/at .*\.js:(\d+):(\d+)/);
+                    if (match) location = ` [Line ${match[1]}]`;
+                }
+                
+                try {
+                    errorId = auditLog("ERROR", "RUNTIME_ERROR", err.message + location, { module: moduleName });
+                } catch (e) {}
+                console.error(`❌ Dynamic Router load failed for: ${moduleName}${location} -`, err.message);
                 res.statusCode = 500;
-                res.json({ status: false, message: "Internal Server Error" });
+                res.json({ status: false, message: `Internal Server Error (Error ID: ${errorId})` });
                 return true;
             }
         }

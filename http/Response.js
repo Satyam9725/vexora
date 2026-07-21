@@ -47,7 +47,8 @@ Object.assign(http.ServerResponse.prototype, {
     if (options.maxAge) cookieString += `; Max-Age=${options.maxAge}`;
     if (options.path) cookieString += `; Path=${options.path}`;
     else cookieString += `; Path=/`;
-    if (options.httpOnly) cookieString += `; HttpOnly`;
+    // Security: Default httpOnly to true unless explicitly set to false
+    if (options.httpOnly !== false) cookieString += `; HttpOnly`;
     if (options.secure) cookieString += `; Secure`;
     if (options.sameSite) cookieString += `; SameSite=${options.sameSite}`;
     

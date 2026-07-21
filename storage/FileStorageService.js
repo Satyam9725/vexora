@@ -165,16 +165,8 @@ class FileStorageService {
             fileSize = tokenData.file_size || (Config.number("UPLOAD_MAX_SIZE_MB", 5) * 1024 * 1024);
             encryptSetting = tokenData.encrypt !== undefined ? Boolean(tokenData.encrypt) : true;
         } else {
-            // Fallback for custom encoded file_manager_token payload
-            try {
-                const parsed = typeof token === "object" ? token : JSON.parse(Buffer.from(String(token).trim(), "base64").toString("utf8"));
-                tokenData = parsed.data || parsed;
-                root = parsed.root || tokenData.root || "temporary";
-                fileSize = parsed.file_size || (Config.number("UPLOAD_MAX_SIZE_MB", 5) * 1024 * 1024);
-                encryptSetting = parsed.encrypt !== undefined ? Boolean(parsed.encrypt) : true;
-            } catch {
-                return { valid: false, message: "Upload session is invalid or expired" };
-            }
+            // Security: Do NOT accept unsigned tokens. Only TokenVault-sealed tokens are valid.
+            return { valid: false, message: "Upload session is invalid or expired" };
         }
 
         this.tokenData = tokenData;

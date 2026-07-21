@@ -5,8 +5,15 @@ class BehaviorAnalyzer {
   constructor() {
     this.history = new Map(); // ip -> { lastRequestTime: number, intervals: number[], consecutive404s: number }
     
-    // Cleanup old histories every 5 minutes to prevent leaks
-    const cleanup = setInterval(() => this.history.clear(), 300000);
+    // Cleanup old histories every 5 minutes (TTL eviction)
+    const cleanup = setInterval(() => {
+        const now = Date.now();
+        for (const [ip, data] of this.history.entries()) {
+            if (now - data.lastRequestTime > 300000) { // 5 minutes inactivity
+                this.history.delete(ip);
+            }
+        }
+    }, 300000);
     if (cleanup && typeof cleanup.unref === "function") {
       cleanup.unref();
     }
@@ -24,7 +31,8 @@ class BehaviorAnalyzer {
 
     // 1. Check for suspicious User-Agents (headless browsers or automated clients)
     const userAgent = String(req.headers["user-agent"] || "").toLowerCase();
-    const suspiciousAgents = ["curl", "wget", "python-requests", "puppeteer", "playwright", "headlesschrome", "selenium"];
+    // Security/Usability: Removed curl and wget to allow DevOps tooling
+    const suspiciousAgents = ["python-requests", "puppeteer", "playwright", "headlesschrome", "selenium"];
     for (const agent of suspiciousAgents) {
       if (userAgent.includes(agent)) {
         return {
@@ -38,6 +46,10 @@ class BehaviorAnalyzer {
     let data = this.history.get(clientIp);
 
     if (!data) {
+      // Security: Bound the tracking map to prevent memory exhaustion
+      if (this.history.size > 100000) {
+        this.history.clear(); // Emergency flush
+      }
       data = {
         lastRequestTime: now,
         intervals: [],

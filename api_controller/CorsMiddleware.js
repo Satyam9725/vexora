@@ -23,7 +23,7 @@ class CorsMiddleware {
      * @param {string|Array} allowedOrigins Allowed origin list or "*" for all origins.
      * @returns {boolean} Returns true if OPTIONS preflight request was handled.
      */
-    static handle(req, res, allowedOrigins = '*') {
+    static handle(req, res, allowedOrigins = '') {
         const nativeRes = res.res || res;
         const nativeReq = req.req || req;
 
@@ -40,7 +40,8 @@ class CorsMiddleware {
         // CORS Origin Handling
         if (allowedOrigins === '*') {
             nativeRes.setHeader('Access-Control-Allow-Origin', '*');
-        } else {
+            // Security: Never set Access-Control-Allow-Credentials: true with '*' origin
+        } else if (allowedOrigins) {
             const origin = (nativeReq.headers && nativeReq.headers['origin']) || '';
             const originsList = Array.isArray(allowedOrigins) ? allowedOrigins : [allowedOrigins];
 

@@ -169,6 +169,10 @@ const Server = (callback, options) => {
 
     let record = suspiciousTracker.get(clientIp);
     if (!record) {
+      // Security: Bound the tracking map to prevent memory exhaustion
+      if (suspiciousTracker.size > 100000) {
+        suspiciousTracker.clear(); // Emergency flush under heavy DDoS
+      }
       record = { timestamps: [], head: 0 };
       suspiciousTracker.set(clientIp, record);
     }
@@ -350,7 +354,7 @@ const Vexora = {
     }
 
     let enableCors = true;
-    let corsOrigins = '*';
+    let corsOrigins = Config.get('CORS_ORIGINS') ? Config.get('CORS_ORIGINS').split(',').map(s => s.trim()) : '';
     if (options.cors !== undefined) {
       if (options.cors === false) {
         enableCors = false;
@@ -445,27 +449,12 @@ const Vexora = {
 Object.freeze(Vexora);
 
 export const Nyvora = Vexora;
-globalThis.Nyvora = Vexora;
 export const Zentrox = Vexora;
-globalThis.Zentrox = Vexora;
 export const VexoraNamespace = Vexora;
+
+// Framework Global Context (Restored for backward compatibility with dynamic API routes)
 globalThis.Vexora = Vexora;
 
-// Global HTTP Verb Helpers for app.Vexora()
-globalThis.get = "GET";
-globalThis.post = "POST";
-globalThis.put = "PUT";
-globalThis.patch = "PATCH";
-globalThis.delete = "DELETE";
-globalThis.any = "ANY";
-globalThis.info_redis = () => MemoryCache.info_redis();
-globalThis.INFO_REDIS = () => MemoryCache.INFO_REDIS();
-globalThis.captcha = (options) => Recaptcha.middleware(options);
-globalThis.verifyCaptcha = (token, provider, customSecret, remoteIp) => Recaptcha.verify(token, provider, customSecret, remoteIp);
-globalThis.Queue = Queue;
-globalThis.QueueWorker = QueueWorker;
-globalThis.Schedule = (cronExpression, handler) => Scheduler.schedule(cronExpression, handler);
-globalThis.Scheduler = Scheduler;
 export default Vexora;
 
 // ==========================================================

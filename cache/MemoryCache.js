@@ -19,6 +19,7 @@ import Config from "../core/config.js";
 class MemoryCache {
     constructor() {
         this.store = new Map();
+        this.currentTotalSize = 0;
         
         // Background Garbage Collector to sweep expired keys every 30 seconds
         const gcInterval = setInterval(() => this._gc(), 30000);
@@ -38,8 +39,7 @@ class MemoryCache {
         const oldSize = oldItem ? (key.length * 2 + this._sizeof(oldItem.value) + 16) : 0;
         const newSize = key.length * 2 + this._sizeof(value) + 16;
         
-        const currentTotal = this.getTotalSize();
-        if (currentTotal - oldSize + newSize > limit) {
+        if (this.currentTotalSize - oldSize + newSize > limit) {
             console.warn(`⚠️ Cache limit exceeded: Cannot store key "${key}". Max size: ${Config.get("REDIS_DATABASE_SIZE") || "500MB"}`);
             return false;
         }
@@ -52,6 +52,8 @@ class MemoryCache {
             createdAt: now,
             expiresAt
         });
+        
+        this.currentTotalSize = this.currentTotalSize - oldSize + newSize;
         return true;
     }
 
@@ -64,7 +66,7 @@ class MemoryCache {
         const item = this.store.get(key);
         
         if (item.expiresAt && Date.now() > item.expiresAt) {
-            this.store.delete(key); // Expired
+            this.del(key); // Expired (uses del to track size)
             return defaultValue;
         }
 
@@ -82,6 +84,10 @@ class MemoryCache {
      * Delete a key from memory
      */
     del(key) {
+        if (!this.store.has(key)) return false;
+        const item = this.store.get(key);
+        const size = key.length * 2 + this._sizeof(item.value) + 16;
+        this.currentTotalSize -= size;
         return this.store.delete(key);
     }
 
@@ -119,7 +125,7 @@ class MemoryCache {
         
         const item = this.store.get(key);
         if (item.expiresAt && Date.now() > item.expiresAt) {
-            this.store.delete(key);
+            this.del(key);
             return false;
         }
 
@@ -137,7 +143,7 @@ class MemoryCache {
         
         const remaining = Math.ceil((item.expiresAt - Date.now()) / 1000);
         if (remaining <= 0) {
-            this.store.delete(key);
+            this.del(key);
             return -2;
         }
         return remaining;
@@ -148,6 +154,7 @@ class MemoryCache {
      */
     flush() {
         this.store.clear();
+        this.currentTotalSize = 0;
         return true;
     }
 
@@ -177,7 +184,7 @@ class MemoryCache {
         const now = Date.now();
         for (const [key, item] of this.store.entries()) {
             if (item.expiresAt && now > item.expiresAt) {
-                this.store.delete(key);
+                this.del(key);
             }
         }
     }
@@ -187,12 +194,15 @@ class MemoryCache {
      */
     _sizeof(value) {
         if (value === null || value === undefined) return 0;
-        try {
-            const str = JSON.stringify(value);
-            return str ? str.length * 2 : 0;
-        } catch {
-            return 128; // safe fallback
+        if (typeof value === 'boolean') return 4;
+        if (typeof value === 'number') return 8;
+        if (typeof value === 'string') return value.length * 2;
+        if (typeof value === 'object') {
+            if (Buffer.isBuffer(value)) return value.length;
+            // Fast heuristic: average object size instead of expensive stringify
+            return 256; 
         }
+        return 64; // fallback for functions, etc
     }
 
     /**
@@ -216,13 +226,7 @@ class MemoryCache {
      * Computes total size of items currently held in store
      */
     getTotalSize() {
-        let total = 0;
-        for (const [key, item] of this.store.entries()) {
-            total += key.length * 2;
-            total += this._sizeof(item.value);
-            total += 16; // createdAt + expiresAt
-        }
-        return total;
+        return this.currentTotalSize;
     }
 
     /**

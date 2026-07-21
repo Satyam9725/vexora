@@ -1446,6 +1446,65 @@ console.log("Decrypted:", original.toString("utf8"));
 
 ---
 
+<a id="absolute-imports"></a>
+
+## 🌐 Absolute Imports & Named Exports
+
+Vexora natively supports **Node.js Subpath Imports**. This allows you to import files from anywhere without using messy relative paths like `../../../`. 
+
+It is highly recommended to use **Named Exports** (the most standard JS pattern) for clean and tree-shakable code.
+
+### 1. Create a Utility File (`test_emport.js` at Root)
+
+```javascript
+// test_emport.js
+
+// 1. Hello User Function
+export const helloUser = (name = "Guest") => {
+    return `Hello ${name}! Welcome to Vexora Engine.`;
+};
+
+// 2. Calculate Discount Function
+export const calculateDiscount = (price, discountPercent) => {
+    const discountAmount = (price * discountPercent) / 100;
+    return {
+        originalPrice: price,
+        discountPercent: `${discountPercent}%`,
+        discountAmount: discountAmount,
+        finalPrice: price - discountAmount
+    };
+};
+
+// 3. App Metadata
+export const appMetadata = {
+    appName: "Vexora Core",
+    version: "1.2.2",
+    environment: "development"
+};
+```
+
+### 2. Configure `package.json`
+To enable the `#` import prefix, simply add this to your `package.json`:
+```json
+{
+  "imports": {
+    "#*": "./*"
+  }
+}
+```
+
+### 3. Use it Anywhere
+Now you can import specific functions anywhere (like in your controllers) using the `#` prefix:
+
+```javascript
+// login.js में (सिर्फ़ helloUser इम्पोर्ट करें)
+import { helloUser } from "#test_emport.js";
+
+console.log(helloUser("Vexora")); // Output: Hello Vexora! Welcome to Vexora Engine.
+```
+
+---
+
 <a id="license"></a>
 
 ## 📄 License
