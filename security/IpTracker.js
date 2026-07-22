@@ -25,7 +25,7 @@ class IpTracker {
         this.enabled = enabled;
         if (!enabled) return;
 
-        this.directory = directory || path.join(process.cwd(), '.Vexora', 'logs', 'ip_tracker');
+        this.directory = directory || path.join(process.cwd(), '.vexora_log', 'ip_tracker');
         this.prefix = prefix;
         this.mutex = new MutexQueue();
     }

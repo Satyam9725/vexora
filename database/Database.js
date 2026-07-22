@@ -70,7 +70,7 @@ class Database {
       } else if (url) {
         input = url;
       } else {
-        throw new Error("Database configuration missing in .Vexora/config");
+        throw new Error("Database configuration missing in .vexora_config/config");
       }
     }
 
@@ -140,7 +140,7 @@ class Database {
         const root = process.cwd();
         const configPaths = [
             path.join(root, 'db_config.json'),
-            path.join(root, '.Vexora', 'db_config.json')
+            path.join(root, '.vexora_config', 'db_config.json')
         ];
         for (const p of configPaths) {
             if (fs.existsSync(p)) {

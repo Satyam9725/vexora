@@ -24,7 +24,7 @@ import Config from "../core/config.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ROOT = path.join(process.cwd(), ".Vexora");
+const ROOT = path.join(process.cwd(), ".vexora_log");
 
 function ensure(dir) {
   if (!fs.existsSync(dir)) {
@@ -129,7 +129,7 @@ export function log(level, code, message, extra = {}) {
       break;
   }
 
-  const dir = path.join(ROOT, "logs", category);
+  const dir = path.join(ROOT, category);
 
   try {
     ensure(dir);

@@ -226,12 +226,22 @@ csrfHandler.rotate = CsrfMiddleware.rotate;
 csrfHandler.generate = CsrfMiddleware.generate;
 csrfHandler.verify = CsrfMiddleware.verify;
 
+let version = "1.4.5";
+try {
+  const pkgPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "package.json");
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    if (pkg.version) version = pkg.version;
+  }
+} catch (e) {}
+
 const initTime = (performance.now() - vexoraStart).toFixed(2);
 if (!cluster.isWorker) {
-  console.log(`⚡ Vexora Engine v1.0.4 Initialized in ${initTime}ms.`);
+  console.log(`⚡ Vexora Engine v${version} Initialized in ${initTime}ms.`);
 }
 
 const Vexora = {
+  version: version,
   protect: Guard.protect,
   session: SessionManager,
   TokenVault: TokenVault,
@@ -464,104 +474,27 @@ globalThis.Vexora = Vexora;
 export default Vexora;
 
 // ==========================================================
-// VEXORA ENGINE CLI SCAFFOLDER & HELPER
+// VEXORA ENGINE CLI ROUTER DELEGATE
 // ==========================================================
 const currentFile = fileURLToPath(import.meta.url);
 const executionFile = process.argv[1] ? path.resolve(process.argv[1]) : "";
 
-if (executionFile && (currentFile === executionFile || executionFile.endsWith("vexora"))) {
-  const args = process.argv.slice(2);
-  const command = args[0];
+if (executionFile && !globalThis.__vexora_cli_executed) {
+  const normCurrent = currentFile.toLowerCase().replace(/\\/g, "/").replace(/\.js$/, "");
+  const normExec = executionFile.toLowerCase().replace(/\\/g, "/").replace(/\.js$/, "");
+  const isBinCli = normExec.endsWith("/bin/cli");
+  const execBase = path.basename(normExec);
 
-  if (command === "init") {
-    console.log("⚙️ Scaffolding Vexora Project...");
-    try {
-      Init.setup();
-
-      const controllersDir = path.join(process.cwd(), "controllers");
-      if (!fs.existsSync(controllersDir)) {
-        fs.mkdirSync(controllersDir);
-      }
-
-      const welcomeController = path.join(controllersDir, "welcome.js");
-      if (!fs.existsSync(welcomeController)) {
-        fs.writeFileSync(welcomeController, `// controllers/welcome.js
-// Pre-injected variables: Vexora, req, res, db, params
-
-Vexora.Response.success({
-    framework: "Vexora Engine",
-    status: "Healthy",
-    uptime: process.uptime()
-}, "Welcome to your secure Vexora Backend!");
-`, "utf8");
-      }
-
-      const appScript = path.join(process.cwd(), "app.js");
-      if (!fs.existsSync(appScript)) {
-        fs.writeFileSync(appScript, `import Vexora from "./Vexora.js";
-
-// Start Vexora Server (Auto-connects static serving and API controllers)
-const app = Vexora.start(3000);
-
-// Define custom routes directly using app
-app.get("/", (req, res) => {
-    return res.success({ hello: "world" }, "Vexora Server is Running!");
-});
-`, "utf8");
-      }
-
-      console.log("✅ Project successfully scaffolded!");
-      console.log("👉 Run 'node app.js' to start your server.");
-      console.log("👉 Try accessing GET http://localhost:3000/welcome mapping to controllers/welcome.js");
-      process.exit(0);
-    } catch (err) {
-      console.error("❌ Failed to scaffold project:", err.message);
-      process.exit(1);
-    }
-  } else if (command === "make:controller" && args[1]) {
-    const controllerName = args[1].trim();
-    console.log(`⚙️ Creating controller controllers/${controllerName}.js...`);
-    try {
-      const controllersDir = path.join(process.cwd(), "controllers");
-      if (!fs.existsSync(controllersDir)) {
-        fs.mkdirSync(controllersDir);
-      }
-
-      const file = path.join(controllersDir, `${controllerName}.js`);
-      const parentDir = path.dirname(file);
-      if (!fs.existsSync(parentDir)) {
-        fs.mkdirSync(parentDir, { recursive: true });
-      }
-
-      if (fs.existsSync(file)) {
-        console.warn(`⚠️ Warning: Controller ${controllerName}.js already exists!`);
-        process.exit(0);
-      }
-
-      fs.writeFileSync(file, `// controllers/${controllerName}.js
-// Pre-injected context variables: Vexora, req, res, db, params
-
-// TODO: Implement your controller logic
-Vexora.Response.success({
-    message: "Hello from dynamic controller controllers/${controllerName}.js"
-});
-`, "utf8");
-
-      console.log(`✅ Created controllers/${controllerName}.js successfully!`);
-      process.exit(0);
-    } catch (err) {
-      console.error("❌ Failed to create controller:", err.message);
-      process.exit(1);
-    }
-  } else {
-    console.log("==========================================");
-    console.log("Vexora Engine - CLI Helper Tool");
-    console.log("==========================================");
-    console.log("Usage:");
-    console.log("  node Vexora.js init                - Scaffolds a new Vexora project");
-    console.log("  node Vexora.js make:controller <n> - Generates a new dynamic controller script");
-    console.log("==========================================");
-    process.exit(0);
+  if (!isBinCli && (normCurrent === normExec || execBase === "vexora")) {
+    globalThis.__vexora_cli_executed = true;
+    import("./command.js").then(({ default: executeCommand }) => {
+      executeCommand(process.argv.slice(2)).catch((err) => {
+        console.error("❌ CLI Error:", err.message);
+        process.exit(1);
+      });
+    });
   }
 }
+
+
 

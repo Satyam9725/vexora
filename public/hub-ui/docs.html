@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vexora Framework Docs — Introduction</title>
+  <meta name="description" content="Introduction to the Vexora Framework. A fast, lightweight and powerful Node.js framework.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <div class="nav-brand-icon">V</div>
+      <span>VEXORA HUB</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="#" class="nav-link">Frameworks</a></li>
+      <li><a href="#" class="nav-link">Libraries</a></li>
+      <li><a href="docs.html" class="nav-link active">Docs</a></li>
+      <li><a href="#" class="nav-link">Examples</a></li>
+      <li><a href="#" class="nav-link">Blog</a></li>
+      <li><a href="#" class="nav-link">Community</a></li>
+      <li>
+        <a href="#" class="nav-link">Explore
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-right">
+      <div class="nav-search">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span>Search documentation...</span>
+        <span class="kbd">Ctrl K</span>
+      </div>
+      <div class="nav-icon-btn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </div>
+      <div class="nav-user">
+        <div class="nav-avatar">JD</div>
+        <span>John Doe</span>
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- ========== LEFT SIDEBAR ========== -->
+    <aside class="sidebar">
+      <!-- Framework selector -->
+      <div class="sidebar-header">
+        <div class="sidebar-header-logo">V</div>
+        <div class="sidebar-header-info">
+          <h4>Vexora Framework</h4>
+          <span>v2.1.0 <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="sidebar-search">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span>Search docs...</span>
+        <span class="kbd" style="margin-left: auto;">Ctrl /</span>
+      </div>
+
+      <!-- Getting Started -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title" data-toggle="getting-started">
+          <div class="group-label">
+            <span class="group-icon">🎯</span>
+            Getting Started
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="getting-started">
+          <a href="#" class="active">Introduction</a>
+          <a href="#">Installation</a>
+          <a href="#">Quick Start</a>
+          <a href="#">Configuration</a>
+          <a href="#">Project Structure</a>
+        </div>
+      </div>
+
+      <!-- Core Concepts -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title" data-toggle="core-concepts">
+          <div class="group-label">
+            <span class="group-icon">📐</span>
+            Core Concepts
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="core-concepts">
+          <a href="#">Routing</a>
+          <a href="#">Middleware</a>
+          <a href="#">Controllers</a>
+          <a href="#">Request & Response</a>
+          <a href="#">Views & Templates</a>
+        </div>
+      </div>
+
+      <!-- Database -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title collapsed" data-toggle="database">
+          <div class="group-label">
+            <span class="group-icon">🗄️</span>
+            Database
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="database" style="display: none;">
+          <a href="#">Query Builder</a>
+          <a href="#">Migrations</a>
+          <a href="#">Seeders</a>
+          <a href="#">Transactions</a>
+          <a href="#">Database Connection</a>
+        </div>
+      </div>
+
+      <!-- WebSocket -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title collapsed" data-toggle="websocket">
+          <div class="group-label">
+            <span class="group-icon">⚡</span>
+            WebSocket
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="websocket" style="display: none;">
+          <a href="#">Getting Started</a>
+          <a href="#">Events</a>
+          <a href="#">Rooms</a>
+          <a href="#">Broadcasting</a>
+          <a href="#">Private Messaging</a>
+        </div>
+      </div>
+
+      <!-- Authentication -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title collapsed" data-toggle="auth">
+          <div class="group-label">
+            <span class="group-icon">🔐</span>
+            Authentication
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="auth" style="display: none;">
+          <a href="#">Overview</a>
+          <a href="#">Login & Register</a>
+          <a href="#">Middleware</a>
+          <a href="#">Authorization</a>
+          <a href="#">Password Reset</a>
+        </div>
+      </div>
+
+      <!-- Other Features -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title collapsed" data-toggle="other">
+          <div class="group-label">
+            <span class="group-icon">🧩</span>
+            Other Features
+          </div>
+          <svg class="chevron icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="sidebar-nav" id="other" style="display: none;">
+          <a href="#">Validation</a>
+          <a href="#">File Upload</a>
+          <a href="#">Caching</a>
+          <a href="#">Logging</a>
+          <a href="#">Error Handling</a>
+        </div>
+      </div>
+
+      <!-- Pro Tip -->
+      <div class="sidebar-promo">
+        <div class="sidebar-promo-title">⭐ Pro Tip</div>
+        <p>Unlock all features and remove limits.</p>
+        <a href="#" class="btn btn-primary btn-sm btn-block">Go Premium</a>
+        <div class="sidebar-promo-footer">Powered by Vexora Docs</div>
+      </div>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="docs-main">
+      <div class="breadcrumb">
+        <a href="docs.html">Docs</a> &rsaquo; <a href="#">Vexora Framework</a> &rsaquo; <span>Getting Started</span>
+      </div>
+
+      <div class="docs-hero-row">
+        <div>
+          <h1 class="docs-page-title">Introduction</h1>
+          <p class="docs-page-desc">Vexora is a fast, lightweight and powerful Node.js framework designed to help you build scalable and high performance applications with an amazing developer experience.</p>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="#" class="btn btn-primary">Get Started →</a>
+            <a href="#" class="btn btn-outline" style="background: var(--bg-card);">
+              View on GitHub
+              <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.376.202 2.394.1 2.646.64.699 1.026 1.591 1.026 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="docs-hero-logo">V</div>
+      </div>
+
+      <!-- Feature pills row -->
+      <div class="feature-pills">
+        <div class="feature-pill">
+          <div class="feature-pill-icon" style="color: #34d399;">⚡</div>
+          <div>
+            <h5>Fast</h5>
+            <p>High performance out of the box</p>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="feature-pill-icon" style="color: #a78bfa;">🍃</div>
+          <div>
+            <h5>Lightweight</h5>
+            <p>Minimal footprint, maximum power</p>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="feature-pill-icon" style="color: #60a5fa;">🧊</div>
+          <div>
+            <h5>Scalable</h5>
+            <p>Built for real world applications</p>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="feature-pill-icon" style="color: #fbbf24;">🧩</div>
+          <div>
+            <h5>Flexible</h5>
+            <p>Extensible and developer friendly</p>
+          </div>
+        </div>
+        <div class="feature-pill">
+          <div class="feature-pill-icon" style="color: #34d399;">🔒</div>
+          <div>
+            <h5>Secure</h5>
+            <p>Security comes built-in</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- What is Vexora -->
+      <h2 id="what-is-vexora" style="font-size: 1.75rem; margin-top: 2.5rem; margin-bottom: 1rem;">What is Vexora?</h2>
+      <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1.5rem;">
+        Vexora is a modern Node.js framework that provides the essential features needed to build web applications, APIs, real-time applications and more. It is designed with simplicity, flexibility and performance in mind.
+      </p>
+
+      <!-- Terminal code block -->
+      <div class="code-block">
+        <div class="code-block-header">
+          <span>Terminal</span>
+          <span style="cursor: pointer;">📋</span>
+        </div>
+        <div class="code-block-body">
+          <div><span class="prompt">$ </span><span class="cmd">npm</span> <span class="pkg">install vexora</span></div>
+          <div><span class="comment"># or</span></div>
+          <div><span class="prompt">$ </span><span class="cmd">yarn</span> <span class="pkg">add vexora</span></div>
+          <div><span class="comment"># or</span></div>
+          <div><span class="prompt">$ </span><span class="cmd">pnpm</span> <span class="pkg">add vexora</span></div>
+        </div>
+      </div>
+
+      <!-- Key Features -->
+      <h2 id="key-features" style="font-size: 1.75rem; margin-top: 3rem; margin-bottom: 1.25rem;">Key Features</h2>
+      <div class="docs-feature-grid">
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(236,72,153,0.12); color: #ec4899;">🔗</div>
+          <div>
+            <h4>Expressive Routing</h4>
+            <p>Create powerful routes with ease.</p>
+          </div>
+        </div>
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(96,165,250,0.12); color: #60a5fa;">⚡</div>
+          <div>
+            <h4>WebSocket Ready</h4>
+            <p>Real-time communication made simple.</p>
+          </div>
+        </div>
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(52,211,153,0.12); color: #34d399;">🗄️</div>
+          <div>
+            <h4>Built-in ORM</h4>
+            <p>Database interaction made easy and safe.</p>
+          </div>
+        </div>
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(251,191,36,0.12); color: #fbbf24;">🔐</div>
+          <div>
+            <h4>Authentication</h4>
+            <p>Secure authentication and authorization.</p>
+          </div>
+        </div>
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(168,85,247,0.12); color: #a855f7;">🥪</div>
+          <div>
+            <h4>Middleware Support</h4>
+            <p>Powerful and flexible middleware system.</p>
+          </div>
+        </div>
+        <div class="docs-feature-card">
+          <div class="docs-feature-icon" style="background: rgba(99,102,241,0.12); color: #6366f1;">💻</div>
+          <div>
+            <h4>Developer Friendly</h4>
+            <p>Clean, simple and easy to learn.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prev / Next -->
+      <div class="docs-pagination">
+        <a href="#">
+          <div class="label">← Previous</div>
+          <div class="title">Overview</div>
+          <div class="desc">Learn the basics of Vexora</div>
+        </a>
+        <a href="#" class="next">
+          <div class="label">Next →</div>
+          <div class="title">Installation</div>
+          <div class="desc">Step by step installation guide</div>
+        </a>
+      </div>
+
+      <!-- Why Vexora -->
+      <h2 id="why-vexora" style="font-size: 1.75rem; margin-top: 3rem; margin-bottom: 1.25rem;">Why Vexora?</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-card-icon" style="background: rgba(236,72,153,0.12); color: #ec4899;">🎯</div>
+          <div>
+            <h4>Developer Experience</h4>
+            <p>Designed to be intuitive and developer friendly.</p>
+          </div>
+        </div>
+        <div class="why-card">
+          <div class="why-card-icon" style="background: rgba(99,102,241,0.12); color: #6366f1;">🚀</div>
+          <div>
+            <h4>High Performance</h4>
+            <p>Optimized for speed and high throughput.</p>
+          </div>
+        </div>
+        <div class="why-card">
+          <div class="why-card-icon" style="background: rgba(168,85,247,0.12); color: #a855f7;">👥</div>
+          <div>
+            <h4>Active Community</h4>
+            <p>Backed by a growing and active community.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ========== RIGHT SIDEBAR ========== -->
+    <aside class="sidebar-right">
+      <!-- Table of Contents -->
+      <div>
+        <div class="toc-title">ON THIS PAGE</div>
+        <div class="toc-nav">
+          <a href="#what-is-vexora" class="toc-link active">What is Vexora?</a>
+          <a href="#key-features" class="toc-link">Key Features</a>
+          <a href="#why-vexora" class="toc-link">Why Vexora?</a>
+          <a href="#" class="toc-link">Who is it for?</a>
+          <a href="#" class="toc-link">Next Steps</a>
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="feedback-box">
+        <p>Was this helpful?</p>
+        <div class="feedback-actions">
+          <button class="btn btn-outline btn-sm">👍</button>
+          <button class="btn btn-outline btn-sm">👎</button>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="quick-links">
+        <div class="toc-title">Quick Links</div>
+        <a href="#">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.376.202 2.394.1 2.646.64.699 1.026 1.591 1.026 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          GitHub Repository
+        </a>
+        <a href="#">📄 API Reference</a>
+        <a href="#">💡 Examples</a>
+        <a href="#">🔄 Changelog</a>
+        <a href="#">💬 Support</a>
+      </div>
+
+      <!-- Download -->
+      <div>
+        <div class="toc-title">Download</div>
+        <div class="download-box">
+          <div class="download-version">
+            <h5>v2.1.0 (Latest)</h5>
+            <span style="color: var(--text-tertiary); cursor: pointer;">⋮</span>
+          </div>
+          <div class="download-date">May 20, 2024</div>
+          <button class="btn btn-download btn-sm btn-block">⬇ Download</button>
+        </div>
+        <a href="#" style="display: block; text-align: center; margin-top: 0.75rem; font-size: 0.82rem; color: var(--primary-light);">View all releases →</a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer" style="margin-top: 0;">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-name">
+            <div class="nav-brand-icon">V</div>
+            VEXORA HUB
+          </div>
+          <p>One platform. All frameworks.<br>Build, share and grow together.</p>
+          <div class="footer-socials">
+            <a href="#" class="footer-social">🐙</a>
+            <a href="#" class="footer-social">🐦</a>
+            <a href="#" class="footer-social">💬</a>
+            <a href="#" class="footer-social">▶</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="#">All Frameworks</a></li>
+            <li><a href="#">All Libraries</a></li>
+            <li><a href="#">All Packages</a></li>
+            <li><a href="#">All Technologies</a></li>
+            <li><a href="#">Explore</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Tutorials</a></li>
+            <li><a href="#">Examples</a></li>
+            <li><a href="#">API Reference</a></li>
+            <li><a href="#">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Community</h4>
+          <ul>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Discussions</a></li>
+            <li><a href="#">Events</a></li>
+            <li><a href="#">Contributors</a></li>
+            <li><a href="#">Code of Conduct</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">License</a></li>
+          </ul>
+        </div>
+        <div class="footer-col footer-newsletter">
+          <h4>Stay Updated</h4>
+          <p>Subscribe to our newsletter for the latest updates and releases.</p>
+          <div class="footer-newsletter-form">
+            <input type="email" placeholder="Enter your email">
+            <button class="btn btn-primary btn-sm">Subscribe</button>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2024 Vexora Hub. All rights reserved.</span>
+        <span>Made with ❤️ by Vexora Team</span>
+        <span>&lt;/&gt; Open Source</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

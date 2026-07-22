@@ -114,8 +114,7 @@ function postExecute(req, response, res) {
           try {
               const root = process.cwd();
               const paths = [
-                  path.join(root, '.Vexora_error', '404.html'),
-                  path.join(root, '.vexora_error', '404.html')
+                  path.join(root, '.vexora_error_page', '404.html')
               ];
               for (const p of paths) {
                   if (fs.existsSync(p) && fs.statSync(p).isFile()) {
@@ -128,7 +127,7 @@ function postExecute(req, response, res) {
           if (req.path === '/') {
               res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
               const publicExists = fs.existsSync(path.join(process.cwd(), 'public'));
-              const apiExists = fs.existsSync(path.join(process.cwd(), '.Vexora_Api'));
+              const apiExists = fs.existsSync(path.join(process.cwd(), '.api_routes'));
               
               let version = "1.2.2";
               try {
@@ -155,7 +154,7 @@ function postExecute(req, response, res) {
               const parts = req.path.split('/').filter(Boolean);
               if (parts.length >= 2) {
                   const folderName = parts[1];
-                  const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                  const folderPath = path.join(process.cwd(), '.api_routes', folderName);
                   if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
                       message = "Invalid endpoint";
                   }
@@ -225,8 +224,7 @@ function handleRequestError(err, req, res) {
             try {
                 const root = process.cwd();
                 const paths = [
-                    path.join(root, '.Vexora_error', '500.html'),
-                    path.join(root, '.vexora_error', '500.html')
+                    path.join(root, '.vexora_error_page', '500.html')
                 ];
                 for (const p of paths) {
                     if (fs.existsSync(p) && fs.statSync(p).isFile()) {
@@ -1158,7 +1156,7 @@ function getDefaultLandingPage(publicExists, apiExists, version) {
                         <span class="status-badge ${publicStatus}">${publicText}</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-name">⚙️ .Vexora_Api/ folder</span>
+                        <span class="status-name">⚙️ .api_routes/ folder</span>
                         <span class="status-badge ${apiStatus}">${apiText}</span>
                     </div>
                 </div>

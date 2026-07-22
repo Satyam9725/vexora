@@ -2,14 +2,14 @@ import Vexora from "vexora";
 
 const app = Vexora.start(3000);
 
-app.static("public", "index.html", {
-  maxAge: 86400,
-  rateLimit: {
-    maxRequests: 150,
-    windowSeconds: 60,
-  },
+// Configure static file serving
+app.static("public", "home.html", {
+    maxAge: 86400,
+    rateLimit: {
+        maxRequests: 150,
+        windowSeconds: 60
+    }
 });
-
 
 // Bind WebSocket engine to the HTTP server
 const io = Vexora.WebSocket(app);

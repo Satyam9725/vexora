@@ -1,0 +1,72 @@
+{
+    "error_id": "3fe7599b-88f1-4db7-9e7f-3c62b79813b4::22-07-2026",
+    "level": "FATAL",
+    "code": "FATAL_ERROR",
+    "message": "satisfies is not defined",
+    "time": "2026-07-22T17:50:49.013Z",
+    "memory": {
+        "rss": 79642624,
+        "heapTotal": 21897216,
+        "heapUsed": 13218112,
+        "external": 3940157,
+        "arrayBuffers": 44491
+    },
+    "request": null,
+    "data": {
+        "file_name": "./index.js",
+        "line_number": 3,
+        "column_number": 1,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+
+{
+    "error_id": "f35250a3-ae50-43e0-981b-12d5b436470a::22-07-2026",
+    "level": "FATAL",
+    "code": "FATAL_ERROR",
+    "message": "satisfies is not defined",
+    "time": "2026-07-22T17:50:51.774Z",
+    "memory": {
+        "rss": 80035840,
+        "heapTotal": 21635072,
+        "heapUsed": 13270456,
+        "external": 3940157,
+        "arrayBuffers": 44491
+    },
+    "request": null,
+    "data": {
+        "file_name": "./index.js",
+        "line_number": 3,
+        "column_number": 1,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+
+{
+    "error_id": "1ce52ebd-7364-432d-bbd3-ca68604c1868::22-07-2026",
+    "level": "FATAL",
+    "code": "FATAL_ERROR",
+    "message": "satisfies is not defined",
+    "time": "2026-07-22T17:50:54.738Z",
+    "memory": {
+        "rss": 79618048,
+        "heapTotal": 20848640,
+        "heapUsed": 13218344,
+        "external": 3940157,
+        "arrayBuffers": 44491
+    },
+    "request": null,
+    "data": {
+        "file_name": "./index.js",
+        "line_number": 3,
+        "column_number": 1,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+

@@ -1,6 +1,8 @@
 # ==========================================================
-# Vexora Framework - Auto Generated Server Config
+# Vexora Framework - WebSocket Config for Apache/LiteSpeed
 # ==========================================================
+# RENAME THIS FILE TO '.htaccess' AND PLACE IT IN YOUR ROOT DIRECTORY
+# TO ENABLE WEBSOCKETS IN PRODUCTION (e.g., Hostinger).
 <IfModule mod_rewrite.c>
     RewriteEngine On
     

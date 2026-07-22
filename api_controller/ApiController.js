@@ -57,68 +57,7 @@ class ApiController {
             return false;
         }
 
-        // 1. Direct file matching inside .Vexora_Api (high precedence)
-        if (req.path.startsWith('/api/') || req.path === '/api') {
-            let suffix = req.path.substring(4);
-            if (suffix.startsWith('/')) suffix = suffix.substring(1);
-            if (!suffix) suffix = 'index';
-
-            // Check if this path matches a sub-folder that has its own index.js (a sub-router)
-            // e.g. /api/auth/login where .Vexora_Api/auth/index.js exists
-            const suffixParts = suffix.split('/').filter(Boolean);
-            let hasSubRouter = false;
-            if (suffixParts.length > 1) {
-                const vexoraSubApiIndex = path.join(process.cwd(), '.Vexora_Api', suffixParts[0], 'index.js');
-                if (fs.existsSync(vexoraSubApiIndex)) {
-                    hasSubRouter = true;
-                }
-            }
-
-            if (!hasSubRouter) {
-                const vexoraApiDir = path.join(process.cwd(), '.Vexora_Api');
-                const fileCandidates = [
-                    path.join(vexoraApiDir, suffix + '.js'),
-                    path.join(vexoraApiDir, suffix, 'index.js')
-                ];
-
-                let matchedFile = null;
-                for (const cand of fileCandidates) {
-                    if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-                        if (cand.endsWith('index.js')) {
-                            // Allow routing through .Vexora_Api/index.js if it's a Router, otherwise execute directly
-                            try {
-                                const fileContent = fs.readFileSync(cand, 'utf8');
-                                if (fileContent.includes('export default') || fileContent.includes('RouteController')) {
-                                    continue; 
-                                }
-                            } catch {}
-                        }
-                        matchedFile = cand;
-                        break;
-                    }
-                }
-
-                if (matchedFile) {
-                    if (!this.fallbackApiRouter) {
-                        this.fallbackApiRouter = createRouter('/api');
-                    }
-                    const relPath = path.relative(process.cwd(), matchedFile);
-                    const actionName = relPath.replace(/\.js$/, '');
-                    try {
-                        await this.fallbackApiRouter._executeAction(req, res, actionName);
-                        return true;
-                    } catch (err) {
-                        if (err && err.message === "VEXORA_ROUTE_BLOCKED") return true;
-                        console.error(`❌ Fallback API load failed for: ${actionName}`, err);
-                        if (!res.headersSent) {
-                            res.statusCode = 500;
-                            res.json({ status: false, message: "Internal Server Error" });
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
+        // Auto-discover sub-routers or index.js files instead of matching individual files directly.
 
         const searchDirs = [
             process.cwd(),
@@ -144,23 +83,46 @@ class ApiController {
         let baseMount = `/${moduleName}`;
         let indexFile = undefined;
 
-        // Check in .Vexora_Api first if moduleName is 'api'
+        // Check in .api_routes first if moduleName is 'api'
         if (moduleName === 'api') {
-            // Check for /api/auth/index.js inside .Vexora_Api
-            if (parts[1]) {
-                const vexoraSubApiIndex = path.join(process.cwd(), '.Vexora_Api', parts[1], 'index.js');
-                if (fs.existsSync(vexoraSubApiIndex)) {
-                    moduleName = parts[1];
-                    indexFile = vexoraSubApiIndex;
-                    baseMount = `/api/${moduleName}`;
+            let matchedDepth = 0;
+            let currentPath = path.join(process.cwd(), '.api_routes');
+            
+            // Traverse down to find how deep the sub-directories go based on the URL parts
+            const hasTrailingSlash = req.path.endsWith('/');
+            for (let i = 1; i < parts.length; i++) {
+                // If it is the last segment and has no trailing slash, do not treat it as a sub-router folder
+                if (i === parts.length - 1 && !hasTrailingSlash) {
+                    break;
+                }
+                const nextPath = path.join(currentPath, parts[i]);
+                if (fs.existsSync(nextPath) && fs.statSync(nextPath).isDirectory()) {
+                    currentPath = nextPath;
+                    matchedDepth = i;
+                } else {
+                    break;
                 }
             }
-            // Check for /api/index.js inside .Vexora_Api
-            if (!indexFile) {
-                const vexoraApiIndex = path.join(process.cwd(), '.Vexora_Api', 'index.js');
-                if (fs.existsSync(vexoraApiIndex)) {
-                    indexFile = vexoraApiIndex;
-                    baseMount = '/api';
+
+            // Search backwards from the deepest matched folder up to the root .api_routes folder
+            // looking for the first api.whitelist.js or index.js
+            for (let i = matchedDepth; i >= 0; i--) {
+                const checkDir = path.join(process.cwd(), '.api_routes', ...parts.slice(1, i + 1));
+                const wl = path.join(checkDir, 'api.whitelist.js');
+                const idx = path.join(checkDir, 'index.js');
+                
+                if (fs.existsSync(wl)) {
+                    indexFile = wl;
+                    const joined = parts.slice(1, i + 1).join('/');
+                    baseMount = joined ? `/api/${joined}` : '/api';
+                    moduleName = parts[i] || 'api';
+                    break;
+                } else if (fs.existsSync(idx)) {
+                    indexFile = idx;
+                    const joined = parts.slice(1, i + 1).join('/');
+                    baseMount = joined ? `/api/${joined}` : '/api';
+                    moduleName = parts[i] || 'api';
+                    break;
                 }
             }
         } else {
@@ -174,6 +136,23 @@ class ApiController {
                     const fileUrl = pathToFileURL(indexFile).href;
                     const module = await import(fileUrl);
                     subRouter = module.default || module;
+                    
+                    // Automatically inject root fallback if not defined by the user
+                    if (subRouter && typeof subRouter.match === 'function' && subRouter.routes) {
+                        let hasRoot = false;
+                        for (const method in subRouter.routes) {
+                            if (subRouter.routes[method]['/']) {
+                                hasRoot = true;
+                                break;
+                            }
+                        }
+                        if (!hasRoot && baseMount === '/api') {
+                            subRouter.match(['GET', 'POST'], '/', (req, res) => {
+                                return res.json({ status: true, message: "Vexora API is running" });
+                            });
+                        }
+                    }
+                    
                     this.routerCache.set(indexFile, subRouter);
                 }
                 

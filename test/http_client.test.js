@@ -63,8 +63,8 @@ export async function run() {
         assert.ok(fileHtmlRes.data.includes("File Not Found"), "Should contain File Not Found header");
         assert.ok(fileHtmlRes.data.includes("/index1.html1"), "Should display requested file path");
 
-        // Create custom .Vexora_error directory and 404.html page
-        const errorDir = path.join(process.cwd(), ".Vexora_error");
+        // Create custom .vexora_error_page directory and 404.html page
+        const errorDir = path.join(process.cwd(), ".vexora_error_page");
         if (!fs.existsSync(errorDir)) {
             fs.mkdirSync(errorDir);
         }
@@ -86,33 +86,6 @@ export async function run() {
             try {
                 fs.unlinkSync(custom404Path);
                 fs.rmdirSync(errorDir);
-            } catch (e) {}
-        }
-
-        // Create custom lowercase .vexora_error directory and 404.html page
-        const errorDirLower = path.join(process.cwd(), ".vexora_error");
-        if (!fs.existsSync(errorDirLower)) {
-            fs.mkdirSync(errorDirLower);
-        }
-        const custom404PathLower = path.join(errorDirLower, "404.html");
-        fs.writeFileSync(custom404PathLower, "<h1>My Custom Lowercase 404 Page</h1>");
-
-        try {
-            // Test that requesting a non-existent file path with Accept: text/html returns the custom 404.html page from lowercase folder
-            const custom404ResLower = await Vexora.http.get("http://localhost:3099/index1.html1", {
-                headers: { 
-                    "Connection": "close",
-                    "Accept": "text/html"
-                }
-            });
-            assert.strictEqual(custom404ResLower.status, 404);
-            assert.ok(custom404ResLower.headers["content-type"].includes("text/html"), "Should return HTML content-type");
-            assert.ok(custom404ResLower.data.includes("<h1>My Custom Lowercase 404 Page</h1>"), "Should serve custom lowercase 404 page content");
-        } finally {
-            // Clean up custom error directory
-            try {
-                fs.unlinkSync(custom404PathLower);
-                fs.rmdirSync(errorDirLower);
             } catch (e) {}
         }
 

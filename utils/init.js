@@ -21,29 +21,81 @@ class Init {
   static setup() {
     try {
       const rootDir = process.cwd();
-      const vexoraDir = path.join(rootDir, ".Vexora");
+      const vexoraDir = path.join(rootDir, ".vexora_config");
 
-      // Create .Vexora directory if it does not exist
+      // Create .vexora_config directory if it does not exist
       if (!fs.existsSync(vexoraDir)) {
         fs.mkdirSync(vexoraDir, {
           recursive: true,
         });
       }
 
-      const vexoraApiDir = path.join(rootDir, ".Vexora_Api");
-      // Create .Vexora_Api directory if it does not exist
+      const vexoraLogDir = path.join(rootDir, ".vexora_log");
+      // Create .vexora_log directory if it does not exist
+      if (!fs.existsSync(vexoraLogDir)) {
+        fs.mkdirSync(vexoraLogDir, {
+          recursive: true,
+        });
+      }
+
+      const vexoraApiDir = path.join(rootDir, ".api_routes");
+      // Create .api_routes directory if it does not exist
       if (!fs.existsSync(vexoraApiDir)) {
         fs.mkdirSync(vexoraApiDir, {
           recursive: true,
         });
       }
 
-      const vexoraErrorDir = path.join(rootDir, ".Vexora_error");
-      // Create .Vexora_error directory if it does not exist
+      const whitelistPath = path.join(vexoraApiDir, "api.whitelist.js");
+      if (!fs.existsSync(whitelistPath)) {
+        fs.writeFileSync(
+          whitelistPath,
+`import Vexora from "vexora";
+
+// Create a RouteController to act as a whitelist and router
+const apiRouter = new Vexora.RouteController();
+
+// A. Map HTTP methods to specific controller script files
+// apiRouter.post('login');    // → .api_routes/login.js
+// apiRouter.get('profile'); // → .api_routes/profile.js
+
+// D. Catch-all routing handler for undefined API routes
+apiRouter.any('/:any', (req, res) => {
+    return res.json({ status: false, message: "Action not found!" }, 404);
+});
+
+export default apiRouter;
+`
+        );
+      }
+
+      const vexoraErrorDir = path.join(rootDir, ".vexora_error_page");
+      // Create .vexora_error_page directory if it does not exist
       if (!fs.existsSync(vexoraErrorDir)) {
         fs.mkdirSync(vexoraErrorDir, {
           recursive: true,
         });
+      }
+
+      // Create vexora.js CLI bridge file if running in an external user project
+      const vexoraBridgePath = path.join(rootDir, "vexora.js");
+      const frameworkPkgPath = path.join(rootDir, "package.json");
+      let isFrameworkDir = false;
+      if (fs.existsSync(frameworkPkgPath)) {
+        try {
+          const p = JSON.parse(fs.readFileSync(frameworkPkgPath, "utf8"));
+          if (p.name === "vexora" && p.repository && p.repository.url && p.repository.url.includes("Satyam9725/vexora")) {
+            isFrameworkDir = true;
+          }
+        } catch (e) {}
+      }
+
+      if (!isFrameworkDir && !fs.existsSync(vexoraBridgePath)) {
+        fs.writeFileSync(
+          vexoraBridgePath,
+          `import executeCommand from "vexora/command";\nexecuteCommand(process.argv.slice(2));\n`,
+          "utf8"
+        );
       }
 
       const configPath = path.join(vexoraDir, "config");
@@ -136,7 +188,7 @@ class Init {
           mode: 0o600,
         });
 
-        console.log("✅ .Vexora/config created");
+        console.log("✅ .vexora_config/config created");
       }
 
       // Create db_config.json file
@@ -159,16 +211,37 @@ class Init {
           mode: 0o600,
         });
 
-        console.log("✅ .Vexora/db_config.json created");
+        console.log("✅ .vexora_config/db_config.json created");
       }
 
-      // Create .htaccess for LiteSpeed / Apache WebSocket Support
-      const htaccessPath = path.join(rootDir, ".htaccess");
+      // Create .vexora_info directory
+      const serverConfigDir = path.join(rootDir, ".vexora_info");
+      if (!fs.existsSync(serverConfigDir)) {
+        fs.mkdirSync(serverConfigDir, { recursive: true });
+      }
+
+      // Smart Detection for Apache/LiteSpeed / Shared Hosting (Hostinger/cPanel)
+      const cwdStr = process.cwd().toLowerCase();
+      const isSharedHosting = 
+        cwdStr.includes('public_html') || 
+        cwdStr.includes('htdocs') || 
+        cwdStr.includes('/var/www/') ||
+        process.env.PASSENGER_BASE_URI !== undefined ||
+        process.env.LSNODE_ROOT !== undefined;
+
+      // If we are on a production server likely running Apache/LiteSpeed, put .htaccess in root
+      // Otherwise (like local development), hide it in .Vexora/server_configs/
+      const htaccessFilename = isSharedHosting ? ".htaccess" : "apache_litespeed.htaccess.example";
+      const htaccessDestDir = isSharedHosting ? rootDir : serverConfigDir;
+      const htaccessPath = path.join(htaccessDestDir, htaccessFilename);
+
       if (!fs.existsSync(htaccessPath)) {
         const htaccessContent = [
           "# ==========================================================",
-          "# Vexora Framework - Auto Generated Server Config",
+          "# Vexora Framework - WebSocket Config for Apache/LiteSpeed",
           "# ==========================================================",
+          isSharedHosting ? "" : "# RENAME THIS FILE TO '.htaccess' AND PLACE IT IN YOUR ROOT DIRECTORY",
+          isSharedHosting ? "" : "# TO ENABLE WEBSOCKETS IN PRODUCTION (e.g., Hostinger).",
           "<IfModule mod_rewrite.c>",
           "    RewriteEngine On",
           "    ",
@@ -179,18 +252,22 @@ class Init {
           "    RewriteRule /(.*)           ws://127.0.0.1:3000/$1 [P,L]",
           "</IfModule>",
           ""
-        ].join("\n");
+        ].filter(line => line !== "").join("\n");
         
         fs.writeFileSync(htaccessPath, htaccessContent, {
           encoding: "utf8",
           mode: 0o644,
         });
         
-        console.log("✅ .htaccess created for WebSocket Proxy Support");
+        if (isSharedHosting) {
+          console.log("✅ .htaccess auto-generated in root for Apache/LiteSpeed WebSockets");
+        } else {
+          console.log("✅ WebSocket Proxy configs generated in .vexora_info/");
+        }
       }
 
       // Create Nginx Example Config for WebSockets
-      const nginxConfigPath = path.join(rootDir, "nginx-websocket.conf.example");
+      const nginxConfigPath = path.join(serverConfigDir, "nginx-websocket.conf.example");
       if (!fs.existsSync(nginxConfigPath)) {
         const nginxContent = [
           "# ==========================================================",

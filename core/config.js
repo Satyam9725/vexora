@@ -24,7 +24,7 @@ class Config {
   static config = {};
   static cache = {};
 
-  static file = path.join(process.cwd(), ".Vexora", "config");
+  static file = path.join(process.cwd(), ".vexora_config", "config");
 
   /**
    * Sync performance-critical configs as static properties
@@ -47,7 +47,7 @@ class Config {
   static load() {
     this.cache = {};
     if (!fs.existsSync(this.file)) {
-      console.warn("⚠️ Warning: .Vexora/config file not found. Relying on environment variables (process.env) if available.");
+      console.warn("⚠️ Warning: .vexora_config/config file not found. Relying on environment variables (process.env) if available.");
       this.config = {};
       this.sync();
       return;
@@ -77,7 +77,7 @@ class Config {
         this.config[key] = value;
       });
     } catch (err) {
-      console.warn(`⚠️ Warning: Failed to read .Vexora/config: ${err.message}. Relying on process.env.`);
+      console.warn(`⚠️ Warning: Failed to read .vexora_config/config: ${err.message}. Relying on process.env.`);
       this.config = {};
     }
     this.sync();

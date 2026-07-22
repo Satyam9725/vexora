@@ -18,7 +18,6 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 import MemoryCache from "../cache/MemoryCache.js";
-import Vexora from "../Vexora.js";
 import { log as auditLog } from "../Middleware/audit_logger.js";
 import Helper from "../utils/Helper.js";
 import { requestContext } from "../core/Context.js";
@@ -58,6 +57,10 @@ class Router {
      */
     match(methods, uri, action) {
         const normalizedUri = this._normalizeUri(uri);
+        if (action === undefined) {
+            action = normalizedUri.replace(/^\//, '');
+            if (action === '') action = 'index';
+        }
         this.lastRegisteredRoutes = [];
         if (this.routeMatchCache) {
             this.routeMatchCache.clear();
@@ -102,7 +105,7 @@ class Router {
                     const parts = req.path.split('/').filter(Boolean);
                     if (parts.length >= 2) {
                         const folderName = parts[1];
-                        const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                        const folderPath = path.join(process.cwd(), '.api_routes', folderName);
                         if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
                             message = "Invalid endpoint";
                         }
@@ -324,8 +327,8 @@ class Router {
                     const searchDirs = [
                         process.cwd(),
                         this.basePath ? path.join(process.cwd(), path.basename(this.basePath)) : null,
-                        this.basePath && this.basePath.startsWith('/api') ? path.join(process.cwd(), '.Vexora_Api', this.basePath.replace(/^\/api/, '')) : null,
-                        path.join(process.cwd(), '.Vexora_Api'),
+                        this.basePath && this.basePath.startsWith('/api') ? path.join(process.cwd(), '.api_routes', this.basePath.replace(/^\/api/, '')) : null,
+                        path.join(process.cwd(), '.api_routes'),
                         path.join(process.cwd(), 'http'),
                         path.join(process.cwd(), 'api'),
                         path.join(process.cwd(), 'controllers')
@@ -361,7 +364,7 @@ class Router {
                         const parts = req.path.split('/').filter(Boolean);
                         if (parts.length >= 2) {
                             const folderName = parts[1];
-                            const folderPath = path.join(process.cwd(), '.Vexora_Api', folderName);
+                            const folderPath = path.join(process.cwd(), '.api_routes', folderName);
                             if (fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()) {
                                 message = "Invalid endpoint";
                             }

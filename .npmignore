@@ -1,67 +1,59 @@
-# Ignore test and temporary folders from the published npm package
+# ==========================================================
+# Vexora Framework - NPM Ignore Manifest
+# ==========================================================
+
+# Test Folders & Test Files
 test/
 scratch/
-
-package-lock.json
-*.log
+live_test/
+test_public/
+test.js
+test*.js
+test_*.js
+*_test.js
 Vexora_test.js
-files/
-.gitignore
-node_modules
+test-server.js
 
-public/
-api/
+# Local Entry Points & Scaffolding Test Files
+app.js
+server.js
+index.js
 
-# Node Modules
-node_modules/
-
-api_manager
-
-# Logs
-*.log
-logs/
-
-# Environment
+# Environment & Config Secrets
 .env
 .env.*
+*.env
 
-# N.Vexora
-.Vexora/
-.Vexora_Api/
+# Logs & Audit Directories
+*.log
+logs/
+.vexora_log/
+npm-debug.log*
 
-test_emport.js
+# Dependencies & Lockfiles
+node_modules/
+package-lock.json
 
-# Cache
-.cache/
-
-# OS Files
+# IDE & OS System Files
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-
-# npm
-npm-debug.log*
-
-/index.js
-
-live_test/
-
-/test.js
-/test2.js
-/test3.js
-/test4.js
-/test-server.js
-
-# Temporary public testing folders
-public1/
-public2/
-
-# GitHub Actions (if any)
+# Git Repository Metadata
+.git/
 .github/
 
-# Auto-Generated Server Configs
+# Temporary Local Storage & Upload Test Directories
+public/
+public1/
+public2/
+files/
+
+# Local Instance Configs (Generated dynamically on user projects by Init.setup())
+.vexora_config/
+.vexora_error_page/
+.vexora_info/
+.api_routes/
 .htaccess
-nginx-websocket.conf.example
+*.example
