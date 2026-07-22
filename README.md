@@ -1707,7 +1707,7 @@ console.log(helloUser("Vexora"));
 Run this command to open the interactive CLI helper tool:
 
 ```bash
-npx vexora
+node Vexora
 ```
 
 ---

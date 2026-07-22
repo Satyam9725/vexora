@@ -216,9 +216,37 @@ Object.assign(http.ServerResponse.prototype, {
   }
 });
 
+import { requestContext } from "../core/Context.js";
+
 class Response {
   constructor(res) {
     return res; // transparently return native res which has everything
+  }
+
+  static get activeRes() {
+    const store = requestContext.getStore();
+    return store ? store.res : null;
+  }
+
+  static status(code) {
+    const res = Response.activeRes;
+    if (res && typeof res.status === "function") return res.status(code);
+    return Response;
+  }
+
+  static json(data) {
+    const res = Response.activeRes;
+    if (res && typeof res.json === "function") return res.json(data);
+  }
+
+  static success(data = null, message = "Success") {
+    const res = Response.activeRes;
+    if (res && typeof res.success === "function") return res.success(data, message);
+  }
+
+  static error(message = "Error", statusCode = 400, data = null) {
+    const res = Response.activeRes;
+    if (res && typeof res.error === "function") return res.error(message, statusCode, data);
   }
 }
 

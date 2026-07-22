@@ -1,1 +1,1 @@
-  Vexora.Response.success("user", "Login successful!");
+ Vexora.Response.error("Invalid credentials!", 401);

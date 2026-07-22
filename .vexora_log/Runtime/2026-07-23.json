@@ -1,0 +1,24 @@
+{
+    "error_id": "51c1686b-dd92-45c2-8305-8babc585b0eb::23-07-2026",
+    "level": "ERROR",
+    "code": "RUNTIME_ERROR",
+    "message": "Unexpected reserved word",
+    "time": "2026-07-22T23:30:10.991Z",
+    "memory": {
+        "rss": 79433728,
+        "heapTotal": 21372928,
+        "heapUsed": 13722736,
+        "external": 3990050,
+        "arrayBuffers": 112473
+    },
+    "request": null,
+    "data": {
+        "file_name": "Unknown",
+        "line_number": null,
+        "column_number": null,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+
