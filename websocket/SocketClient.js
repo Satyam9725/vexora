@@ -24,6 +24,7 @@ class SocketClient extends EventEmitter {
         this.socket = socket;
         this.server = server;
         this.buffer = Buffer.alloc(0);
+        this.isAlive = true;
 
         this.socket.on("data", (data) => this._handleData(data));
         this.socket.on("close", () => {
@@ -85,8 +86,8 @@ class SocketClient extends EventEmitter {
 
             if (this.buffer.length < headerLen + payloadLen) return;
 
-            const payload = this.buffer.slice(headerLen, headerLen + payloadLen);
-            this.buffer = this.buffer.slice(headerLen + payloadLen);
+            const payload = Buffer.from(this.buffer.subarray(headerLen, headerLen + payloadLen));
+            this.buffer = Buffer.from(this.buffer.subarray(headerLen + payloadLen));
 
             if (isMasked && maskingKey) {
                 for (let i = 0; i < payload.length; i++) {
@@ -99,6 +100,7 @@ class SocketClient extends EventEmitter {
     }
 
     _handleFrame(opcode, payload) {
+        this.isAlive = true;
         switch (opcode) {
             case 0x1:
                 const text = payload.toString('utf8');
@@ -114,6 +116,9 @@ class SocketClient extends EventEmitter {
             case 0x9:
                 this._sendFrame(0xA, payload);
                 break;
+            case 0xA:
+                // Pong received
+                break;
             default:
                 break;
         }
@@ -121,8 +126,20 @@ class SocketClient extends EventEmitter {
 
     _sendFrame(opcode, payload) {
         if (!this.socket.writable) return;
+        
+        // Prevent memory leak if client stops reading (backpressure)
+        if (this.socket.writableLength > 5 * 1024 * 1024) { // 5MB buffer limit
+            console.error("❌ WebSocket Error: Client not reading fast enough. Dropping connection.");
+            this.socket.destroy();
+            return;
+        }
+
         const frameBuffer = createFrame(opcode, payload);
         this.socket.write(frameBuffer);
+    }
+
+    ping() {
+        this._sendFrame(0x9, Buffer.alloc(0));
     }
 
     send(data) {

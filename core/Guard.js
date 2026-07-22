@@ -14,53 +14,32 @@
  * ==========================================================
  */
 
-let enabled = false;
-let mode = "full"; // "full" or "browser"
+import { requestContext } from "./Context.js";
+import Config from "./config.js";
 
-function protect(targetMode = "full") {
-    enabled = true;
-    const normalized = String(targetMode).toLowerCase().trim();
-    if (normalized === "browser" || normalized === "url") {
-        mode = "browser";
-    } else {
-        mode = "full";
+function protect() {
+    const store = requestContext.getStore();
+    if (store && store.response && !store.response.headersSent) {
+        store.response.writeHead(404, { "Content-Type": "text/plain" });
+        store.response.end("404 Not Found");
+        throw new Error("VEXORA_ROUTE_BLOCKED");
     }
 }
 
 function check(req, res) {
-    if (!enabled) {
-        return true;
+    if (Config.boolean("EMERGENCY_BLOCK", false)) {
+        res.statusCode = 404;
+        res.setHeader("Content-Type", "text/plain");
+        res.end("404 Not Found");
+        return false;
     }
-
-    if (mode === "browser") {
-        // Determine if it is a direct browser navigation (HTML page load)
-        const secFetchMode = req.headers['sec-fetch-mode'];
-        const secFetchDest = req.headers['sec-fetch-dest'];
-        const accept = req.headers['accept'] || '';
-
-        const isBrowserNavigation = 
-            secFetchMode === 'navigate' || 
-            secFetchDest === 'document' ||
-            (accept.includes('text/html') && !accept.includes('application/json'));
-
-        // Bypass lockdown if requested programmatically (e.g. API call, XHR, fetch)
-        if (!isBrowserNavigation) {
-            return true;
-        }
-    }
-
-    // Default: Block all requests (Full Lockdown mode)
-    res.statusCode = 404;
-    res.setHeader("Content-Type", "text/plain");
-    res.end("404 Not Found");
-
-    return false;
+    return true;
 }
 
 export default {
     protect,
     check,
     get enabled() {
-        return enabled;
+        return true; 
     }
 };

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexora WebSocket Client</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090e;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #8b5cf6;
+            --success: #10b981;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+        }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .header h2 { font-size: 1.8rem; font-weight: 800; color: #a78bfa; margin-bottom: 0.25rem; }
+        .header p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        .status-indicator { display: flex; align-items: center; gap: 0.5rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; transition: background 0.3s; }
+        .dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+ 
+        .chat-box {
+            height: 250px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .msg { padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 85%; width: fit-content; line-height: 1.4; }
+        .msg.system { background: transparent; color: var(--text-muted); font-style: italic; max-width: 100%; padding: 0.25rem 0; }
+        .msg.client { background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #c084fc; align-self: flex-end; }
+        .msg.server { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); color: #34d399; align-self: flex-start; }
+ 
+        .input-group { display: flex; gap: 0.5rem; }
+        input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            color: var(--text);
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            background: var(--primary);
+            border: none;
+            color: var(--text);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-conn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .btn-conn.connected { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h2>Vexora Socket Client</h2>
+            <p>Real-time bidirectional event console</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <button class="btn btn-conn" id="connBtn" onclick="toggleConnection()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px;">Connect</button>
+        </div>
+ 
+        <div class="chat-box" id="chatBox">
+            <div class="msg system">Click Connect to establish stream protocol.</div>
+        </div>
+ 
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type message..." disabled>
+            <button class="btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+ 
+    <script>
+        let ws = null;
+        const chatBox = document.getElementById('chatBox');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const connBtn = document.getElementById('connBtn');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+ 
+        function appendMessage(text, sender = 'system') {
+            const div = document.createElement('div');
+            div.className = `msg ${sender}`;
+            div.innerText = sender === 'client' ? `👤 ${text}` : sender === 'server' ? `⚡ ${text}` : text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+ 
+        function toggleConnection() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+                return;
+            }
+ 
+            const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
+            appendMessage(`Connecting to ${wsUrl}...`, 'system');
+ 
+            ws = new WebSocket(wsUrl);
+ 
+            ws.onopen = () => {
+                statusDot.classList.add('connected');
+                statusText.innerText = 'Connected';
+                connBtn.innerText = 'Disconnect';
+                connBtn.classList.add('connected');
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                appendMessage('Stream link established with Vexora server.', 'system');
+            };
+ 
+            ws.onmessage = (event) => {
+                let text = event.data;
+                try {
+                    const parsed = JSON.parse(event.data);
+                    text = JSON.stringify(parsed);
+                } catch {}
+                appendMessage(text, 'server');
+            };
+ 
+            ws.onclose = () => {
+                statusDot.classList.remove('connected');
+                statusText.innerText = 'Disconnected';
+                connBtn.innerText = 'Connect';
+                connBtn.classList.remove('connected');
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                messageInput.value = '';
+                appendMessage('WebSocket link terminated.', 'system');
+            };
+ 
+            ws.onerror = () => {
+                appendMessage('WebSocket connection error.', 'system');
+            };
+        }
+ 
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(text);
+                appendMessage(text, 'client');
+                messageInput.value = '';
+            }
+        }
+ 
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>

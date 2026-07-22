@@ -48,3 +48,20 @@ npm-debug.log*
 /index.js
 
 live_test/
+
+/test.js
+/test2.js
+/test3.js
+/test4.js
+/test-server.js
+
+# Temporary public testing folders
+public1/
+public2/
+
+# GitHub Actions (if any)
+.github/
+
+# Auto-Generated Server Configs
+.htaccess
+nginx-websocket.conf.example

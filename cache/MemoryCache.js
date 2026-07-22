@@ -96,6 +96,20 @@ class MemoryCache {
     }
 
     /**
+     * Get a user-scoped cache instance
+     * Usage: Vexora.Redis.user(101).set("username", "satyam")
+     */
+    user(userId) {
+        return {
+            set: (key, value, ttlSeconds = 0) => this.set(`user:${userId}:${key}`, value, ttlSeconds),
+            get: (key, defaultValue = null) => this.get(`user:${userId}:${key}`, defaultValue),
+            has: (key) => this.has(`user:${userId}:${key}`),
+            del: (key) => this.del(`user:${userId}:${key}`),
+            forget: (key) => this.del(`user:${userId}:${key}`)
+        };
+    }
+
+    /**
      * Increment a numeric value (Redis-style INCR)
      */
     incr(key, amount = 1) {

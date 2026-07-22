@@ -106,6 +106,11 @@ function getErrorInfo(error) {
 
 export function setupGlobalErrorHandlers() {
   process.on("uncaughtException", (error) => {
+    // Safely ignore harmless networking errors where clients close connections early
+    if (error && (error.code === 'EPIPE' || error.code === 'ECONNRESET')) {
+      return;
+    }
+
     const formatted = formatError(error);
     const errorInfo = getErrorInfo(error);
     

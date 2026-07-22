@@ -158,15 +158,7 @@ import Vexora from "vexora";
 // This auto-connects API controllers, static serving, and security middleware
 const app = Vexora.start(3000);
 
-// Define routes using the Vexora signature
-// Supported verbs: get, post, put, patch, delete, any
-app.Vexora(get, "/", (req, res) => {
-    return res.success({ hello: "world" }, "Welcome to Vexora!");
-});
 
-app.Vexora(post, "/submit", (req, res) => {
-    return res.success(req.all(), "Data processed successfully!");
-});
 ```
 
 ### Step 2 — Run
@@ -251,7 +243,7 @@ Vexora supports automatic **`.Vexora_Api` directory-based routing**. When the se
 Drop a JavaScript file into `.Vexora_Api/` — it's automatically mapped to a route:
 
 ```
-.Vexora_Api/profile.js  →  GET http://localhost:3000/api/profile
+.Vexora_Api/auth/login.js  →  GET http://localhost:3000/api/auth/login
 ```
 
 ### Module-Based Sub-Routers
@@ -342,14 +334,23 @@ if (!user) {
 >
 > *Vexora also supports path parameters (`/users/:id` → `params.id`) if your design demands strict URL hierarchies.*
 
-### Global Server Lockdown
+### Route Access Protection
 
 ```javascript
-// Full lockdown — blocks all HTTP traffic with 404
-Vexora.protect();       // or Vexora.protect("full")
+// Blocks ALL external HTTP access (GET, POST, Fetch, Axios, URL) to this route (returns 404)
+// Allows the file to be used purely as an internal server module via `import` or `require`
+Vexora.protect();
+```
 
-// Browser-only lockdown — blocks direct URL navigation, allows fetch/XHR/Axios
-Vexora.protect("browser");  // or Vexora.protect("url")
+> [!TIP]
+> Use `Vexora.protect()` inside any file to make it strictly a private server-side module. If anyone tries to access it via any HTTP request, they will be blocked.
+
+### Emergency Server Lockdown
+
+To block **all** incoming traffic globally across the entire server, enable the `EMERGENCY_BLOCK` flag in your `.Vexora/config` file:
+
+```env
+EMERGENCY_BLOCK=true
 ```
 
 ---
@@ -642,25 +643,47 @@ const io = Vexora.WebSocket(app);
 
 io.on("connection", (socket) => {
     console.log("🔌 Client connected!");
-
     // Send to this client
     socket.send({ type: "welcome", message: "Connected to Vexora!" });
-
     // Listen for messages
     socket.on("message", (msg) => {
         console.log("Received:", msg);
-
         // Broadcast to all OTHER clients (excluding sender)
         socket.broadcast(msg);
-
         // Broadcast to EVERYONE (including sender)
         // io.broadcast(msg);
     });
-
     socket.on("disconnect", () => {
         console.log("🔌 Client disconnected");
     });
 });
+```
+
+### Reverse Proxy Setup (Hostinger / Nginx)
+
+If you are hosting your Vexora app on a VPS or Shared Hosting (like Hostinger), you must configure your reverse proxy to allow WebSocket upgrades.
+
+**For LiteSpeed / Apache (Hostinger Shared/Cloud):**
+Add this to your `.htaccess` file:
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*)           ws://127.0.0.1:3000/$1 [P,L]
+</IfModule>
+```
+
+**For Nginx (VPS / Dedicated):**
+Add this inside your server's `location /` block:
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+}
 ```
 
 ### Client Setup
@@ -945,6 +968,24 @@ const exists = Vexora.Redis.has("temp_token");
 
 // Delete key
 Vexora.Redis.del("temp_token");
+```
+
+### User-Scoped Caching
+
+Automatically scopes keys to specific users (e.g., `user:101:username`) to prevent overlapping data across sessions or clients.
+
+```javascript
+// 1. Set user-specific data
+Vexora.Redis.user(101).set("username", "satyam_kumar");
+
+// 2. Retrieve user-specific data
+const name = Vexora.Redis.user(101).get("username");
+
+// 3. Delete user data
+Vexora.Redis.user(101).del("username");
+
+// 4. Check existence
+const exists = Vexora.Redis.user(101).has("username");
 ```
 
 ### Atomic Counters

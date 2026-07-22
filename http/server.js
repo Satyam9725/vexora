@@ -181,6 +181,8 @@ function postExecute(req, response, res) {
 }
 
 function handleRequestError(err, req, res) {
+      if (err && err.message === "VEXORA_ROUTE_BLOCKED") return;
+
       console.error("❌ Request Error:", err.stack || err.message);
 
       let message = err instanceof Error ? err.message : String(err);
@@ -310,7 +312,7 @@ export default function Server(callback, options = {}) {
       req.startTime = performance.now();
     }
     try {
-      if (Guard.enabled && Guard.check(req, res) === false) {
+      if (Guard.check(req, res) === false) {
         return;
       }
 
@@ -325,7 +327,7 @@ export default function Server(callback, options = {}) {
         res.setHeader('X-XSS-Protection', '1; mode=block');
         // Security: Add CSP and HSTS headers
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self';");
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:;");
       }
 
       req.method = req.method || "GET";

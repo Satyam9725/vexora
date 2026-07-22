@@ -41,9 +41,12 @@ class ApiController {
                 await cached.subRouter.run(req, res);
                 return true;
             } catch (err) {
+                if (err && err.message === "VEXORA_ROUTE_BLOCKED") return true;
                 console.error(`❌ Dynamic Router load failed for: ${cached.moduleName}`, err);
-                res.statusCode = 500;
-                res.json({ status: false, message: "Internal Server Error" });
+                if (!res.headersSent) {
+                    res.statusCode = 500;
+                    res.json({ status: false, message: "Internal Server Error" });
+                }
                 return true;
             }
         }
@@ -105,9 +108,12 @@ class ApiController {
                         await this.fallbackApiRouter._executeAction(req, res, actionName);
                         return true;
                     } catch (err) {
+                        if (err && err.message === "VEXORA_ROUTE_BLOCKED") return true;
                         console.error(`❌ Fallback API load failed for: ${actionName}`, err);
-                        res.statusCode = 500;
-                        res.json({ status: false, message: "Internal Server Error" });
+                        if (!res.headersSent) {
+                            res.statusCode = 500;
+                            res.json({ status: false, message: "Internal Server Error" });
+                        }
                         return true;
                     }
                 }
@@ -179,6 +185,7 @@ class ApiController {
                     return true; // Successfully matched and handled
                 }
             } catch (err) {
+                if (err && err.message === "VEXORA_ROUTE_BLOCKED") return true;
                 let errorId = "N/A";
                 let location = "";
                 if (err.stack) {
@@ -190,8 +197,10 @@ class ApiController {
                     errorId = auditLog("ERROR", "RUNTIME_ERROR", err.message + location, { module: moduleName });
                 } catch (e) {}
                 console.error(`❌ Dynamic Router load failed for: ${moduleName}${location} -`, err.message);
-                res.statusCode = 500;
-                res.json({ status: false, message: `Internal Server Error (Error ID: ${errorId})` });
+                if (!res.headersSent) {
+                    res.statusCode = 500;
+                    res.json({ status: false, message: `Internal Server Error (Error ID: ${errorId})` });
+                }
                 return true;
             }
         }

@@ -1,0 +1,12 @@
+# ==========================================================
+# Vexora Framework - Auto Generated Server Config
+# ==========================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Enable WebSockets proxy for LiteSpeed / Apache servers
+    # Note: If your Vexora app runs on a port other than 3000, 
+    # update the port number below!
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule /(.*)           ws://127.0.0.1:3000/$1 [P,L]
+</IfModule>

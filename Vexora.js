@@ -241,7 +241,7 @@ const Vexora = {
   Request: Request,
   Response: GlobalResponse,
   Validator: Validator,
-  WebSocket: initWebSocket,
+  WebSocket: (server) => server.ws || (server.ws = initWebSocket(server)),
   Cache: MemoryCache,
   Redis: MemoryCache,
   info_redis: () => MemoryCache.info_redis(),
@@ -342,7 +342,11 @@ const Vexora = {
   Server,
   http: Http,
   start(port = null, options = {}) {
-    const actualPort = port || parseInt(Config.get("PORT")) || 30000;
+    const actualPort = port || process.env.PORT || parseInt(Config.get("PORT")) || 30000;
+
+    if (options.staticDir === undefined && fs.existsSync(path.join(process.cwd(), "public"))) {
+      options.staticDir = "public";
+    }
 
     let serveStatic = null;
     if (options.staticDir) {
@@ -431,6 +435,8 @@ const Vexora = {
     server.listen(actualPort, () => {
       console.log(`🚀 Vexora Server is running at http://localhost:${actualPort}`);
     });
+
+    server.ws = initWebSocket(server);
 
     return server;
   },

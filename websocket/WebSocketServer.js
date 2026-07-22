@@ -25,14 +25,33 @@ class WebSocketServer extends EventEmitter {
     constructor(server) {
         super();
         this.clients = new Set();
+        
+        // Start heartbeat interval to clean up dead connections (Configurable, default 30s)
+        const heartbeatInterval = parseInt(Config.get("WS_HEARTBEAT_INTERVAL")) || 30000;
+        this.pingInterval = setInterval(() => {
+            for (const client of this.clients) {
+                if (client.isAlive === false) {
+                    client.socket.destroy();
+                    this.clients.delete(client);
+                    continue;
+                }
+                client.isAlive = false;
+                client.ping();
+            }
+        }, heartbeatInterval);
 
         server.on("upgrade", (req, socket, head) => {
             this._handleUpgrade(req, socket, head);
         });
+        
+        server.on("close", () => {
+            clearInterval(this.pingInterval);
+        });
     }
 
     _handleUpgrade(req, socket, head) {
-        if (req.headers["upgrade"] !== "websocket") {
+        const upgradeHeader = (req.headers["upgrade"] || "").toLowerCase();
+        if (upgradeHeader !== "websocket") {
             socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
             return;
         }
@@ -49,6 +68,11 @@ class WebSocketServer extends EventEmitter {
         }
 
         const clientKey = req.headers["sec-websocket-key"];
+        if (!clientKey) {
+            socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+            return;
+        }
+
         const hash = crypto.createHash("sha1").update(clientKey + WS_MAGIC_STRING).digest("base64");
         
         const responseHeaders = [
@@ -59,6 +83,10 @@ class WebSocketServer extends EventEmitter {
         ];
 
         socket.write(responseHeaders.join("\r\n") + "\r\n\r\n");
+
+        // Disable Nagle's algorithm for faster real-time message delivery
+        socket.setNoDelay(true);
+        socket.setKeepAlive(true, 10000);
 
         const client = new SocketClient(socket, this);
         this.clients.add(client);

@@ -136,29 +136,8 @@ class StaticMiddleware {
                         }
                     } catch (e) {}
                     
-                    // Fallback to index.php or index.html if the default is index.html and was not found
-                    if (!found && defaultIndexFile === "index.html") {
-                        const fallbackFiles = ["index.php", "index.html"];
-                        for (const file of fallbackFiles) {
-                            const candidate = path.join(targetFile, file);
-                            try {
-                                const candStats = await fs.promises.stat(candidate);
-                                if (candStats.isFile()) {
-                                    indexFile = candidate;
-                                    indexStats = candStats;
-                                    found = true;
-                                    break;
-                                }
-                            } catch (e) {}
-                        }
-                    }
-                    
                     if (found) {
                         if (!checkRateLimit()) return true;
-                        const ext = path.extname(indexFile).toLowerCase();
-                        if (ext === '.php' || ext === '.html' || ext === '.htm') {
-                            return await StaticMiddleware._runPhpFile(res, indexFile, req);
-                        }
                         return await StaticMiddleware._sendFile(res, indexFile, indexStats, maxAge, req);
                     }
                     
@@ -321,9 +300,6 @@ class StaticMiddleware {
                 if (stats.isFile()) {
                     if (!checkRateLimit()) return true;
                     const ext = path.extname(targetFile).toLowerCase();
-                    if (ext === '.php' || ext === '.html' || ext === '.htm') {
-                        return await StaticMiddleware._runPhpFile(res, targetFile, req);
-                    }
                     return await StaticMiddleware._sendFile(res, targetFile, stats, maxAge, req);
                 }
             } catch (err) {
@@ -407,113 +383,7 @@ class StaticMiddleware {
         });
     }
 
-    static async _runPhpFile(res, filePath, req) {
-        return new Promise((resolve) => {
-            const env = {
-                ...process.env,
-                GATEWAY_INTERFACE: "CGI/1.1",
-                SERVER_PROTOCOL: "HTTP/1.1",
-                SERVER_SOFTWARE: "Vexora",
-                REQUEST_METHOD: req.method || "GET",
-                SCRIPT_FILENAME: filePath,
-                REDIRECT_STATUS: "200",
-                REQUEST_URI: req.url || req.path || "/",
-                QUERY_STRING: req.url ? (req.url.split("?")[1] || "") : "",
-                CONTENT_TYPE: req.headers ? (req.headers["content-type"] || "") : "",
-                CONTENT_LENGTH: req.headers ? (req.headers["content-length"] || "") : "",
-                HTTP_COOKIE: req.headers ? (req.headers["cookie"] || "") : "",
-            };
 
-            if (req.headers) {
-                for (const [key, value] of Object.entries(req.headers)) {
-                    const envKey = "HTTP_" + key.toUpperCase().replace(/-/g, "_");
-                    env[envKey] = String(value);
-                }
-            }
-
-            const child = spawn("php-cgi", [], { env });
-
-            let responseHeaderSent = false;
-            let buffer = Buffer.alloc(0);
-            const nativeRes = res.res || res;
-
-            child.stdout.on("data", (chunk) => {
-                if (responseHeaderSent) {
-                    nativeRes.write(chunk);
-                } else {
-                    buffer = Buffer.concat([buffer, chunk]);
-                    
-                    let headerEndIndex = buffer.indexOf("\r\n\r\n");
-                    let delimiterLength = 4;
-                    if (headerEndIndex === -1) {
-                        headerEndIndex = buffer.indexOf("\n\n");
-                        delimiterLength = 2;
-                    }
-
-                    if (headerEndIndex !== -1) {
-                        const headersPart = buffer.slice(0, headerEndIndex).toString("utf8");
-                        const bodyPart = buffer.slice(headerEndIndex + delimiterLength);
-
-                        const lines = headersPart.split(/\r?\n/);
-                        for (const line of lines) {
-                            const colonIdx = line.indexOf(":");
-                            if (colonIdx !== -1) {
-                                const key = line.substring(0, colonIdx).trim();
-                                const val = line.substring(colonIdx + 1).trim();
-                                if (key.toLowerCase() === "status") {
-                                    const statusCode = parseInt(val);
-                                    if (!isNaN(statusCode)) {
-                                        nativeRes.statusCode = statusCode;
-                                    }
-                                } else {
-                                    nativeRes.setHeader(key, val);
-                                }
-                            }
-                        }
-
-                        responseHeaderSent = true;
-                        if (bodyPart.length > 0) {
-                            nativeRes.write(bodyPart);
-                        }
-                    }
-                }
-            });
-
-            child.stderr.on("data", (chunk) => {
-                console.error("PHP Error:", chunk.toString("utf8"));
-            });
-
-            child.on("close", (code) => {
-                if (!responseHeaderSent) {
-                    if (buffer.length > 0) {
-                        nativeRes.write(buffer);
-                    }
-                }
-                nativeRes.end();
-                resolve(true);
-            });
-
-            child.on("error", (err) => {
-                console.error("Failed to start php-cgi:", err);
-                if (!nativeRes.headersSent) {
-                    nativeRes.statusCode = 500;
-                    nativeRes.end("Internal Server Error: Failed to execute script");
-                }
-                resolve(true);
-            });
-
-            if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
-                if (req.rawBody !== undefined && req.rawBody !== null) {
-                    child.stdin.write(req.rawBody);
-                    child.stdin.end();
-                } else {
-                    child.stdin.end();
-                }
-            } else {
-                child.stdin.end();
-            }
-        });
-    }
 }
 
 export default StaticMiddleware;

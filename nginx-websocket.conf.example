@@ -1,0 +1,15 @@
+# ==========================================================
+# Vexora Framework - Nginx WebSocket Configuration Example
+# ==========================================================
+# If you are using Nginx instead of Apache/LiteSpeed, Nginx
+# will ignore the .htaccess file. You must add these lines
+# to your Nginx Server Block (e.g., in /etc/nginx/sites-available/).
+
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+}
