@@ -99,9 +99,8 @@ npm install vexora
 Run this command to open the interactive CLI helper tool:
 
 ```bash
-vexora
-# or
-vexora init
+vexora login
+
 ```
 
 ### 🛡️ Master Live Security Scanner & Code Analyzer
