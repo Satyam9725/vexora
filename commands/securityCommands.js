@@ -166,14 +166,23 @@ export const securityCommands = {
             "CORS_ORIGINS is set to '*' allowing any domain to send cross-origin requests.",
             "In production, restrict CORS_ORIGINS to specific trusted domains.");
         }
-        if (configMap["DETECT_BOT_BEHAVIOR"] === "false") {
-          addFinding("WARN", "Bot Shield", "Bot Behavior Detection Disabled",
-            "DETECT_BOT_BEHAVIOR is set to false. Automated bot shielding is turned off.",
+
+        // Bot Shield Config Checks
+        if (!configMap["DETECT_BOT_BEHAVIOR"] || configMap["DETECT_BOT_BEHAVIOR"].toLowerCase() !== "true") {
+          addFinding("WARN", "Bot Shield", "Bot Behavior Detection Disabled or Missing",
+            "DETECT_BOT_BEHAVIOR is missing or set to false. Automated bot shielding is turned off.",
             "Set DETECT_BOT_BEHAVIOR=true in .vexora_config/config.");
         }
-        if (configMap["ENABLE_SECURITY_HEADERS"] === "false") {
-          addFinding("FAIL", "HTTP Security", "Security Headers Disabled",
-            "ENABLE_SECURITY_HEADERS is set to false. Security headers are disabled.",
+        if (!configMap["SUSPICIOUS_THRESHOLD"] || !configMap["AUTO_BLOCK_DURATION"] || !configMap["MAX_CONSECUTIVE_404S"]) {
+          addFinding("WARN", "Bot Shield", "DDoS / Bot Guard Parameters Missing",
+            "One or more Bot Shield parameters (SUSPICIOUS_THRESHOLD, AUTO_BLOCK_DURATION, MAX_CONSECUTIVE_404S) are missing from config.",
+            "Run 'npx vexora reset:config' or re-add Bot Guard settings in .vexora_config/config.");
+        }
+
+        // HTTP Security Headers Check
+        if (!configMap["ENABLE_SECURITY_HEADERS"] || configMap["ENABLE_SECURITY_HEADERS"].toLowerCase() !== "true") {
+          addFinding("FAIL", "HTTP Security", "Security Headers Disabled or Missing",
+            "ENABLE_SECURITY_HEADERS is missing or set to false. OWASP Security headers are turned off.",
             "Set ENABLE_SECURITY_HEADERS=true in .vexora_config/config.");
         }
         if (!configMap["CSRF_SECRET"] || configMap["CSRF_SECRET"].length < 8) {
