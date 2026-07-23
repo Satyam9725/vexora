@@ -14,7 +14,7 @@ test_*.js
 Vexora_test.js
 test-server.js
 
-# Local Entry Points & Scaffolding Test Files (Root level only)
+# Local Entry Points & Local Demo Files (Root level only)
 /app.js
 /server.js
 /index.js
@@ -50,6 +50,7 @@ public/
 public1/
 public2/
 files/
+storage/
 
 # Local Instance Configs (Generated dynamically on user projects by Init.setup())
 .vexora_config/
