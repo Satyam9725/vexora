@@ -16,8 +16,8 @@ export const routeCommands = {
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a route name.");
-        console.error("   Usage: node Vexora make:route <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:route <name>");
+        return;
       }
       const routeName = name.trim().replace(/^\/+|\/+$/g, "");
       console.log(`⚙️ Creating API Route inside .api_routes/${routeName}...`);
@@ -31,7 +31,7 @@ export const routeCommands = {
         console.warn(
           `⚠️ Warning: ${path.relative(rootDir(), whitelistFile)} already exists!`
         );
-        process.exit(0);
+        return;
       }
 
       const whitelistTemplate = `import Vexora from "vexora";
@@ -66,8 +66,8 @@ export default apiRouter;
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a route name to remove.");
-        console.error("   Usage: node Vexora remove:route <name>");
-        process.exit(1);
+        console.error("   Usage: vexora remove:route <name>");
+        return;
       }
       const routeName = name.trim().replace(/^\/+|\/+$/g, "");
       const targetDir = path.join(apiRoutesDir(), routeName);

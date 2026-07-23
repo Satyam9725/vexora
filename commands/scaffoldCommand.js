@@ -20,7 +20,6 @@ export const scaffoldCommands = {
         console.log("👉 Configuration saved in .vexora_config/config");
       } catch (err) {
         console.error("❌ Failed to scaffold project:", err.message);
-        process.exit(1);
       }
     },
   }

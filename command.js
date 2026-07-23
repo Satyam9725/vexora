@@ -23,6 +23,20 @@ import { securityCommands } from "./commands/securityCommands.js";
 import { queueCommands } from "./commands/queueCommands.js";
 import { maintenanceCommands } from "./commands/maintenanceCommands.js";
 import { systemCommands, renderHelpUI } from "./commands/systemCommands.js";
+import { authCommands, isAuthenticated, clearAuthSession } from "./commands/authCommands.js";
+import { colors } from "./commands/helpers.js";
+
+// Handle Ctrl+C (SIGINT) to automatically logout session
+process.on("SIGINT", () => {
+  clearAuthSession();
+  console.log(`\n${colors.brightYellow}⚠️ Ctrl+C detected. Session terminated and logged out.${colors.reset}\n`);
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  clearAuthSession();
+  process.exit(0);
+});
 
 // Combine all modular command objects
 const commands = {
@@ -35,6 +49,7 @@ const commands = {
   ...queueCommands,
   ...maintenanceCommands,
   ...systemCommands,
+  ...authCommands,
 };
 
 commands["list"] = {
@@ -53,28 +68,43 @@ commands["list"] = {
 export default async function executeCommand(args) {
   const command = args[0];
 
+  // Strictly enforce login: ONLY 'login' command allowed when unauthenticated
+  if (!isAuthenticated()) {
+    const isLoginCmd = command === "login" || command === "auth:login";
+    if (!isLoginCmd) {
+      console.log(`\n${colors.brightYellow}🔒 Access Denied! Authentication Required.${colors.reset}`);
+      console.log(`👉 Please run '${colors.brightGreen}vexora login${colors.reset}' first to unlock and use Vexora CLI.\n`);
+      process.exit(1);
+    }
+  }
+
+  // If no subcommand passed (e.g. just 'vexora')
   if (!command) {
     await renderHelpUI(commands, true);
     process.exit(0);
   }
 
-  // Check direct match
+  // Find matching command by key or alias
+  let targetCmdKey = null;
   if (commands[command]) {
-    await commands[command].run(args);
-    process.exit(0);
-  }
-
-  // Check aliases
-  for (const [name, cmd] of Object.entries(commands)) {
-    if (cmd.aliases && cmd.aliases.includes(command)) {
-      await cmd.run(args);
-      process.exit(0);
+    targetCmdKey = command;
+  } else {
+    for (const [name, cmd] of Object.entries(commands)) {
+      if (cmd.aliases && cmd.aliases.includes(command)) {
+        targetCmdKey = name;
+        break;
+      }
     }
   }
 
-  // Unknown command
-  console.error(`❌ Unknown command: '${command}'`);
-  console.error("💡 Run 'node Vexora' to see all available commands.\n");
-  await renderHelpUI(commands, false);
-  process.exit(1);
+  // Unknown / Invalid command check
+  if (!targetCmdKey) {
+    console.log(`\n${colors.brightYellow}❌ Invalid command: '${command}'${colors.reset}`);
+    console.log(`💡 Type '${colors.brightGreen}vexora list${colors.reset}' to view all available commands.\n`);
+    process.exit(1);
+  }
+
+  // Execute matched command
+  await commands[targetCmdKey].run(args, commands);
+  process.exit(0);
 }

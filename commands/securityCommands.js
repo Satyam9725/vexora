@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
 import { execSync } from "node:child_process";
-import { rootDir, vexoraConfigDir, apiRoutesDir, line, colors } from "./helpers.js";
+import { rootDir, vexoraConfigDir, apiRoutesDir, line, colors, padDisplayEnd } from "./helpers.js";
 import { requestContext } from "../core/Context.js";
 
 const nodeBuiltins = new Set([
@@ -67,8 +67,8 @@ export const securityCommands = {
     async run(args) {
       if (!args[1]) {
         console.error("❌ Please specify the IP to unblock.");
-        console.error("   Usage: npx vexora security:unblock <ip>");
-        process.exit(1);
+        console.error("   Usage: vexora security:unblock <ip>");
+        return;
       }
       const MemoryCache = (await import("../cache/MemoryCache.js")).default;
       const ipToUnblock = args[1].trim();
@@ -818,19 +818,29 @@ export const securityCommands = {
       if (score < 25) { grade = "F (CRITICAL / BROKEN)"; gradeColor = c.bold + "\x1b[31m"; }
 
       // Stats Box
-      console.log(`${c.gray}╔══════════════════════════════════════════════════════════════════════════════╗${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  ${c.bold}📊 ADVANCED AUDIT REPORT${c.reset}                                                   ${c.gray}║${c.reset}`);
-      console.log(`${c.gray}╠══════════════════════════════════════════════════════════════════════════════╣${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  Files Scanned     : ${c.white}${totalFilesScanned}${c.reset}${" ".repeat(Math.max(1, 54 - String(totalFilesScanned).length))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  Syntax Errors     : ${syntaxErrors > 0 ? c.bold + "\x1b[31m" + syntaxErrors + " ERROR(S)" + c.reset : c.green + "0 — Clean" + c.reset}${" ".repeat(Math.max(1, syntaxErrors > 0 ? 45 - String(syntaxErrors).length : 45))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  API Scripts Tested : ${apiScriptsTested > 0 ? c.white + apiScriptsTested + c.reset : c.dim + "none" + c.reset}${" ".repeat(Math.max(1, 54 - (apiScriptsTested > 0 ? String(apiScriptsTested).length : 4)))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  DB Connections     : ${dbConnectionsTested > 0 ? c.white + dbConnectionsTested + c.reset : c.dim + "none" + c.reset}${" ".repeat(Math.max(1, 54 - (dbConnectionsTested > 0 ? String(dbConnectionsTested).length : 4)))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  NPM Vulnerabilities: ${npmAuditVulns > 0 ? "\x1b[31m" + npmAuditVulns + c.reset : c.green + "0" + c.reset}${" ".repeat(Math.max(1, 54 - String(npmAuditVulns).length))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}╠══════════════════════════════════════════════════════════════════════════════╣${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  ❌ Failures : ${fails > 0 ? "\x1b[31m" + fails + c.reset : "0"}    ⚠️  Warnings : ${warns > 0 ? c.yellow + warns + c.reset : "0"}    ℹ️  Notices : ${infos}${" ".repeat(Math.max(1, 20))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}╠══════════════════════════════════════════════════════════════════════════════╣${c.reset}`);
-      console.log(`${c.gray}║${c.reset}  ${c.bold}Security Score: ${gradeColor}${score}/100 — GRADE ${grade}${c.reset}${" ".repeat(Math.max(1, 43 - grade.length - String(score).length))}${c.gray}║${c.reset}`);
-      console.log(`${c.gray}╚══════════════════════════════════════════════════════════════════════════════╝${c.reset}\n`);
+      const boxW = 78;
+      const bTitle = padDisplayEnd(`  ${c.bold}📊 ADVANCED AUDIT REPORT${c.reset}`, boxW);
+      const r1 = padDisplayEnd(`  Files Scanned      : ${c.white}${totalFilesScanned}${c.reset}`, boxW);
+      const r2 = padDisplayEnd(`  Syntax Errors      : ${syntaxErrors > 0 ? c.bold + "\x1b[31m" + syntaxErrors + " ERROR(S)" + c.reset : c.green + "0 — Clean" + c.reset}`, boxW);
+      const r3 = padDisplayEnd(`  API Scripts Tested : ${apiScriptsTested > 0 ? c.white + apiScriptsTested + c.reset : c.dim + "none" + c.reset}`, boxW);
+      const r4 = padDisplayEnd(`  DB Connections     : ${dbConnectionsTested > 0 ? c.white + dbConnectionsTested + c.reset : c.dim + "none" + c.reset}`, boxW);
+      const r5 = padDisplayEnd(`  NPM Vulnerabilities: ${npmAuditVulns > 0 ? "\x1b[31m" + npmAuditVulns + c.reset : c.green + "0" + c.reset}`, boxW);
+      const r6 = padDisplayEnd(`  ❌ Failures : ${fails > 0 ? "\x1b[31m" + fails + c.reset : "0"}    ⚠️ Warnings : ${warns > 0 ? c.yellow + warns + c.reset : "0"}    ℹ️ Notices : ${infos}`, boxW);
+      const r7 = padDisplayEnd(`  ${c.bold}Security Score: ${gradeColor}${score}/100 — GRADE ${grade}${c.reset}`, boxW);
+
+      console.log(`${c.gray}╔${"═".repeat(boxW)}╗${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${bTitle}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}╠${"═".repeat(boxW)}╣${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r1}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r2}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r3}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r4}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r5}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}╠${"═".repeat(boxW)}╣${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r6}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}╠${"═".repeat(boxW)}╣${c.reset}`);
+      console.log(`${c.gray}║${c.reset}${r7}${c.gray}║${c.reset}`);
+      console.log(`${c.gray}╚${"═".repeat(boxW)}╝${c.reset}\n`);
 
       // Detailed Findings
       if (findings.length === 0) {
@@ -888,7 +898,7 @@ export const securityCommands = {
       }
 
       console.log(`\n  ${c.dim}💡 Tips:${c.reset}`);
-      console.log(`  ${c.dim}  • Run 'npx vexora security:blocked' to view live blocked IPs.${c.reset}`);
+      console.log(`  ${c.dim}  • Run 'vexora security:blocked' to view live blocked IPs.${c.reset}`);
       console.log(`  ${c.dim}  • Add ENABLE_SECURITY_HEADERS=true in config for OWASP headers.${c.reset}\n`);
     },
   }

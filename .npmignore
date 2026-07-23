@@ -58,3 +58,4 @@ files/
 .api_routes/
 .htaccess
 *.example
+vexora.cmd

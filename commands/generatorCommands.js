@@ -18,16 +18,16 @@ export const generatorCommands = {
       const name = args[1] ? args[1].trim() : "";
       if (!name) {
         console.error("❌ Please provide a server file name.");
-        console.error("   Usage: node Vexora make:server <name>");
-        console.error("   Example: node Vexora make:server server");
-        process.exit(1);
+        console.error("   Usage: vexora make:server <name>");
+        console.error("   Example: vexora make:server index");
+        return;
       }
       const targetName = name.endsWith(".js") ? name : `${name}.js`;
       const file = path.join(rootDir(), targetName);
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: ${targetName} already exists! Skipping.`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -43,52 +43,104 @@ const app = Vexora.start(3000);
 
   // ─── WebSocket ─────────────────────────────────────────
   "make:websocket": {
-    description: "Generates a WebSocket server module",
-    usage: "make:websocket [name]",
+    description: "Injects WebSocket server engine code into target file (e.g., index)",
+    usage: "make:websocket [fileName]",
     category: "⚙️ Generators",
-    aliases: ["make:ws"],
+    aliases: ["make:ws", "add:websocket", "add:ws"],
     async run(args) {
-      const wsName = (args[1] || "chat").trim();
-      const wsDir = path.join(rootDir(), "websockets");
-      ensureDir(wsDir);
-      const file = path.join(wsDir, `${wsName}.js`);
+      const nameArg = (args[1] || "index").trim().replace(/\.js$/i, "");
+      const targetFile = path.join(rootDir(), `${nameArg}.js`);
 
-      if (fs.existsSync(file)) {
-        console.warn(`⚠️ Warning: websockets/${wsName}.js already exists!`);
-        process.exit(0);
+      let content = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, "utf8") : "";
+
+      if (content.includes("Vexora.WebSocket")) {
+        console.log(`⚠️ WebSocket engine code is already present in ${nameArg}.js.`);
+        return;
       }
 
-      fs.writeFileSync(file, `import Vexora from "vexora";
+      const hasImport = content.includes('import Vexora from "vexora"') || content.includes("import Vexora from 'vexora'");
+      const hasAppStart = /const\s+app\s*=\s*Vexora\.start\([^)]*\);?/.test(content);
 
-/**
- * Vexora WebSocket Module - ${wsName}
- */
-export function initWebSocket(app) {
-    const io = Vexora.WebSocket(app);
+      let header = "";
+      if (!hasImport) {
+        header += `import Vexora from "vexora";\n\n`;
+      }
+      if (!hasAppStart) {
+        header += `const app = Vexora.start(3000);\n\n`;
+      }
 
-    io.on("connection", (socket) => {
-        console.log("⚡ Client connected:", socket.id);
+      const wsCode = `// Bind WebSocket engine to the HTTP server
+const io = Vexora.WebSocket(app);
+console.log("🌐 Vexora WebSocket Engine is running!");
 
-        socket.on("message", (data) => {
-            console.log("📩 Received:", data);
-            // Echo back
-            socket.send({ echo: data, timestamp: Date.now() });
-            // Broadcast to all
-            io.broadcast({ from: socket.id, data });
-        });
+io.on("connection", (socket) => {
+    console.log("🔌 Client connected!");
 
-        socket.on("disconnect", () => {
-            console.log("🔌 Client disconnected:", socket.id);
-        });
+    // Send to this client
+    socket.send({ type: "welcome", message: "Connected to Vexora!" });
+
+    // Listen for messages
+    socket.on("message", (msg) => {
+        console.log("Received:", msg);
+
+        // Broadcast to all OTHER clients (excluding sender)
+        socket.broadcast(msg);
+
+        // Broadcast to EVERYONE (including sender)
+        // io.broadcast(msg);
     });
 
-    return io;
-}
+    socket.on("disconnect", () => {
+        console.log("🔌 Client disconnected");
+    });
+});`;
 
-export default initWebSocket;
-`, "utf8");
-      console.log(`✅ Created websockets/${wsName}.js successfully!`);
-      console.log(`👉 Import & call initWebSocket(app) in your server.js`);
+      if (!fs.existsSync(targetFile) || content.trim() === "") {
+        content = `${header}${wsCode}\n`;
+      } else {
+        const appMatch = content.match(/(const\s+app\s*=\s*Vexora\.start\([^)]*\);?)/);
+        if (appMatch) {
+          content = content.replace(appMatch[1], `${appMatch[1]}\n\n${wsCode}`);
+        } else {
+          content = `${header}${content.trim()}\n\n${wsCode}\n`;
+        }
+      }
+
+      fs.writeFileSync(targetFile, content, "utf8");
+      console.log(`✅ Successfully added WebSocket engine code to ${nameArg}.js!`);
+    },
+  },
+
+  "remove:websocket": {
+    description: "Removes WebSocket server engine code from target file (e.g., index)",
+    usage: "remove:websocket [fileName]",
+    category: "⚙️ Generators",
+    aliases: ["remove:ws", "rm:websocket", "rm:ws"],
+    async run(args) {
+      const nameArg = (args[1] || "index").trim().replace(/\.js$/i, "");
+      const targetFile = path.join(rootDir(), `${nameArg}.js`);
+
+      if (!fs.existsSync(targetFile)) {
+        console.log(`❌ Target file ${nameArg}.js not found.`);
+        return;
+      }
+
+      let content = fs.readFileSync(targetFile, "utf8");
+      if (!content.includes("Vexora.WebSocket")) {
+        console.log(`ℹ️ No WebSocket code found in ${nameArg}.js.`);
+        return;
+      }
+
+      const wsRegex = /\/\/\s*Bind WebSocket engine[\s\S]*?\}\);\s*\}\);?/g;
+      if (wsRegex.test(content)) {
+        content = content.replace(wsRegex, "").trim() + "\n";
+      } else {
+        const fallbackRegex = /const\s+io\s*=\s*Vexora\.WebSocket[\s\S]*?\}\);\s*\}\);?/g;
+        content = content.replace(fallbackRegex, "").trim() + "\n";
+      }
+
+      fs.writeFileSync(targetFile, content, "utf8");
+      console.log(`✅ Successfully removed WebSocket engine code from ${nameArg}.js!`);
     },
   },
 
@@ -102,8 +154,8 @@ export default initWebSocket;
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a cron task name.");
-        console.error("   Usage: node Vexora make:cron <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:cron <name>");
+        return;
       }
       const cronName = name.trim();
       const cronDir = path.join(rootDir(), "cron");
@@ -112,7 +164,7 @@ export default initWebSocket;
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: cron/${cronName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -142,7 +194,7 @@ Vexora.Schedule("*/5 * * * *", async () => {
 
       if (fs.existsSync(file)) {
         console.warn("⚠️ Warning: controllers/auth.js already exists!");
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `// controllers/auth.js
@@ -189,7 +241,7 @@ return res.error("Invalid action", 400);
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: mail/${mailerName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -222,7 +274,7 @@ export async function sendOTP(toEmail, otp) {
     return await Vexora.mail.send({
         to: toEmail,
         subject: "Your OTP Code",
-        html: \`<h2>Your verification code: <strong>\${otp}</strong></h2><p>Valid for 10 minutes.</p>\`
+        html: \`<h2>Your verification code: <strong>\${otp}</strong></h2><p>Valid for 10 minutes.</p\`
     });
 }
 
@@ -246,7 +298,7 @@ export default { sendWelcomeEmail, sendOTP };
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: services/${clientName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -303,7 +355,7 @@ export default { fetchUsers, createUser, updateUser, deleteUser };
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: controllers/${uploadName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `// controllers/${uploadName}.js
@@ -357,7 +409,7 @@ return res.json({ endpoints: ["POST /${uploadName}", "GET /${uploadName}?file=<p
 
       if (fs.existsSync(file)) {
         console.warn("⚠️ Warning: controllers/csrf_form.js already exists!");
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `// controllers/csrf_form.js
@@ -441,8 +493,8 @@ return res.error("Method not allowed", 405);
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a middleware name.");
-        console.error("   Usage: node Vexora make:middleware <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:middleware <name>");
+        return;
       }
       const mwName = name.trim();
       ensureDir(middlewareDir());
@@ -450,7 +502,7 @@ return res.error("Method not allowed", 405);
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: Middleware/${mwName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `/**
@@ -473,15 +525,15 @@ export default async function ${mwName}(req, res, next) {
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a middleware name to remove.");
-        console.error("   Usage: node Vexora remove:middleware <name>");
-        process.exit(1);
+        console.error("   Usage: vexora remove:middleware <name>");
+        return;
       }
       const mwName = name.trim();
       const file = path.join(middlewareDir(), `${mwName}.js`);
 
       if (!fs.existsSync(file)) {
         console.warn(`⚠️ Middleware/${mwName}.js does not exist.`);
-        process.exit(0);
+        return;
       }
 
       fs.unlinkSync(file);
@@ -498,8 +550,8 @@ export default async function ${mwName}(req, res, next) {
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a job name.");
-        console.error("   Usage: node Vexora make:job <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:job <name>");
+        return;
       }
       const jobName = name.trim();
       ensureDir(queueDir());
@@ -507,7 +559,7 @@ export default async function ${mwName}(req, res, next) {
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: queue/${jobName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -533,8 +585,8 @@ Vexora.Queue.define("${jobName}", async (jobData) => {
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a model name.");
-        console.error("   Usage: node Vexora make:model <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:model <name>");
+        return;
       }
       const modelName = name.trim();
       const dbDir = path.join(rootDir(), "database");
@@ -543,7 +595,7 @@ Vexora.Queue.define("${jobName}", async (jobData) => {
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: database/${modelName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `import Vexora from "vexora";
@@ -589,19 +641,20 @@ export default ${modelName};
     description: "Removes a Database Model script",
     usage: "remove:model <name>",
     category: "⚙️ Generators",
+    aliases: ["remove:db-model"],
     async run(args) {
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a model name to remove.");
-        console.error("   Usage: node Vexora remove:model <name>");
-        process.exit(1);
+        console.error("   Usage: vexora remove:model <name>");
+        return;
       }
       const modelName = name.trim();
       const file = path.join(rootDir(), "database", `${modelName}.js`);
 
       if (!fs.existsSync(file)) {
         console.warn(`⚠️ database/${modelName}.js does not exist.`);
-        process.exit(0);
+        return;
       }
 
       fs.unlinkSync(file);
@@ -618,8 +671,8 @@ export default ${modelName};
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a controller name.");
-        console.error("   Usage: node Vexora make:controller <name>");
-        process.exit(1);
+        console.error("   Usage: vexora make:controller <name>");
+        return;
       }
       const controllerName = name.trim();
       ensureDir(controllersDir());
@@ -629,7 +682,7 @@ export default ${modelName};
 
       if (fs.existsSync(file)) {
         console.warn(`⚠️ Warning: controllers/${controllerName}.js already exists!`);
-        process.exit(0);
+        return;
       }
 
       fs.writeFileSync(file, `// controllers/${controllerName}.js
@@ -666,15 +719,15 @@ return Vexora.Response.error("Method not allowed", 405);
       const name = args[1];
       if (!name) {
         console.error("❌ Please provide a controller name to remove.");
-        console.error("   Usage: node Vexora remove:controller <name>");
-        process.exit(1);
+        console.error("   Usage: vexora remove:controller <name>");
+        return;
       }
       const controllerName = name.trim();
       const file = path.join(controllersDir(), `${controllerName}.js`);
 
       if (!fs.existsSync(file)) {
         console.warn(`⚠️ controllers/${controllerName}.js does not exist.`);
-        process.exit(0);
+        return;
       }
 
       fs.unlinkSync(file);
