@@ -132,6 +132,8 @@ export const systemCommands = {
         MemoryCache.del("temp_blocked_ip:::1");
         if (BehaviorAnalyzer) BehaviorAnalyzer.isEnabled = false;
 
+        const keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: 500, keepAliveMsecs: 60000 });
+
         const testPort = 19998;
         const app = Vexora.start(testPort);
 
@@ -142,9 +144,9 @@ export const systemCommands = {
 
         await new Promise((r) => setTimeout(r, 150));
 
-        const totalReqs = 3000;
-        const concurrency = 50;
-        console.log(`  🚀 Launching Load Test: ${totalReqs} Requests (${concurrency} Concurrent connections)...`);
+        const totalReqs = 20000;
+        const concurrency = 200;
+        console.log(`  🚀 Launching High-Speed Load Test: ${totalReqs} Requests (${concurrency} Concurrent connections)...`);
 
         const startTime = performance.now();
         let completed = 0;
@@ -153,7 +155,7 @@ export const systemCommands = {
         async function sendReq() {
           return new Promise((resolve) => {
             const req = http.request(
-              { hostname: "127.0.0.1", port: testPort, path: "/api/perf_ping", method: "GET" },
+              { hostname: "127.0.0.1", port: testPort, path: "/api/perf_ping", method: "GET", agent: keepAliveAgent },
               (res) => {
                 let d = "";
                 res.on("data", (chunk) => { d += chunk; });
@@ -187,6 +189,7 @@ export const systemCommands = {
         const endHeap = (memAfter.heapUsed / 1024 / 1024).toFixed(2);
 
         app.close();
+        try { keepAliveAgent.destroy(); } catch (e) {}
 
         console.log("");
         line();
