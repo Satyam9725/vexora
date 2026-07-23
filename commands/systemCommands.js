@@ -219,44 +219,58 @@ ${c.cyan}${c.bold}  ██╗   ██╗███████╗██╗  █�
   console.log(`  ${c.gray}${"─".repeat(totalW + 2)}${c.reset}`);
   console.log("");
 
-  // ── INTERACTIVE COMMAND RUNNER ─────────────────────────
+  // ── INTERACTIVE COMMAND RUNNER (LOOP) ─────────────────
   if (interactive) {
-    const choice = await promptQuestion(`Enter command # to run (1-${serialNum}), or press Enter to exit`, "");
-    if (!choice) return;
+    while (true) {
+      const choice = await promptQuestion(`Enter command # to run (1-${serialNum}), or press Enter to exit`, "");
+      if (!choice) break;
 
-    const num = parseInt(choice);
-    if (isNaN(num) || num < 1 || num > serialNum) {
-      console.log(`  ${c.brightYellow}❌${c.reset} Invalid selection. Exiting.`);
-      return;
-    }
+      const num = parseInt(choice);
+      if (isNaN(num) || num < 1 || num > serialNum) {
+        console.log(`  ${c.brightYellow}❌${c.reset} Invalid selection. Try again or press Enter to exit.\n`);
+        continue;
+      }
 
-    const selected = flatList.find(f => f.serial === num);
-    if (!selected) return;
+      const selected = flatList.find(f => f.serial === num);
+      if (!selected) continue;
 
-    const needsArg = selected.usage && (selected.usage.includes("<") || selected.usage.includes("["));
-    let finalArgs = [selected.name];
+      // Extract required (<arg>) and optional ([arg]) arguments from usage (skip [options], [flags], etc.)
+      const usageArgs = selected.usage
+        ? [...selected.usage.matchAll(/[<\[]([^\]>]+)[>\]]/g)]
+            .map(m => m[1])
+            .filter(a => !["options", "flags", "..."].includes(a.toLowerCase()))
+        : [];
+      let finalArgs = [selected.name];
 
-    if (needsArg) {
-      const argMatch = selected.usage.match(/[<\[]([^\]>]+)[>\]]/);
-      const argName = argMatch ? argMatch[1] : "argument";
-      const argVal = await promptQuestion(`Enter ${argName} for '${selected.name}'`, "");
-      if (argVal) finalArgs.push(argVal);
-    }
+      if (usageArgs.length > 0) {
+        for (const argName of usageArgs) {
+          const argVal = await promptQuestion(
+            `📝 Enter ${argName} (Usage: npx vexora ${selected.usage || selected.name})`,
+            ""
+          );
+          if (argVal) finalArgs.push(argVal);
+        }
+      }
 
-    // Confirmation
-    const cmdDisplay = `npx vexora ${finalArgs.join(" ")}`;
-    const confirm = await promptQuestion(`Run "${cmdDisplay}"? (y/n)`, "y");
-    if (confirm.toLowerCase() !== "y" && confirm.toLowerCase() !== "yes") {
-      console.log(`  ${c.dim}⏹ Cancelled.${c.reset}`);
-      return;
-    }
+      // Confirmation
+      const cmdDisplay = `npx vexora ${finalArgs.join(" ")}`;
+      const confirm = await promptQuestion(`Run "${cmdDisplay}"? (y/n)`, "y");
+      if (confirm.toLowerCase() !== "y" && confirm.toLowerCase() !== "yes") {
+        console.log(`  ${c.dim}⏹ Cancelled.${c.reset}\n`);
+        continue;
+      }
 
-    console.log(`\n  ${c.brightCyan}▶ Running:${c.reset} ${c.green}${cmdDisplay}${c.reset}\n`);
+      console.log(`\n  ${c.brightCyan}▶ Running:${c.reset} ${c.green}${cmdDisplay}${c.reset}\n`);
 
-    try {
-      await selected.cmd.run(finalArgs);
-    } catch (err) {
-      console.error(`  ${c.brightYellow}❌ Error:${c.reset} ${err.message}`);
+      try {
+        await selected.cmd.run(finalArgs);
+      } catch (err) {
+        console.error(`  ${c.brightYellow}❌ Error:${c.reset} ${err.message}`);
+      }
+
+      console.log(`\n  ${c.gray}${"─".repeat(60)}${c.reset}`);
+      console.log(`  ${c.dim}✅ Command finished. Select another or press Enter to exit.${c.reset}`);
+      console.log(`  ${c.gray}${"─".repeat(60)}${c.reset}\n`);
     }
   }
 }

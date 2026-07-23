@@ -22,3 +22,54 @@
     }
 },
 
+{
+    "error_id": "ad778922-b0ba-465f-8c47-39d92b83cb45::23-07-2026",
+    "level": "ERROR",
+    "code": "RUNTIME_ERROR",
+    "message": "Table 'u978749416_eformx_it.projects1' doesn't exist [Line 1]",
+    "time": "2026-07-23T00:10:09.690Z",
+    "memory": {
+        "rss": 80928768,
+        "heapTotal": 22061056,
+        "heapUsed": 15785488,
+        "external": 3913483,
+        "arrayBuffers": 44655
+    },
+    "request": {
+        "url": "http://localhost:3000/api/get_any",
+        "method": "GET",
+        "ip": "::1",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+        "sessionId": "c6529f6e-1a74-45a9-b2c9-f139baf44346",
+        "query": {},
+        "body": {}
+    },
+    "data": {
+        "file": ".api_routes\\get_any.js"
+    }
+},
+
+{
+    "error_id": "4d3d302c-a310-4430-bd4b-a3c7de9e994f::23-07-2026",
+    "level": "ERROR",
+    "code": "RUNTIME_ERROR",
+    "message": "Unexpected reserved word",
+    "time": "2026-07-23T00:12:07.312Z",
+    "memory": {
+        "rss": 79785984,
+        "heapTotal": 21897216,
+        "heapUsed": 13592136,
+        "external": 4011744,
+        "arrayBuffers": 134167
+    },
+    "request": null,
+    "data": {
+        "file_name": "Unknown",
+        "line_number": null,
+        "column_number": null,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+

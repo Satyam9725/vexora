@@ -613,9 +613,14 @@ export const securityCommands = {
       let apiScriptsTested = 0;
       let apiScriptsPassed = 0;
       if (fs.existsSync(apiDir)) {
-        // Build a proper Vexora mock that mirrors the real Vexora.Response (GlobalResponse)
+        let VexoraInstance = {};
+        try {
+          VexoraInstance = (await import("../Vexora.js")).default || {};
+        } catch (e) {}
+
+        // Build a robust Vexora mock that delegates to VexoraInstance methods
         const buildMockVexora = (mockRes) => {
-          return {
+          const baseMock = {
             Response: {
               json: (status, message = "", data = null, httpCode = 200) => {
                 mockRes.statusCode = httpCode;
@@ -632,9 +637,29 @@ export const securityCommands = {
             },
             Cache: { get: () => null, set: () => {}, del: () => {}, keys: () => [] },
             Validator: { validate: () => ({ valid: true, errors: [] }) },
-            version: "audit-mock"
+            version: VexoraInstance.version || "audit-mock"
           };
+
+          return new Proxy(baseMock, {
+            get(target, prop) {
+              if (prop in target) return target[prop];
+              if (VexoraInstance && prop in VexoraInstance) {
+                const val = VexoraInstance[prop];
+                if (typeof val === "function") {
+                  return async (...args) => {
+                    // Try real Vexora execution (e.g. Database.fetchAll).
+                    // If SQL query has error (e.g. Table projects1 does not exist), throw error so audit catches it!
+                    return await val.apply(VexoraInstance, args);
+                  };
+                }
+                return val;
+              }
+              return async () => [];
+            }
+          });
         };
+
+        const promises = [];
 
         const testApiScripts = (dir) => {
           const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -649,7 +674,7 @@ export const securityCommands = {
                 const scriptCode = fs.readFileSync(fullPath, "utf8");
                 if (!scriptCode.trim()) {
                   apiScriptsPassed++;
-                  return; // Skip empty files
+                  continue; // Skip empty files
                 }
 
                 const AsyncFn = Object.getPrototypeOf(async function () { }).constructor;
@@ -666,21 +691,37 @@ export const securityCommands = {
                 mockRes.end = () => mockRes;
                 mockReq.res = mockRes;
                 mockRes.req = mockReq;
-                const mockDb = { query: async () => [], execute: async () => [] };
+                const mockDb = {
+                  query: async (...args) => VexoraInstance.query ? VexoraInstance.query(...args) : [],
+                  execute: async (...args) => VexoraInstance.execute ? VexoraInstance.execute(...args) : [],
+                  fetchAll: async (...args) => VexoraInstance.fetchAll ? VexoraInstance.fetchAll(...args) : [],
+                  fetchOne: async (...args) => VexoraInstance.fetchOne ? VexoraInstance.fetchOne(...args) : ({}),
+                  table: (t) => ({
+                    get: async () => [],
+                    first: async () => ({}),
+                    insert: async () => ({ id: 1 }),
+                    update: async () => true,
+                    delete: async () => true,
+                  })
+                };
                 const mockParams = {};
                 const mockVexora = buildMockVexora(mockRes);
 
                 // Run within requestContext so GlobalResponse._getRes() works
-                requestContext.run({ req: mockReq, res: mockRes, response: mockRes, session: {} }, () => {
-                  fn(mockVexora, mockReq, mockRes, mockDb, mockParams)
-                    .then(() => { apiScriptsPassed++; })
-                    .catch((rtErr) => {
-                      addFinding("FAIL", "API Runtime Exception",
-                        `Runtime Error in API Script ${relPath}`,
-                        `${rtErr.name}: ${rtErr.message}`,
-                        `Inspect and fix the runtime exception in ${relPath}.`, relPath);
-                    });
+                const p = new Promise((resolve) => {
+                  requestContext.run({ req: mockReq, res: mockRes, response: mockRes, session: {} }, () => {
+                    fn(mockVexora, mockReq, mockRes, mockDb, mockParams)
+                      .then(() => { apiScriptsPassed++; resolve(); })
+                      .catch((rtErr) => {
+                        addFinding("FAIL", "API Runtime Exception",
+                          `Runtime Error in API Script ${relPath}`,
+                          `${rtErr.name || "Error"}: ${rtErr.message || rtErr}`,
+                          `Inspect and fix the runtime exception in ${relPath}.`, relPath);
+                        resolve();
+                      });
+                  });
                 });
+                promises.push(p);
               } catch (compileErr) {
                 const firstLine = compileErr.message || "Script compilation failed";
                 addFinding("FAIL", "API Compile Error",
@@ -692,6 +733,7 @@ export const securityCommands = {
           }
         };
         testApiScripts(apiDir);
+        await Promise.all(promises);
       }
 
       // Wait a moment for async catches to settle

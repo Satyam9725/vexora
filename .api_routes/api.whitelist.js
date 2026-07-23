@@ -6,7 +6,7 @@ const apiRouter = new Vexora.RouteController();
 // 1. Ye api self folder (.api_routes) se kam kare:
 // iska url kuchh aisa banega:
 // http://localhost:3000/api/get_any
-apiRouter.any('admin');  
+apiRouter.any('get_any');  
 
 // http://localhost:3000/api/get_post
 apiRouter.post('get_post');  
