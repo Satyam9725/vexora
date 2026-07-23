@@ -15,7 +15,7 @@
  */
 
 import { requestContext } from "../core/Context.js";
-import { trimValue } from "./request/TrimHelper.js";
+import { trimValue } from "./request_helpers/TrimHelper.js";
 
 class Request {
     static _getReq() {

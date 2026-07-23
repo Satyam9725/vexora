@@ -1,6 +1,6 @@
 {
   "name": "vexora",
-  "version": "1.4.8",
+  "version": "1.5.2",
   "description": "Vexora Framework - Advanced, Blazing-Fast, Zero-Dependency Backend Framework for Node.js",
   "type": "module",
   "main": "./Vexora.js",

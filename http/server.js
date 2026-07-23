@@ -25,9 +25,9 @@ import Guard from "../core/Guard.js";
 import SessionManager from "../session/SessionManager.js";
 import { requestContext } from "../core/Context.js";
 import Config from "../core/config.js";
-import { parseBody } from "./server/BodyParser.js";
+import { parseBody } from "./server_helpers/BodyParser.js";
 import RateLimiter from "../security/RateLimiter.js";
-import { trimValue } from "./request/TrimHelper.js";
+import { trimValue } from "./request_helpers/TrimHelper.js";
 
 const EMPTY_OBJECT = Object.freeze({});
 

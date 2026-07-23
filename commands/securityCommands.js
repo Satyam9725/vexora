@@ -880,7 +880,6 @@ export const securityCommands = {
 
       console.log(`\n  ${c.dim}💡 Tips:${c.reset}`);
       console.log(`  ${c.dim}  • Run 'npx vexora security:blocked' to view live blocked IPs.${c.reset}`);
-      console.log(`  ${c.dim}  • Run 'npm audit fix' to auto-fix npm dependency vulnerabilities.${c.reset}`);
       console.log(`  ${c.dim}  • Add ENABLE_SECURITY_HEADERS=true in config for OWASP headers.${c.reset}\n`);
     },
   }

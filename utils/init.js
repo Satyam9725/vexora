@@ -77,27 +77,6 @@ export default apiRouter;
         });
       }
 
-      // Create vexora.js CLI bridge file if running in an external user project
-      const vexoraBridgePath = path.join(rootDir, "vexora.js");
-      const frameworkPkgPath = path.join(rootDir, "package.json");
-      let isFrameworkDir = false;
-      if (fs.existsSync(frameworkPkgPath)) {
-        try {
-          const p = JSON.parse(fs.readFileSync(frameworkPkgPath, "utf8"));
-          if (p.name === "vexora" && p.repository && p.repository.url && p.repository.url.includes("Satyam9725/vexora")) {
-            isFrameworkDir = true;
-          }
-        } catch (e) {}
-      }
-
-      if (!isFrameworkDir && !fs.existsSync(vexoraBridgePath)) {
-        fs.writeFileSync(
-          vexoraBridgePath,
-          `import executeCommand from "vexora/command";\nexecuteCommand(process.argv.slice(2));\n`,
-          "utf8"
-        );
-      }
-
       const configPath = path.join(vexoraDir, "config");
 
       // Essential configurations only

@@ -14,10 +14,11 @@ test_*.js
 Vexora_test.js
 test-server.js
 
-# Local Entry Points & Scaffolding Test Files
-app.js
-server.js
-index.js
+# Local Entry Points & Scaffolding Test Files (Root level only)
+/app.js
+/server.js
+/index.js
+!http/server.js
 
 # Environment & Config Secrets
 .env
