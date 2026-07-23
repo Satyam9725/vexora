@@ -11,11 +11,12 @@ io.on("connection", (socket) => {
 
     // Send to this client
     socket.send({ type: "welcome", message: "Connected to Vexora!" });
+   
 
-    // Listen for messages
+    // Listen for    messages
     socket.on("message", (msg) => {
         console.log("Received:", msg);
-
+       
         // Broadcast to all OTHER clients (excluding sender)
         socket.broadcast(msg);
 
