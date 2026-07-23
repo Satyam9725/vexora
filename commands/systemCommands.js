@@ -14,13 +14,10 @@ export const systemCommands = {
     async run() {
       const c = colors;
       const mem = process.memoryUsage();
-      let version = "1.4.5";
+      let version = "1.5.4";
       try {
-        const pkgPath = path.join(process.cwd(), "package.json");
-        if (fs.existsSync(pkgPath)) {
-          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-          if (pkg.version) version = pkg.version;
-        }
+        const Vexora = (await import("../Vexora.js")).default;
+        if (Vexora && Vexora.version) version = Vexora.version;
       } catch (e) {}
 
       const nowStr = new Date().toLocaleString("en-US", {
@@ -95,6 +92,124 @@ export const systemCommands = {
       console.log(`${c.gray}╚${"═".repeat(boxW)}╝${c.reset}`);
       console.log("");
     },
+  },
+
+  "speed:test": {
+    description: "Runs Vexora speed & memory load benchmark using isolated temporary config",
+    category: "⚡ Performance",
+    aliases: ["vexora:speed:test", "speed:benchmark", "speed", "perf:test"],
+    async run() {
+      const c = colors;
+      console.log("");
+      line();
+      console.log(`⚡ ${c.bold}${c.brightCyan}VEXORA ENGINE — ISOLATED SPEED & MEMORY BENCHMARK${c.reset}`);
+      line();
+      console.log(`  🔒 Notice: Running in Isolated Sandbox Mode (User .vexora_config/config is UNTOUCHED)`);
+      console.log("");
+
+      const memBefore = process.memoryUsage();
+      const startRss = (memBefore.rss / 1024 / 1024).toFixed(2);
+      const startHeap = (memBefore.heapUsed / 1024 / 1024).toFixed(2);
+
+      // Dynamically load required modules
+      const Config = (await import("../core/config.js")).default;
+      const MemoryCache = (await import("../cache/MemoryCache.js")).default;
+      const BehaviorAnalyzer = (await import("../security/BehaviorAnalyzer.js")).default;
+      const Vexora = (await import("../Vexora.js")).default;
+      const http = (await import("node:http")).default;
+
+      // Save user's original in-memory config values
+      const origThreshold = Config.get("SUSPICIOUS_THRESHOLD");
+      const origBot = Config.get("DETECT_BOT_BEHAVIOR");
+      const origJitter = Config.get("BOT_MIN_JITTER");
+
+      try {
+        // Set temporary isolated config (strictly in-memory, never saved to file)
+        Config.set("SUSPICIOUS_THRESHOLD", "100000");
+        Config.set("DETECT_BOT_BEHAVIOR", "false");
+        Config.set("BOT_MIN_JITTER", "0");
+        MemoryCache.del("temp_blocked_ip:127.0.0.1");
+        MemoryCache.del("temp_blocked_ip:::1");
+        if (BehaviorAnalyzer) BehaviorAnalyzer.isEnabled = false;
+
+        const testPort = 19998;
+        const app = Vexora.start(testPort);
+
+        // Add benchmark ping endpoint
+        app.Vexora("GET", "/api/perf_ping", (req, res) => {
+          return res.success({ ping: "pong", time: Date.now() });
+        });
+
+        await new Promise((r) => setTimeout(r, 150));
+
+        const totalReqs = 3000;
+        const concurrency = 50;
+        console.log(`  🚀 Launching Load Test: ${totalReqs} Requests (${concurrency} Concurrent connections)...`);
+
+        const startTime = performance.now();
+        let completed = 0;
+        let successCount = 0;
+
+        async function sendReq() {
+          return new Promise((resolve) => {
+            const req = http.request(
+              { hostname: "127.0.0.1", port: testPort, path: "/api/perf_ping", method: "GET" },
+              (res) => {
+                let d = "";
+                res.on("data", (chunk) => { d += chunk; });
+                res.on("end", () => {
+                  if (res.statusCode === 200) successCount++;
+                  completed++;
+                  resolve();
+                });
+              }
+            );
+            req.on("error", () => { completed++; resolve(); });
+            req.end();
+          });
+        }
+
+        for (let i = 0; i < totalReqs; i += concurrency) {
+          const batch = [];
+          for (let j = 0; j < concurrency && (i + j) < totalReqs; j++) {
+            batch.push(sendReq());
+          }
+          await Promise.all(batch);
+        }
+
+        const durationMs = performance.now() - startTime;
+        const reqPerSec = Math.round((completed / durationMs) * 1000);
+        const avgLatencyMs = (durationMs / completed).toFixed(3);
+        const avgLatencyUs = (avgLatencyMs * 1000).toFixed(0);
+
+        const memAfter = process.memoryUsage();
+        const endRss = (memAfter.rss / 1024 / 1024).toFixed(2);
+        const endHeap = (memAfter.heapUsed / 1024 / 1024).toFixed(2);
+
+        app.close();
+
+        console.log("");
+        line();
+        console.log(`📊 ${c.bold}${c.brightGreen}SPEED & MEMORY BENCHMARK SUMMARY${c.reset}`);
+        line();
+        console.log(`  ⏱️  Total Duration    : ${c.brightCyan}${durationMs.toFixed(2)} ms${c.reset}`);
+        console.log(`  🚀  Requests/Sec      : ${c.bold}${c.brightGreen}${reqPerSec} req/s${c.reset}`);
+        console.log(`  ⚡  Avg Latency       : ${c.brightYellow}${avgLatencyMs} ms (${avgLatencyUs} µs)${c.reset}`);
+        console.log(`  ✅  Success Rate      : ${c.green}${((successCount / totalReqs) * 100).toFixed(2)}% (${successCount}/${totalReqs})${c.reset}`);
+        console.log("  ──────────────────────────────────────────");
+        console.log(`  💾  RSS Memory        : ${c.cyan}${endRss} MB${c.reset}  (Baseline: ${startRss} MB)`);
+        console.log(`  🧠  Heap Memory Used  : ${c.cyan}${endHeap} MB${c.reset}  (Baseline: ${startHeap} MB)`);
+        console.log(`  🛡️  Config Integrity  : ${c.brightGreen}✓ User Config File Intact & Untouched${c.reset}`);
+        line();
+        console.log("");
+      } finally {
+        // Restore user's original config values in-memory
+        if (origThreshold !== undefined) Config.set("SUSPICIOUS_THRESHOLD", origThreshold);
+        if (origBot !== undefined) Config.set("DETECT_BOT_BEHAVIOR", origBot);
+        if (origJitter !== undefined) Config.set("BOT_MIN_JITTER", origJitter);
+        if (BehaviorAnalyzer) BehaviorAnalyzer.isEnabled = true;
+      }
+    }
   }
 };
 
@@ -136,9 +251,13 @@ ${c.cyan}${c.bold}  ██╗   ██╗███████╗██╗  █�
   console.log(`${c.gray}╚${"═".repeat(boxW)}╝${c.reset}`);
 
   if (interactive) {
-    const answer = await promptQuestion("View all CLI Helper Commands & Options? (y/n)", "n");
-    if (answer.toLowerCase() !== "y" && answer.toLowerCase() !== "yes") {
+    const rawAns = await promptQuestion("View all CLI Helper Commands & Options? (y/n)", "n");
+    const answer = rawAns.trim().toLowerCase();
+    if (answer === "n" || answer === "no" || answer === "") {
       console.log(`\n  ${c.brightYellow}💡${c.reset} Type ${c.green}vexora list${c.reset} or ${c.green}vexora help${c.reset} to view all commands.\n`);
+      return;
+    } else if (answer !== "y" && answer !== "yes") {
+      console.log(`\n  ${c.brightRed}❌ Invalid command or selection '${rawAns}'. Try again or press Enter to exit.${c.reset}\n`);
       return;
     }
   }
@@ -271,6 +390,7 @@ ${c.cyan}${c.bold}  ██╗   ██╗███████╗██╗  █�
         : [];
       let finalArgs = [selected.name, ...typedExtraArgs];
 
+      let cancelled = false;
       if (usageArgs.length > typedExtraArgs.length) {
         const remainingUsageArgs = usageArgs.slice(typedExtraArgs.length);
         for (const argName of remainingUsageArgs) {
@@ -282,13 +402,21 @@ ${c.cyan}${c.bold}  ██╗   ██╗███████╗██╗  █�
               defaultArgVal = Object.keys(dbConfs)[0] || "";
             } catch (e) {}
           }
+          const promptHint = defaultArgVal ? ` [Default: ${defaultArgVal}, type 'back' to cancel]` : ` [type 'back' or press Enter to cancel]`;
           const argVal = await promptQuestion(
-            `📝 Enter ${argName} (Usage: vexora ${selected.usage || selected.name})`,
+            `📝 Enter ${argName} (Usage: vexora ${selected.usage || selected.name})${promptHint}`,
             defaultArgVal
           );
+          const trimmed = argVal.trim();
+          if (["back", "cancel", "exit", "0", "b"].includes(trimmed.toLowerCase()) || (!defaultArgVal && !trimmed)) {
+            console.log(`  ${c.dim}⏹ Cancelled & Returning to Main Menu...${c.reset}\n`);
+            cancelled = true;
+            break;
+          }
           if (argVal) finalArgs.push(argVal);
         }
       }
+      if (cancelled) continue;
 
       // Confirmation
       const cmdDisplay = `vexora ${finalArgs.join(" ")}`;

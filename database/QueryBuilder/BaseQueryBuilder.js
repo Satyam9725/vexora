@@ -38,16 +38,23 @@ class BaseQueryBuilder {
 
   /* ================= SHARED READ READ-ONLY OPERATIONS ================= */
 
+  _parseParams(paramVal) {
+    if (paramVal === undefined || paramVal === null) return [];
+    return Array.isArray(paramVal) ? paramVal : [paramVal];
+  }
+
   async count(...args) {
     let table, where = '', params = [];
-    if (args.length >= 2 && typeof args[1] === "string") {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
       table = args[1];
       where = args[2] || '';
-      params = args[3] || [];
-    } else {
+      params = this._parseParams(args[3]);
+    } else if (typeof args[0] === "string") {
       table = args[0];
       where = args[1] || '';
-      params = args[2] || [];
+      params = this._parseParams(args[2]);
+    } else {
+      throw new Error(`Invalid arguments provided to count().`);
     }
 
     const quotedTable = this._quoteIdentifier(table);
@@ -61,14 +68,16 @@ class BaseQueryBuilder {
 
   async exists(...args) {
     let table, where, params = [];
-    if (args.length >= 3 && typeof args[1] === "string" && typeof args[2] === "string") {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
       table = args[1];
       where = args[2];
-      params = args[3] || [];
-    } else {
+      params = this._parseParams(args[3]);
+    } else if (typeof args[0] === "string" && typeof args[1] === "string") {
       table = args[0];
       where = args[1];
-      params = args[2] || [];
+      params = this._parseParams(args[2]);
+    } else {
+      throw new Error(`Invalid arguments provided to exists(). Expected (table, where, params).`);
     }
 
     const quotedTable = this._quoteIdentifier(table);
@@ -81,10 +90,10 @@ class BaseQueryBuilder {
     let sql, params;
     if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string") {
       sql = args[1];
-      params = args[2] || [];
+      params = this._parseParams(args[2]);
     } else {
       sql = args[0];
-      params = args[1] || [];
+      params = this._parseParams(args[1]);
     }
     const rows = await this.query(sql, params);
     return (rows && rows.length > 0) ? rows[0] : null;
@@ -94,10 +103,10 @@ class BaseQueryBuilder {
     let sql, params;
     if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string") {
       sql = args[1];
-      params = args[2] || [];
+      params = this._parseParams(args[2]);
     } else {
       sql = args[0];
-      params = args[1] || [];
+      params = this._parseParams(args[1]);
     }
     return await this.query(sql, params);
   }
@@ -106,11 +115,11 @@ class BaseQueryBuilder {
     let sql, params, columnNumber = 0;
     if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string") {
       sql = args[1];
-      params = args[2] || [];
+      params = this._parseParams(args[2]);
       columnNumber = args[3] || 0;
     } else {
       sql = args[0];
-      params = args[1] || [];
+      params = this._parseParams(args[1]);
       columnNumber = args[2] || 0;
     }
     const row = await this.fetch(sql, params);

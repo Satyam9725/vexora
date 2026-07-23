@@ -64,14 +64,21 @@ class PostgresQueryBuilder extends BaseQueryBuilder {
     return Array.isArray(result) ? result.length : 0;
   }
 
+  _parseParams(paramVal) {
+    if (paramVal === undefined || paramVal === null) return [];
+    return Array.isArray(paramVal) ? paramVal : [paramVal];
+  }
+
   async insert(...args) {
     let table, data;
-    if (args.length === 3) {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
       table = args[1];
       data = args[2];
-    } else {
+    } else if (typeof args[0] === "string" && typeof args[1] === "object" && args[1] !== null) {
       table = args[0];
       data = args[1];
+    } else {
+      throw new Error(`Invalid arguments provided to insert(). Expected (table, data) or (dbKey, table, data).`);
     }
 
     const quotedTable = this._quoteIdentifier(table);
@@ -85,17 +92,19 @@ class PostgresQueryBuilder extends BaseQueryBuilder {
   }
 
   async update(...args) {
-    let table, data, where, params;
-    if (args.length >= 4) {
+    let table, data, where = '', params = [];
+    if (args.length >= 4 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
       table = args[1];
       data = args[2];
-      where = args[3];
-      params = args[4] || [];
-    } else {
+      where = args[3] || '';
+      params = this._parseParams(args[4]);
+    } else if (typeof args[0] === "string" && typeof args[1] === "object" && args[1] !== null) {
       table = args[0];
       data = args[1];
-      where = args[2];
-      params = args[3] || [];
+      where = args[2] || '';
+      params = this._parseParams(args[3]);
+    } else {
+      throw new Error(`Invalid arguments provided to update(). Expected (table, data, where, params) or (dbKey, table, data, where, params).`);
     }
 
     const quotedTable = this._quoteIdentifier(table);
@@ -107,39 +116,43 @@ class PostgresQueryBuilder extends BaseQueryBuilder {
       setClauses.push(`${this._quoteIdentifier(col)} = $${idx + 1}`);
     });
 
-    const sql = `UPDATE ${quotedTable} SET ${setClauses.join(', ')} WHERE ${where}`;
+    const sql = where ? `UPDATE ${quotedTable} SET ${setClauses.join(', ')} WHERE ${where}` : `UPDATE ${quotedTable} SET ${setClauses.join(', ')}`;
     const result = await postgres.query(sql, [...values, ...params]);
     return result.length;
   }
 
   async delete(...args) {
-    let table, where, params;
-    if (args.length >= 3) {
+    let table, where = '', params = [];
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
       table = args[1];
       where = args[2];
-      params = args[3] || [];
-    } else {
+      params = this._parseParams(args[3]);
+    } else if (typeof args[0] === "string") {
       table = args[0];
-      where = args[1];
-      params = args[2] || [];
+      where = args[1] || '';
+      params = this._parseParams(args[2]);
+    } else {
+      throw new Error(`Invalid arguments provided to delete(). Expected (table, where, params) or (dbKey, table, where, params).`);
     }
 
     const quotedTable = this._quoteIdentifier(table);
-    const sql = `DELETE FROM ${quotedTable} WHERE ${where}`;
+    const sql = where ? `DELETE FROM ${quotedTable} WHERE ${where}` : `DELETE FROM ${quotedTable}`;
     const result = await postgres.query(sql, params);
     return result.length;
   }
 
   async upsert(...args) {
     let table, insertData, updateData;
-    if (args.length === 4) {
+    if (args.length >= 4 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
       table = args[1];
       insertData = args[2];
       updateData = args[3];
-    } else {
+    } else if (typeof args[0] === "string" && typeof args[1] === "object" && typeof args[2] === "object") {
       table = args[0];
       insertData = args[1];
       updateData = args[2];
+    } else {
+      throw new Error(`Invalid arguments provided to upsert().`);
     }
 
     const quotedTable = this._quoteIdentifier(table);

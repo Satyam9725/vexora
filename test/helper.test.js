@@ -8,7 +8,7 @@ export async function run() {
     // Test password hashing and verification
     const pass = "secret_123";
     const hashed = Helper.hashPassword(pass);
-    assert.ok(hashed.includes(":"), "Hash format should include salt separator");
+    assert.ok(hashed.startsWith("$2y$10$"), "Hash format should match PHP $2y$ Bcrypt standard");
     
     const isValid = Helper.verifyPassword(pass, hashed);
     assert.ok(isValid, "Password verification should pass");

@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 
-export const SUPPORTED_DB_DRIVERS = ["mysql", "postgres"];
+export const SUPPORTED_DB_DRIVERS = ["mysql", "postgres", "mongodb", "mongo"];
 
 export const colors = {
   reset: "\x1b[0m",
@@ -19,6 +19,8 @@ export const colors = {
   brightGreen: "\x1b[92m",
   yellow: "\x1b[33m",
   brightYellow: "\x1b[93m",
+  red: "\x1b[31m",
+  brightRed: "\x1b[91m",
   blue: "\x1b[34m",
   magenta: "\x1b[35m",
   white: "\x1b[37m",
@@ -52,6 +54,21 @@ export function padDisplayEnd(str, targetWidth) {
   return str + " ".repeat(padLen);
 }
 
+export function formatCellValue(rawVal) {
+  if (rawVal === null || rawVal === undefined) return "null";
+  if (rawVal instanceof Date || (typeof rawVal === "object" && Object.prototype.toString.call(rawVal) === "[object Date]" && !isNaN(rawVal))) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const y = rawVal.getFullYear();
+    const m = pad(rawVal.getMonth() + 1);
+    const d = pad(rawVal.getDate());
+    const hh = pad(rawVal.getHours());
+    const mm = pad(rawVal.getMinutes());
+    const ss = pad(rawVal.getSeconds());
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+  }
+  return String(rawVal);
+}
+
 export function renderConsoleTable(rows) {
   const c = colors;
   if (!rows || !Array.isArray(rows) || rows.length === 0) {
@@ -68,7 +85,7 @@ export function renderConsoleTable(rows) {
 
   for (const row of rows) {
     for (const col of columns) {
-      const valStr = row[col] === null || row[col] === undefined ? "null" : String(row[col]);
+      const valStr = formatCellValue(row[col]);
       colWidths[col] = Math.max(colWidths[col], getDisplayWidth(valStr));
     }
   }
@@ -89,7 +106,7 @@ export function renderConsoleTable(rows) {
   for (const row of rows) {
     const rowCells = columns.map(col => {
       let rawVal = row[col];
-      let valStr = rawVal === null || rawVal === undefined ? "null" : String(rawVal);
+      let valStr = formatCellValue(rawVal);
       if (valStr.length > colWidths[col]) {
         valStr = valStr.substring(0, colWidths[col] - 2) + "..";
       }

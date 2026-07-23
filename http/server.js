@@ -30,6 +30,7 @@ import RateLimiter from "../security/RateLimiter.js";
 import { trimValue } from "./request_helpers/TrimHelper.js";
 
 const EMPTY_OBJECT = Object.freeze({});
+const staticFileCache = new Map();
 
 // Define lazy getters on IncomingMessage prototype once to avoid Object.defineProperty on every request
 Object.defineProperty(http.IncomingMessage.prototype, 'cookies', {
@@ -354,23 +355,31 @@ export default function Server(callback, options = {}) {
 
       // Check if it's a request to a static file in public
       let isStaticFile = false;
-      if (isGetOrHead) {
+      if (isGetOrHead && PUBLIC_DIR_EXISTS && req.path.length > 1 && req.path.includes(".")) {
           try {
-              let cleanPath = req.path;
-              try {
-                  cleanPath = decodeURIComponent(cleanPath);
-              } catch (e) {}
-              const staticRoot = path.resolve(process.cwd(), 'public');
-              const targetFile = path.join(staticRoot, cleanPath);
-              const relative = path.relative(staticRoot, targetFile);
-              if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
-                  const stats = fs.statSync(targetFile);
-                  if (stats.isFile() || stats.isDirectory()) {
-                      isStaticFile = true;
+              const cached = staticFileCache.get(req.path);
+              if (cached !== undefined) {
+                  isStaticFile = cached;
+              } else {
+                  let cleanPath = req.path;
+                  try {
+                      cleanPath = decodeURIComponent(cleanPath);
+                  } catch (e) {}
+                  const staticRoot = path.resolve(process.cwd(), 'public');
+                  const targetFile = path.join(staticRoot, cleanPath);
+                  const relative = path.relative(staticRoot, targetFile);
+                  if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
+                      const stats = fs.statSync(targetFile);
+                      isStaticFile = stats.isFile() || stats.isDirectory();
+                  }
+                  if (staticFileCache.size < 10000) {
+                      staticFileCache.set(req.path, isStaticFile);
                   }
               }
           } catch (e) {
-              // File does not exist
+              if (staticFileCache.size < 10000) {
+                  staticFileCache.set(req.path, false);
+              }
           }
       }
 

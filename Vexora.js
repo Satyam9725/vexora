@@ -38,6 +38,7 @@ import RateLimiter, { RateLimiterClass } from "./security/RateLimiter.js";
 import Request from "./http/Request.js";
 import GlobalResponse from "./http/GlobalResponse.js";
 import Validator from "./utils/Validator.js";
+import PolymorphicCipher from "./vexora_encryption/PolymorphicCipher.js";
 import initWebSocket from "./websocket/WebSocketServer.js";
 import MemoryCache from "./cache/MemoryCache.js";
 import CorsMiddleware from "./api_controller/CorsMiddleware.js";
@@ -109,7 +110,9 @@ const serveForbidden = (req, res, message) => {
           break;
         }
       }
-    } catch (e) { }
+    } catch (e) {
+      console.error("Failed to read error page:", e);
+    }
   }
 
   if (customErrorHtml !== null) {
@@ -233,7 +236,9 @@ try {
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
     if (pkg.version) version = pkg.version;
   }
-} catch (e) {}
+} catch (e) {
+  console.error("Failed to load Vexora version:", e);
+}
 
 const initTime = (performance.now() - vexoraStart).toFixed(2);
 if (!cluster.isWorker) {
@@ -342,7 +347,7 @@ const Vexora = {
       return null;
     }
   },
-  version: "1.0.4",
+  version: version,
   name: "Vexora",
   framework: "Vexora Engine",
 
@@ -392,13 +397,13 @@ const Vexora = {
       const isApiRoute = req.path === '/api' || req.path.startsWith('/api/');
 
       if (isApiRoute) {
-        // 1. ApiController autoload routes
-        const handled = await ApiController.handle(req, res);
-        if (handled) return;
-
-        // 2. Custom routes defined on app
+        // 1. Custom routes defined on app (e.g. app.Vexora("GET", "/info", ...))
         const customHandled = await customRouter.handle(req, res);
         if (customHandled) return;
+
+        // 2. ApiController autoload routes (.api_routes/)
+        const handled = await ApiController.handle(req, res);
+        if (handled) return;
       } else {
         // 3. Serve static files (only for non-API routes)
         if (serveStatic) {
@@ -426,19 +431,16 @@ const Vexora = {
       return uri.startsWith("/api") ? uri : "/api" + (uri.startsWith("/") ? uri : "/" + uri);
     };
 
-    // Attach route verbs to the returned server object so users can write app.get(), app.post() etc.
-    server.get = (uri, action) => { customRouter.match('GET', getFinalUri(uri), action); return server; };
-    server.post = (uri, action) => { customRouter.match('POST', getFinalUri(uri), action); return server; };
-    server.put = (uri, action) => { customRouter.match('PUT', getFinalUri(uri), action); return server; };
-    server.patch = (uri, action) => { customRouter.match('PATCH', getFinalUri(uri), action); return server; };
-    server.delete = (uri, action) => { customRouter.match('DELETE', getFinalUri(uri), action); return server; };
-    server.any = (uri, action) => { customRouter.match(Router.ALL, getFinalUri(uri), action); return server; };
-    server.match = (methods, uri, action) => { customRouter.match(methods, getFinalUri(uri), action); return server; };
-
-    // Unique Vexora routing syntax: app.Vexora(get, "/path", handler)
+    // Vexora-native routing syntax: app.Vexora(method, uri, handler)
     server.Vexora = (method, uri, action) => {
-      const m = String(method).toUpperCase();
-      customRouter.match(m === "ANY" ? Router.ALL : m, getFinalUri(uri), action);
+      let m = method;
+      if (Array.isArray(method)) {
+        m = method.map(item => String(item).toUpperCase());
+      } else {
+        const strM = String(method).toUpperCase();
+        m = strM === "ANY" || strM === "*" ? Router.ALL : strM;
+      }
+      customRouter.match(m, getFinalUri(uri), action);
       return server;
     };
 
@@ -456,10 +458,37 @@ const Vexora = {
   },
   captcha: (options) => Recaptcha.middleware(options),
   verifyCaptcha: (token, provider, customSecret, remoteIp) => Recaptcha.verify(token, provider, customSecret, remoteIp),
+  password_hash: (password, cost = 10) => Helper.hashPassword(password, cost),
+  password_verify: (password, hash) => Helper.verifyPassword(password, hash),
+  Hash: {
+    make: (password, cost = 10) => Helper.hashPassword(password, cost),
+    verify: (password, hash) => Helper.verifyPassword(password, hash),
+    check: (password, hash) => Helper.verifyPassword(password, hash)
+  },
+  Crypt: {
+    encrypt: (data, secret = "") => PolymorphicCipher.encrypt(data, secret),
+    decrypt: (cipherText, secret = "") => PolymorphicCipher.decrypt(cipherText, secret),
+    getMatrixInfo: () => PolymorphicCipher.getMatrixInfo(),
+    setCustomKey: (key) => PolymorphicCipher.setCustomKey(key)
+  },
   Queue,
   QueueWorker,
   Schedule: (cronExpression, handler) => Scheduler.schedule(cronExpression, handler),
   Scheduler: Scheduler,
+  getServerIp: () => Helper.getServerIp(),
+  DB: Database,
+  fetch: (...args) => Database.fetch(...args),
+  fetchAll: (...args) => Database.fetchAll(...args),
+  fetchColumn: (...args) => Database.fetchColumn(...args),
+  query: (...args) => Database.query(...args),
+  exec: (...args) => Database.exec(...args),
+  insert: (...args) => Database.insert(...args),
+  update: (...args) => Database.update(...args),
+  delete: (...args) => Database.delete(...args),
+  upsert: (...args) => Database.upsert(...args),
+  exists: (...args) => Database.exists(...args),
+  count: (...args) => Database.count(...args),
+  paginate: (...args) => Database.paginate(...args),
 };
 
 Object.freeze(Vexora);

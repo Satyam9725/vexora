@@ -34,17 +34,21 @@ async function getDbClient(keyArg) {
   let key = availableKeys.find(k => k.toLowerCase() === (keyArg || "").toLowerCase());
 
   if (!key) {
-    line();
-    console.log("📌 Select Database Connection:");
-    availableKeys.forEach((k, idx) => console.log(`   ${idx + 1}. [${k}] → ${configs[k].driver || configs[k].DB_DRIVER || "mysql"}://${configs[k].DB_USER}@${configs[k].DB_HOST}/${configs[k].DB_NAME}`));
-    line();
-
-    const selected = await promptQuestion("Enter Connection Key or # to use", availableKeys[0]);
-    const num = parseInt(selected);
-    if (!isNaN(num) && num >= 1 && num <= availableKeys.length) {
-      key = availableKeys[num - 1];
+    if (availableKeys.length === 1) {
+      key = availableKeys[0];
     } else {
-      key = availableKeys.find(k => k.toLowerCase() === selected.trim().toLowerCase()) || selected.trim();
+      line();
+      console.log("📌 Select Database Connection:");
+      availableKeys.forEach((k, idx) => console.log(`   ${idx + 1}. [${k}] → ${configs[k].driver || configs[k].DB_DRIVER || "mysql"}://${configs[k].DB_USER}@${configs[k].DB_HOST}/${configs[k].DB_NAME}`));
+      line();
+
+      const selected = await promptQuestion("Enter Connection Key or # to use", availableKeys[0]);
+      const num = parseInt(selected);
+      if (!isNaN(num) && num >= 1 && num <= availableKeys.length) {
+        key = availableKeys[num - 1];
+      } else {
+        key = availableKeys.find(k => k.toLowerCase() === selected.trim().toLowerCase()) || selected.trim();
+      }
     }
   }
 
@@ -160,6 +164,7 @@ export const dbCommands = {
       let user = "root";
       let pass = "";
       let driver = "mysql";
+      let mongoUri = "";
 
       const hasInlineArgs =
         args.length > 2 || (args[1] && args[1].includes("="));
@@ -196,11 +201,12 @@ export const dbCommands = {
 
         while (true) {
           driver = await promptQuestion(
-            "2/6 Enter Database Driver (mysql/postgres)",
+            "2/6 Enter Database Driver (mysql/postgres/mongodb)",
             "mysql"
           );
           if (SUPPORTED_DB_DRIVERS.includes(driver.toLowerCase())) {
             driver = driver.toLowerCase();
+            if (driver === "mongo") driver = "mongodb";
             break;
           }
           console.error(
@@ -208,13 +214,83 @@ export const dbCommands = {
           );
         }
 
-        host = await promptQuestion(
-          "3/6 Enter Database Host (IP / domain)",
-          "127.0.0.1"
-        );
-        dbName = await promptQuestion("4/6 Enter Database Name", dbKey);
-        user = await promptQuestion("5/6 Enter Database User", "root");
-        pass = await promptQuestion("6/6 Enter Database Password", "");
+        if (driver === "mongodb") {
+          let retryMongo = true;
+          while (retryMongo) {
+            line();
+            console.log("📌 Select MongoDB Setup Option:");
+            console.log("   1. Full Connection URI (e.g. mongodb+srv://user:pass@cluster.mongodb.net/dbname)");
+            console.log("   2. Individual Credentials (Host, User, Password, DB Name)");
+            line();
+            const mongoOpt = await promptQuestion("Select Option (1/2)", "1");
+
+            try {
+              if (mongoOpt.trim() === "1") {
+                let rawUrl = await promptQuestion("Enter MongoDB Connection URI");
+                if (!rawUrl.startsWith("mongodb://") && !rawUrl.startsWith("mongodb+srv://")) {
+                  rawUrl = `mongodb+srv://${rawUrl}`;
+                }
+
+                // Robust multi-@ URI Parser & Password Auto-Encoder
+                const schemaIdx = rawUrl.indexOf("://");
+                const schema = rawUrl.substring(0, schemaIdx);
+                const rest = rawUrl.substring(schemaIdx + 3);
+
+                if (rest.includes("@")) {
+                  const lastAtIdx = rest.lastIndexOf("@");
+                  const creds = rest.substring(0, lastAtIdx);
+                  const hostAndPath = rest.substring(lastAtIdx + 1);
+
+                  const firstColon = creds.indexOf(":");
+                  if (firstColon !== -1) {
+                    user = creds.substring(0, firstColon);
+                    pass = creds.substring(firstColon + 1);
+                    const encPass = encodeURIComponent(pass);
+                    mongoUri = `${schema}://${user}:${encPass}@${hostAndPath}`;
+                  } else {
+                    mongoUri = rawUrl;
+                  }
+
+                  const pathParts = hostAndPath.split("/");
+                  host = pathParts[0];
+                  if (pathParts[1]) {
+                    dbName = pathParts[1].split("?")[0];
+                  }
+                } else {
+                  mongoUri = rawUrl;
+                }
+
+                if (!dbName || dbName === dbKey) {
+                  dbName = await promptQuestion("Enter MongoDB Database Name", dbKey || "vexora_mongo");
+                }
+              } else {
+                host = await promptQuestion("3/6 Enter Database Host", "cluster0.fsiwzxu.mongodb.net");
+                dbName = await promptQuestion("4/6 Enter Database Name", dbKey || "vexora_mongo");
+                user = await promptQuestion("5/6 Enter Database User", "satyam");
+                pass = await promptQuestion("6/6 Enter Database Password", "");
+
+                const encPass = encodeURIComponent(pass);
+                mongoUri = `mongodb+srv://${user}:${encPass}@${host}/${dbName}?appName=Cluster0`;
+              }
+              retryMongo = false;
+            } catch (mongoErr) {
+              console.error(`\n❌ Error parsing MongoDB setup: ${mongoErr.message}`);
+              const retryAns = await promptQuestion("🔄 Would you like to RETRY MongoDB setup? (y/n)", "y");
+              if (retryAns.trim().toLowerCase() !== "y" && retryAns.trim().toLowerCase() !== "yes") {
+                console.log("⏹ MongoDB Setup Cancelled.");
+                return;
+              }
+            }
+          }
+        } else {
+          host = await promptQuestion(
+            "3/6 Enter Database Host (IP / domain)",
+            "127.0.0.1"
+          );
+          dbName = await promptQuestion("4/6 Enter Database Name", dbKey);
+          user = await promptQuestion("5/6 Enter Database User", "root");
+          pass = await promptQuestion("6/6 Enter Database Password", "");
+        }
       } else {
         const existingKey = Object.keys(dbConfigs).find(k => k.toLowerCase() === dbKey.toLowerCase());
         if (existingKey) {
@@ -257,6 +333,7 @@ export const dbCommands = {
         DB_NAME: dbName,
         DB_USER: user,
         DB_PASS: pass,
+        DB_URL: mongoUri || undefined,
         MSG: dbKey,
         DB_DRIVER: driver,
         driver: driver,
@@ -272,7 +349,7 @@ export const dbCommands = {
   },
 
   "db:list": {
-    description: "Lists all configured database connections",
+    description: "Lists all configured database connections & opens Interactive Studio",
     category: "🗄️ Database",
     async run() {
       line();
@@ -283,15 +360,42 @@ export const dbCommands = {
       const keys = Object.keys(configs);
       if (keys.length === 0) {
         console.log("  (No databases configured)");
-      } else {
-        keys.forEach((key, idx) => {
-          const conf = configs[key];
-          console.log(
-            `  ${idx + 1}. [KEY: ${key}]  →  ${conf.driver || conf.DB_DRIVER}://${conf.DB_USER}@${conf.DB_HOST}/${conf.DB_NAME}`
-          );
-        });
+        line();
+        return;
       }
+
+      keys.forEach((key, idx) => {
+        const conf = configs[key];
+        const isOff = conf.enabled === false || conf.ENABLED === false;
+        const statusBadge = isOff ? " [OFF]" : " [ACTIVE]";
+        console.log(
+          `  ${idx + 1}. [KEY: ${key}]${statusBadge}  →  ${conf.driver || conf.DB_DRIVER || "mysql"}://${conf.DB_USER || "root"}@${conf.DB_HOST || "127.0.0.1"}/${conf.DB_NAME || "default"}`
+        );
+      });
       line();
+
+      const choice = await promptQuestion(
+        "👉 Enter Database Connection # or Key to open & manage (or press Enter to exit)",
+        ""
+      );
+      const trimmed = choice.trim();
+      if (!trimmed || ["back", "cancel", "exit", "0", "b"].includes(trimmed.toLowerCase())) {
+        return;
+      }
+
+      let selectedKey = "";
+      const num = parseInt(trimmed);
+      if (!isNaN(num) && num >= 1 && num <= keys.length) {
+        selectedKey = keys[num - 1];
+      } else {
+        selectedKey = keys.find(k => k.toLowerCase() === trimmed.toLowerCase()) || trimmed;
+      }
+
+      if (selectedKey && configs[selectedKey]) {
+        await openDatabaseStudio(selectedKey);
+      } else {
+        console.error(`❌ Connection key '${trimmed}' not found in db_config.json`);
+      }
     },
   },
 
@@ -337,6 +441,7 @@ export const dbCommands = {
   "db:status": {
     description: "Checks database connection health",
     category: "🗄️ Database",
+    aliases: ["db:ping", "db:health"],
     async run() {
       line();
       console.log("🗄️ VEXORA DATABASE HEALTH CHECK");
@@ -357,6 +462,15 @@ export const dbCommands = {
     },
   },
 
+  "db:ping": {
+    description: "Checks database connection health",
+    category: "🗄️ Database",
+    aliases: ["db:health"],
+    async run(args, allCommands) {
+      return dbCommands["db:status"].run(args, allCommands);
+    }
+  },
+
   "db:con": {
     description: "Test database connection & interactively update credentials if failed",
     usage: "db:con [key]",
@@ -374,11 +488,21 @@ export const dbCommands = {
   },
 
   // ─── Table Management Commands ─────────────────────────
+  "db:tables": {
+    description: "Lists all database tables and allows interactive viewing & editing",
+    usage: "db:tables [key]",
+    category: "🗄️ Database",
+    aliases: ["db:table:list", "db:table-list", "db:table"],
+    async run(args) {
+      return dbCommands["db:table:list"].run(args);
+    }
+  },
+
   "db:table:list": {
     description: "Lists all database tables and allows interactive viewing & editing",
     usage: "db:table:list [key]",
     category: "🗄️ Database",
-    aliases: ["db:tables", "db:table-list"],
+    aliases: ["db:tables", "db:table-list", "db:table"],
     async run(args) {
       const dbObj = await getDbClient(args[1]);
       if (!dbObj) return;
@@ -582,7 +706,7 @@ export const dbCommands = {
   },
 
   "db:table:create": {
-    description: "Interactively creates a new database table",
+    description: "Interactively creates a new database table (Step-by-Step Column Builder)",
     usage: "db:table:create [tableName] [key]",
     category: "🗄️ Database",
     aliases: ["db:create-table", "db:make-table"],
@@ -593,8 +717,8 @@ export const dbCommands = {
       let tableName = rawTable;
       if (!tableName) {
         tableName = await promptQuestion("Enter New Table Name (e.g. users, posts, products)");
-        if (!tableName) {
-          console.error("❌ Table name is required!");
+        if (!tableName || ["back", "b", "cancel"].includes(tableName.trim().toLowerCase())) {
+          console.log("  ⏹ Cancelled.");
           return;
         }
       }
@@ -603,31 +727,300 @@ export const dbCommands = {
       if (!dbObj) return;
 
       const { client, driver, key } = dbObj;
-      console.log(`\n⚙️ Creating table '${tableName}' on connection '${key}'...`);
 
-      let columnsSQL = "";
+      line();
+      console.log(`⚙️  CREATE TABLE WIZARD  [Table: '${tableName}']  [Connection: ${key}]`);
+      line();
+      console.log(`  📌 Column 'id' is auto-set as PRIMARY KEY (cannot be changed)\n`);
+
+      // ─── Available data types ───
+      const mysqlTypes = [
+        "INT", "BIGINT", "TINYINT", "SMALLINT", "FLOAT", "DOUBLE", "DECIMAL",
+        "VARCHAR", "CHAR", "TEXT", "MEDIUMTEXT", "LONGTEXT",
+        "DATE", "DATETIME", "TIMESTAMP", "TIME", "YEAR",
+        "BOOLEAN", "ENUM", "JSON", "BLOB"
+      ];
+      const pgTypes = [
+        "INTEGER", "BIGINT", "SMALLINT", "REAL", "DOUBLE PRECISION", "NUMERIC",
+        "VARCHAR", "CHAR", "TEXT",
+        "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "INTERVAL",
+        "BOOLEAN", "JSON", "JSONB", "UUID", "BYTEA", "SERIAL"
+      ];
+
+      const availableTypes = driver === "postgres" ? pgTypes : mysqlTypes;
+
+      // ─── Columns collector ───
+      const columns = [];
+
+      // Auto-add id column (non-removable)
       if (driver === "postgres") {
-        columnsSQL = `id SERIAL PRIMARY KEY, title VARCHAR(255), status VARCHAR(50) DEFAULT 'active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`;
+        columns.push({ name: "id", type: "SERIAL", size: "", nullable: false, index: "PRIMARY KEY", auto: true });
       } else {
-        columnsSQL = `id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), status VARCHAR(50) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`;
+        columns.push({ name: "id", type: "INT", size: "", nullable: false, index: "PRIMARY KEY", auto: true, extra: "AUTO_INCREMENT" });
       }
 
-      const customCols = await promptQuestion("Enter columns definition (or press ENTER for default id, title, status, timestamps)", columnsSQL);
+      // ─── Step-by-step column addition loop ───
+      let colNum = 1;
+      while (true) {
+        try {
+          console.log(`\n  ── Add Column #${colNum} ──`);
 
-      try {
-        const createQuery = driver === "postgres"
-          ? `CREATE TABLE IF NOT EXISTS "${tableName}" (${customCols})`
-          : `CREATE TABLE IF NOT EXISTS \`${tableName}\` (${customCols})`;
+          // 1. Column Name
+          const colName = await promptQuestion(`Column Name (or 'done' to finish)`, "");
+          const trimName = (colName || "").trim().toLowerCase();
+          if (!trimName || ["done", "finish", "f", "end"].includes(trimName)) break;
+          if (["back", "b", "cancel"].includes(trimName)) {
+            if (columns.length <= 1) {
+              console.log("  ⏹ Cancelled.");
+              return;
+            }
+            break;
+          }
 
+          // Validate column name (no spaces, no special chars)
+          if (/[^a-zA-Z0-9_]/.test(colName.trim())) {
+            console.log(`  ❌ Invalid column name '${colName.trim()}'. Use only letters, numbers, underscores.`);
+            continue;
+          }
+
+          // Check duplicate
+          if (columns.some(c => c.name.toLowerCase() === trimName)) {
+            console.log(`  ⚠️  Column '${colName.trim()}' already exists! Try a different name.`);
+            continue;
+          }
+
+          // 2. Data Type (with validation loop & shortcuts)
+          console.log(`  📋 Short keys: v=VARCHAR, i=${driver === "postgres" ? "INTEGER" : "INT"}, b=BIGINT, t=TEXT, e=ENUM, d=DATE, dt=DATETIME, bool=BOOLEAN, j=JSON, f=FLOAT`);
+          console.log(`  📋 Available types: ${availableTypes.join(", ")}`);
+          let upperType = "";
+          while (true) {
+            const colType = await promptQuestion(`Data Type for '${colName.trim()}'`, "VARCHAR");
+            if (["back", "b", "cancel"].includes((colType || "").trim().toLowerCase())) { upperType = "__BACK__"; break; }
+
+            const cleanInput = (colType || "VARCHAR").trim().toLowerCase();
+            const typeMap = {
+              v: "VARCHAR", var: "VARCHAR", varchar: "VARCHAR", str: "VARCHAR", string: "VARCHAR",
+              i: driver === "postgres" ? "INTEGER" : "INT", int: driver === "postgres" ? "INTEGER" : "INT", integer: driver === "postgres" ? "INTEGER" : "INT", num: driver === "postgres" ? "INTEGER" : "INT",
+              b: "BIGINT", big: "BIGINT", bigint: "BIGINT",
+              t: "TEXT", txt: "TEXT", text: "TEXT",
+              d: "DATE", date: "DATE",
+              dt: "DATETIME", datetime: "DATETIME",
+              ts: "TIMESTAMP", timestamp: "TIMESTAMP",
+              e: "ENUM", enum: "ENUM",
+              j: "JSON", json: "JSON",
+              bool: "BOOLEAN", boolean: "BOOLEAN",
+              f: "FLOAT", float: "FLOAT",
+              dec: "DECIMAL", decimal: "DECIMAL",
+              c: "CHAR", char: "CHAR",
+              uuid: "UUID", blob: "BLOB"
+            };
+
+            let resolved = typeMap[cleanInput];
+            if (!resolved) {
+              const upper = cleanInput.toUpperCase();
+              if (availableTypes.includes(upper)) {
+                resolved = upper;
+              } else {
+                const matches = availableTypes.filter(t => t.startsWith(upper));
+                if (matches.length === 1) resolved = matches[0];
+              }
+            }
+
+            if (resolved && availableTypes.includes(resolved)) {
+              upperType = resolved;
+              if (cleanInput.toUpperCase() !== resolved) {
+                console.log(`  👉 Selected type: ${resolved} (shortcut '${colType.trim()}')`);
+              }
+              break;
+            }
+            console.log(`  ❌ Invalid type '${colType.trim()}'. Choose from list or use shortcuts (v, i, b, t, e, d, dt, bool, j).`);
+          }
+          if (upperType === "__BACK__") continue;
+
+          // 3. Size (only for VARCHAR, CHAR, DECIMAL, NUMERIC, ENUM)
+          let colSize = "";
+          const needsSize = ["VARCHAR", "CHAR", "DECIMAL", "NUMERIC", "ENUM"].includes(upperType);
+          if (needsSize) {
+            const defaultSize = upperType === "VARCHAR" ? "255" : upperType === "CHAR" ? "1" : upperType === "DECIMAL" || upperType === "NUMERIC" ? "10,2" : "";
+            if (upperType === "ENUM") {
+              colSize = await promptQuestion(`ENUM values (comma separated, e.g. active,inactive,pending)`, "active,inactive");
+            } else {
+              colSize = await promptQuestion(`Size for ${upperType}`, defaultSize);
+            }
+            if (["back", "b", "cancel"].includes((colSize || "").trim().toLowerCase())) continue;
+          }
+
+          // 4. Nullable? (with validation loop)
+          let nullable = true;
+          while (true) {
+            const nullableChoice = await promptQuestion(`Allow NULL? (y/n)`, "y");
+            const nv = (nullableChoice || "y").trim().toLowerCase();
+            if (nv === "y" || nv === "yes") { nullable = true; break; }
+            if (nv === "n" || nv === "no") { nullable = false; break; }
+            console.log(`  ❌ Invalid input '${nullableChoice.trim()}'. Enter 'y' or 'n'.`);
+          }
+
+          // 5. Default value?
+          const defaultVal = await promptQuestion(`Default value (press Enter for none)`, "");
+
+          // 6. Index? (with validation loop)
+          let index = "";
+          console.log(`  📋 Index options: none, INDEX, UNIQUE`);
+          while (true) {
+            const indexChoice = await promptQuestion(`Index type`, "none");
+            const iv = (indexChoice || "none").trim().toUpperCase();
+            if (iv === "NONE" || iv === "") { index = ""; break; }
+            if (iv === "INDEX" || iv === "UNIQUE") { index = iv; break; }
+            console.log(`  ❌ Invalid index '${indexChoice.trim()}'. Choose: none, INDEX, UNIQUE`);
+          }
+
+          columns.push({
+            name: colName.trim(),
+            type: upperType,
+            size: (colSize || "").trim(),
+            nullable,
+            defaultValue: (defaultVal || "").trim(),
+            index,
+            auto: false
+          });
+
+          console.log(`  ✅ Column '${colName.trim()}' (${upperType}${colSize ? `(${colSize.trim()})` : ""}) added!`);
+          colNum++;
+        } catch (e) {
+          console.log(`  ⚠️  Input error: ${e.message || "unexpected"}. Try again or type 'done' to finish.`);
+        }
+      }
+
+
+      // ─── Auto-add timestamp columns ───
+      const addTimestamps = await promptQuestion("Add created_at & updated_at timestamp columns? (y/n)", "y");
+      if (addTimestamps.trim().toLowerCase() === "y" || addTimestamps.trim().toLowerCase() === "yes") {
         if (driver === "postgres") {
-          await client.query(createQuery);
+          columns.push({ name: "created_at", type: "TIMESTAMP", size: "", nullable: false, defaultValue: "CURRENT_TIMESTAMP", index: "", auto: true });
+          columns.push({ name: "updated_at", type: "TIMESTAMP", size: "", nullable: false, defaultValue: "CURRENT_TIMESTAMP", index: "", auto: true });
         } else {
-          await client.query(createQuery);
+          columns.push({ name: "created_at", type: "DATETIME", size: "", nullable: false, defaultValue: "CURRENT_TIMESTAMP", index: "", auto: true });
+          columns.push({ name: "updated_at", type: "DATETIME", size: "", nullable: false, defaultValue: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", index: "", auto: true });
+        }
+      }
+
+      if (columns.length <= 1) {
+        console.log("  ⚠️  No columns added (only 'id'). Table creation cancelled.");
+        return;
+      }
+
+      // ─── Preview table structure ───
+      console.log("");
+      line();
+      console.log(`  📐 TABLE STRUCTURE PREVIEW: '${tableName}'`);
+      line();
+
+      // Build preview table data
+      const previewRows = columns.map((col, idx) => ({
+        "#": idx + 1,
+        Column: col.name,
+        Type: col.size
+          ? (col.type === "ENUM" ? `ENUM('${col.size.split(",").join("','")}')` : `${col.type}(${col.size})`)
+          : col.type,
+        Null: col.nullable ? "YES" : "NO",
+        Key: col.index === "PRIMARY KEY" ? "PRI" : col.index === "UNIQUE" ? "UNI" : col.index === "INDEX" ? "MUL" : "-",
+        Default: col.defaultValue || (col.extra ? col.extra : "-"),
+        Extra: col.extra || (col.auto && col.name === "id" ? (driver === "postgres" ? "SERIAL" : "AUTO_INCREMENT") : "-")
+      }));
+
+      renderConsoleTable(previewRows);
+
+      console.log(`\n  📊 Total columns: ${columns.length}`);
+      line();
+
+      // ─── Final confirmation ───
+      const confirm = await promptQuestion("Create this table? Press Enter to confirm or 'cancel' to abort", "y");
+      if (["cancel", "no", "n", "back", "b"].includes(confirm.trim().toLowerCase())) {
+        console.log("  ⏹ Table creation cancelled.");
+        return;
+      }
+
+      // ─── Build SQL ───
+      const colDefs = [];
+      const indexDefs = [];
+
+      for (const col of columns) {
+        if (col.name === "id") {
+          if (driver === "postgres") {
+            colDefs.push(`"id" SERIAL PRIMARY KEY`);
+          } else {
+            colDefs.push("`id` INT AUTO_INCREMENT PRIMARY KEY");
+          }
+          continue;
         }
 
-        console.log(`✅ Table '${tableName}' created successfully in database connection '${key}'!`);
+        let def = "";
+        const quotedName = driver === "postgres" ? `"${col.name}"` : `\`${col.name}\``;
+
+        // Type with size
+        let typePart = col.type;
+        if (col.size) {
+          if (col.type === "ENUM") {
+            typePart = `ENUM('${col.size.split(",").map(v => v.trim()).join("','")}')`;
+          } else {
+            typePart = `${col.type}(${col.size})`;
+          }
+        }
+
+        def = `${quotedName} ${typePart}`;
+
+        // Nullable
+        if (!col.nullable) def += " NOT NULL";
+
+        // Default
+        if (col.defaultValue) {
+          const dv = col.defaultValue;
+          // Don't quote function-like defaults
+          if (/^(CURRENT_TIMESTAMP|NOW\(\)|NULL|TRUE|FALSE|\d+)/i.test(dv)) {
+            def += ` DEFAULT ${dv}`;
+          } else {
+            def += ` DEFAULT '${dv}'`;
+          }
+        }
+
+        colDefs.push(def);
+
+        // Indexes (non-primary)
+        if (col.index === "UNIQUE") {
+          if (driver === "postgres") {
+            indexDefs.push(`UNIQUE ("${col.name}")`);
+          } else {
+            indexDefs.push(`UNIQUE KEY \`idx_${col.name}\` (\`${col.name}\`)`);
+          }
+        } else if (col.index === "INDEX") {
+          if (driver !== "postgres") {
+            indexDefs.push(`INDEX \`idx_${col.name}\` (\`${col.name}\`)`);
+          }
+        }
+      }
+
+      const allParts = [...colDefs, ...indexDefs];
+      const createSQL = driver === "postgres"
+        ? `CREATE TABLE IF NOT EXISTS "${tableName}" (\n  ${allParts.join(",\n  ")}\n)`
+        : `CREATE TABLE IF NOT EXISTS \`${tableName}\` (\n  ${allParts.join(",\n  ")}\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
+
+      try {
+        await client.query(createSQL);
+        console.log(`\n  ✅ Table '${tableName}' created successfully on connection '${key}'!`);
+
+        // Add indexes for postgres separately
+        if (driver === "postgres") {
+          for (const col of columns) {
+            if (col.index === "INDEX") {
+              try {
+                await client.query(`CREATE INDEX "idx_${col.name}" ON "${tableName}" ("${col.name}")`);
+              } catch (e) { /* ignore if already exists */ }
+            }
+          }
+        }
       } catch (err) {
-        console.error(`❌ Failed to create table '${tableName}': ${err.message}`);
+        console.error(`  ❌ Failed to create table '${tableName}': ${err.message}`);
+        console.log(`\n  📝 Generated SQL:\n  ${createSQL}\n`);
       }
     }
   },
@@ -811,3 +1204,517 @@ export const dbCommands = {
     }
   }
 };
+
+export async function openDatabaseStudio(dbKey) {
+  const configs = readDbConfig();
+  const conf = configs[dbKey];
+  if (!conf) {
+    console.error(`❌ Connection key '${dbKey}' not found in db_config.json`);
+    return;
+  }
+
+  const isEnabled = conf.enabled !== false && conf.ENABLED !== false && conf.enabled !== "false";
+  if (!isEnabled) {
+    console.error(`\n❌ DATABASE ERROR: Database connection '${dbKey}' is turned OFF (enabled: false).`);
+    console.log("👉 Set 'enabled: true' in .vexora_config/db_config.json to enable access.\n");
+    return;
+  }
+
+  const driver = (conf.driver || conf.DB_DRIVER || "mysql").toLowerCase();
+  console.log(`\n⚡ Connecting to database '${dbKey}' (${driver})...`);
+
+  const dbObj = await getDbClient(dbKey);
+  if (!dbObj) return;
+
+  const { client, key, dbName } = dbObj;
+
+  // ─── HELPER: Fetch all table names ───
+  async function fetchTablesList() {
+    let tables = [];
+    try {
+      if (driver === "postgres") {
+        const res = await client.query("SELECT tablename FROM pg_tables WHERE schemaname='public'");
+        tables = res.rows.map(r => r.tablename);
+      } else {
+        const [rows] = await client.query("SHOW TABLES");
+        tables = rows.map(r => Object.values(r)[0]);
+      }
+    } catch (e) {
+      console.error(`❌ Error fetching tables: ${e.message}`);
+    }
+    return tables;
+  }
+
+  // ─── HELPER: Fetch row count for a table ───
+  async function getRowCount(tbl) {
+    try {
+      if (driver === "postgres") {
+        const res = await client.query(`SELECT COUNT(*) AS total FROM "${tbl}"`);
+        return res.rows[0].total;
+      } else {
+        const [rows] = await client.query(`SELECT COUNT(*) AS total FROM \`${tbl}\``);
+        return rows[0].total;
+      }
+    } catch (e) { return "?"; }
+  }
+
+  // ─── HELPER: Fetch table data (first 30 rows) ───
+  async function fetchTableData(tbl) {
+    try {
+      if (driver === "postgres") {
+        const res = await client.query(`SELECT * FROM "${tbl}" LIMIT 30`);
+        return res.rows;
+      } else {
+        const [rows] = await client.query(`SELECT * FROM \`${tbl}\` LIMIT 30`);
+        return rows;
+      }
+    } catch (e) {
+      console.error(`❌ Error fetching data: ${e.message}`);
+      return [];
+    }
+  }
+
+  // ─── HELPER: Show table schema ───
+  async function showSchema(tbl) {
+    try {
+      if (driver === "postgres") {
+        const res = await client.query(`SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = $1`, [tbl]);
+        res.rows.forEach(r => console.log(`  │ ${r.column_name.padEnd(20)} │ ${(r.data_type).padEnd(15)} │ Nullable: ${r.is_nullable.padEnd(3)} │`));
+      } else {
+        const [rows] = await client.query(`DESCRIBE \`${tbl}\``);
+        rows.forEach(r => console.log(`  │ ${String(r.Field).padEnd(20)} │ ${String(r.Type).padEnd(15)} │ Null: ${String(r.Null).padEnd(3)} │ Key: ${String(r.Key || "-").padEnd(3)} │`));
+      }
+    } catch (err) {
+      console.error(`  ❌ Error reading schema: ${err.message}`);
+    }
+  }
+
+  // ─── HELPER: Fetch detailed column schema with ENUM values ───
+  async function getDetailedSchema(tbl) {
+    const schemaMap = {};
+    try {
+      if (driver === "postgres") {
+        const res = await client.query(
+          `SELECT column_name, data_type, udt_name FROM information_schema.columns WHERE table_name = $1`,
+          [tbl]
+        );
+        for (const r of res.rows) {
+          const cName = r.column_name;
+          let enumValues = [];
+          if (r.data_type === "USER-DEFINED" || r.udt_name) {
+            try {
+              const enumRes = await client.query(
+                `SELECT enumlabel FROM pg_enum JOIN pg_type ON pg_enum.enumtypid = pg_type.oid WHERE pg_type.typname = $1 ORDER BY enumsortorder`,
+                [r.udt_name]
+              );
+              enumValues = enumRes.rows.map(e => e.enumlabel);
+            } catch (e) {}
+          }
+          schemaMap[cName.toLowerCase()] = {
+            name: cName,
+            type: r.data_type,
+            isEnum: enumValues.length > 0,
+            enumValues
+          };
+        }
+      } else {
+        const [rows] = await client.query(`DESCRIBE \`${tbl}\``);
+        for (const r of rows) {
+          const cName = r.Field;
+          const rawType = String(r.Type || "");
+          const isEnum = /^enum\(/i.test(rawType);
+          let enumValues = [];
+          if (isEnum) {
+            const matches = [...rawType.matchAll(/'([^']+)'/g)];
+            enumValues = matches.map(m => m[1]);
+          }
+          schemaMap[cName.toLowerCase()] = {
+            name: cName,
+            type: rawType,
+            isEnum,
+            enumValues
+          };
+        }
+      }
+    } catch (e) {}
+    return schemaMap;
+  }
+
+  // ─── HELPER: Prompt value for a column with ENUM shortcut support ───
+  async function promptColumnValue(colName, colSchema) {
+    if (colSchema && colSchema.isEnum && colSchema.enumValues.length > 0) {
+      const vals = colSchema.enumValues;
+      console.log(`\n  📋 Column '${colName}' is ENUM. Available options:`);
+      vals.forEach((v, idx) => {
+        console.log(`     [${idx + 1}] ${v}`);
+      });
+      console.log(`  (Enter #1-${vals.length}, full value, or shortcut like '${vals[0][0]}')`);
+
+      while (true) {
+        const val = await promptQuestion(`Select value for '${colName}'`, "");
+        const input = (val || "").trim();
+        if (!input || ["back", "b", "cancel"].includes(input.toLowerCase())) return "__CANCEL__";
+
+        // 1. Numeric shortcut (1-indexed)
+        const num = parseInt(input, 10);
+        if (!isNaN(num) && num >= 1 && num <= vals.length) {
+          const chosen = vals[num - 1];
+          console.log(`  👉 Selected ENUM: '${chosen}'`);
+          return chosen;
+        }
+
+        // 2. Exact match (case-insensitive)
+        const exact = vals.find(v => v.toLowerCase() === input.toLowerCase());
+        if (exact) return exact;
+
+        // 3. Prefix shortcut match
+        const matches = vals.filter(v => v.toLowerCase().startsWith(input.toLowerCase()));
+        if (matches.length === 1) {
+          console.log(`  👉 Selected ENUM shortcut match: '${matches[0]}'`);
+          return matches[0];
+        } else if (matches.length > 1) {
+          console.log(`  ⚠️  Multiple ENUM options match '${input}': ${matches.join(", ")}. Be more specific or use numbers #1-${vals.length}.`);
+          continue;
+        }
+
+        console.log(`  ❌ Invalid ENUM value '${input}'. Options are: ${vals.map((v, i) => `[${i+1}] ${v}`).join(", ")}`);
+      }
+    } else {
+      const val = await promptQuestion(`Enter value for '${colName}' (or 'back' to cancel)`, "");
+      const input = (val || "").trim();
+      if (["back", "b", "cancel"].includes(input.toLowerCase())) return "__CANCEL__";
+      return input;
+    }
+  }
+
+  // ─── HELPER: Insert record ───
+  async function insertRecord(tbl) {
+    console.log(`\n  ➕ INSERT NEW RECORD INTO '${tbl}'`);
+    line();
+
+    const schemaMap = await getDetailedSchema(tbl);
+    const columns = Object.keys(schemaMap).map(k => schemaMap[k].name);
+
+    if (columns.length === 0) {
+      console.error("  ❌ Could not read table columns.");
+      return;
+    }
+
+    const skipCols = ["id", "created_at", "updated_at"];
+    const writeCols = columns.filter(c => !skipCols.includes(c.toLowerCase()));
+
+    console.log(`  📌 Writable columns: ${writeCols.join(", ")}`);
+    console.log(`  (Columns like id, created_at, updated_at are auto-managed)`);
+    line();
+
+    const data = {};
+    for (const col of writeCols) {
+      const colMeta = schemaMap[col.toLowerCase()];
+      const val = await promptColumnValue(col, colMeta);
+      if (val === "__CANCEL__") return;
+      data[col] = val;
+    }
+
+    const cols = Object.keys(data);
+    if (cols.length === 0) return;
+
+    try {
+      if (driver === "postgres") {
+        const placeholders = cols.map((_, i) => `$${i + 1}`).join(", ");
+        await client.query(`INSERT INTO "${tbl}" (${cols.map(c => `"${c}"`).join(", ")}) VALUES (${placeholders})`, Object.values(data));
+      } else {
+        const placeholders = cols.map(() => "?").join(", ");
+        await client.query(`INSERT INTO \`${tbl}\` (${cols.map(c => `\`${c}\``).join(", ")}) VALUES (${placeholders})`, Object.values(data));
+      }
+      console.log(`  ✅ Record inserted successfully into '${tbl}'!`);
+    } catch (e) {
+      console.error(`  ❌ Insert Error: ${e.message}`);
+    }
+  }
+
+  // ─── HELPER: Update record ───
+  async function updateRecord(tbl) {
+    console.log(`\n  ✏️  UPDATE RECORD IN '${tbl}'`);
+    line();
+
+    const schemaMap = await getDetailedSchema(tbl);
+    const columns = Object.keys(schemaMap).map(k => schemaMap[k].name);
+    if (columns.length === 0) {
+      console.error("  ❌ Could not read table columns.");
+      return;
+    }
+
+    const skipCols = ["id", "created_at", "updated_at"];
+    const writeCols = columns.filter(c => !skipCols.includes(c.toLowerCase()));
+
+    console.log(`  📌 Writable columns: ${writeCols.map(c => {
+      const info = schemaMap[c.toLowerCase()];
+      return info && info.isEnum ? `${c} (ENUM: ${info.enumValues.join(",")})` : c;
+    }).join(", ")}`);
+    line();
+
+    let colName = "";
+    let colMeta = null;
+
+    while (true) {
+      const inputCol = await promptQuestion("Enter Column Name to update (e.g. status, title)", "");
+      const trimmed = (inputCol || "").trim();
+      if (!trimmed || ["back", "b", "cancel"].includes(trimmed.toLowerCase())) return;
+
+      const foundKey = Object.keys(schemaMap).find(k => k === trimmed.toLowerCase() || schemaMap[k].name.toLowerCase() === trimmed.toLowerCase());
+      if (foundKey) {
+        colMeta = schemaMap[foundKey];
+        colName = colMeta.name;
+        break;
+      }
+
+      console.log(`  ❌ Column '${trimmed}' does not exist. Available: ${writeCols.join(", ")}`);
+    }
+
+    const newVal = await promptColumnValue(colName, colMeta);
+    if (newVal === "__CANCEL__") return;
+
+    const rawWhere = await promptQuestion("Enter row ID or WHERE clause (e.g. 5 or id = 5)", "");
+    if (!rawWhere || ["back", "b", "cancel"].includes(rawWhere.trim().toLowerCase())) return;
+
+    const whereCond = formatWhereClause(rawWhere);
+    const confirm = await promptQuestion(`⚠️  UPDATE '${tbl}' SET ${colName}='${newVal}' WHERE ${whereCond}? (y/n)`, "n");
+    if (confirm.toLowerCase() !== "y" && confirm.toLowerCase() !== "yes") {
+      console.log("  ⏹ Update cancelled.");
+      return;
+    }
+
+    try {
+      if (driver === "postgres") {
+        await client.query(`UPDATE "${tbl}" SET "${colName}" = $1 WHERE ${whereCond}`, [newVal]);
+      } else {
+        await client.query(`UPDATE \`${tbl}\` SET \`${colName}\` = ? WHERE ${whereCond}`, [newVal]);
+      }
+      console.log(`  ✅ Record updated successfully in '${tbl}'!`);
+    } catch (e) {
+      console.error(`  ❌ Update Error: ${e.message}`);
+    }
+  }
+
+  // ─── HELPER: Delete record ───
+  async function deleteRecord(tbl) {
+    console.log(`\n  🗑️  DELETE RECORD FROM '${tbl}'`);
+    line();
+    const rawWhere = await promptQuestion("  Enter row ID to delete (e.g. 5) or WHERE clause (e.g. id = 5)", "");
+    if (!rawWhere || ["back", "b", "cancel"].includes(rawWhere.trim().toLowerCase())) return;
+
+    const whereCond = formatWhereClause(rawWhere);
+    const confirm = await promptQuestion(`  ⚠️  DELETE FROM '${tbl}' WHERE ${whereCond}? (y/n)`, "n");
+    if (confirm.toLowerCase() !== "y" && confirm.toLowerCase() !== "yes") {
+      console.log("  ⏹ Delete cancelled.");
+      return;
+    }
+
+    try {
+      const delQuery = driver === "postgres"
+        ? `DELETE FROM "${tbl}" WHERE ${whereCond}`
+        : `DELETE FROM \`${tbl}\` WHERE ${whereCond}`;
+      await client.query(delQuery);
+      console.log(`  ✅ Record(s) deleted from '${tbl}' successfully!`);
+    } catch (e) {
+      console.error(`  ❌ Delete Error: ${e.message}`);
+    }
+  }
+
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║  MAIN STUDIO LOOP: Tables List → Select → Data → Actions   ║
+  // ╚══════════════════════════════════════════════════════════════╝
+
+  console.log(`  ✅ Connected to '${dbKey}' (${dbName || "default"})!\n`);
+
+  while (true) {
+    // ── STEP 1: Show all tables ──
+    line();
+    console.log(`⚡ DATABASE STUDIO  [${key}]  ${driver.toUpperCase()}://${conf.DB_HOST || "127.0.0.1"}/${dbName || "default"}`);
+    line();
+
+    const tables = await fetchTablesList();
+    if (tables.length === 0) {
+      console.log("  (No tables found in this database)");
+      line();
+      const action = await promptQuestion("  [c] Create New Table | [q] Run Custom SQL | [b] Exit Studio", "b");
+      const a = action.trim().toLowerCase();
+      if (a === "c") {
+        await dbCommands["db:table:create"].run(["db:table:create", "", key]);
+        continue;
+      } else if (a === "q") {
+        const sql = await promptQuestion("  Enter SQL Query", "");
+        if (sql && !["back", "b", "cancel"].includes(sql.trim().toLowerCase())) {
+          await dbCommands["db:query"].run(["db:query", sql, key]);
+        }
+        continue;
+      }
+      break;
+    }
+
+    // Show tables with row counts
+    const tableData = [];
+    for (let i = 0; i < tables.length; i++) {
+      const count = await getRowCount(tables[i]);
+      tableData.push({ serial: i + 1, name: tables[i], rows: count });
+    }
+
+    console.log(`  📋 TABLES IN DATABASE (${tables.length} found):\n`);
+    for (const td of tableData) {
+      console.log(`   ${String(td.serial).padStart(3)}.  📄 ${td.name.padEnd(30)} ${td.rows} rows`);
+    }
+
+    console.log("");
+    line();
+    console.log("  [#] Select Table by Number    [c] Create Table    [q] Run SQL    [b] Exit Studio");
+    line();
+
+    const tblChoice = await promptQuestion("Select Table # or name (or 'b' to exit)", "");
+    const trimmed = tblChoice.trim();
+
+    if (!trimmed || ["back", "cancel", "exit", "0", "b"].includes(trimmed.toLowerCase())) {
+      console.log(`  ⏹ Exiting DB Studio for '${key}'...\n`);
+      break;
+    }
+
+    if (trimmed.toLowerCase() === "c") {
+      await dbCommands["db:table:create"].run(["db:table:create", "", key]);
+      continue;
+    }
+
+    if (trimmed.toLowerCase() === "q") {
+      const sql = await promptQuestion("  Enter SQL Query or Trigger", "");
+      if (sql && !["back", "b", "cancel"].includes(sql.trim().toLowerCase())) {
+        await dbCommands["db:query"].run(["db:query", sql, key]);
+      }
+      continue;
+    }
+
+    // Resolve table name
+    let selectedTable = null;
+    const num = parseInt(trimmed);
+    if (!isNaN(num) && num >= 1 && num <= tableData.length) {
+      selectedTable = tableData[num - 1].name;
+    } else {
+      selectedTable = tableData.find(t => t.name.toLowerCase() === trimmed.toLowerCase())?.name || trimmed;
+    }
+
+    // ── STEP 2: Table Detail Loop ──
+    let stayInTable = true;
+    while (stayInTable) {
+      line();
+      console.log(`📋 TABLE: '${selectedTable}'  [Connection: ${key}]`);
+      line();
+
+      // Show schema
+      console.log(`  📐 SCHEMA:`);
+      await showSchema(selectedTable);
+
+      // Show data
+      console.log("");
+      const dataRows = await fetchTableData(selectedTable);
+      const rowCount = await getRowCount(selectedTable);
+      console.log(`  📖 DATA (${rowCount} total rows, showing up to 30):`);
+      console.log("");
+
+      if (!dataRows || dataRows.length === 0) {
+        console.log(`  (Table '${selectedTable}' is empty)`);
+      } else {
+        renderConsoleTable(dataRows);
+      }
+
+      const isEmpty = !dataRows || dataRows.length === 0;
+
+      console.log("");
+      line();
+      if (isEmpty) {
+        console.log("  [i] Insert Record    [s] Schema    [q] Run SQL");
+        console.log("  [drop] Drop Table    [b] ← Back to Tables List");
+      } else {
+        console.log("  [i] Insert    [u] Update    [d] Delete    [s] Schema    [q] Run SQL");
+        console.log("  [drop] Drop Table    [trunc] Truncate Table    [b] ← Back to Tables List");
+      }
+      line();
+
+      const action = await promptQuestion("Action", "b");
+      const act = action.trim().toLowerCase();
+
+      if (act === "b" || act === "back" || !act) {
+        stayInTable = false;
+      } else if (act === "i" || act === "insert") {
+        await insertRecord(selectedTable);
+      } else if (act === "u" || act === "update") {
+        if (isEmpty) {
+          console.log(`\n  ⚠️ Table '${selectedTable}' is empty. No records to update. Use [i] to insert a new record.\n`);
+        } else {
+          await updateRecord(selectedTable);
+        }
+      } else if (act === "d" || act === "delete") {
+        if (isEmpty) {
+          console.log(`\n  ⚠️ Table '${selectedTable}' is empty. No records to delete.\n`);
+        } else {
+          await deleteRecord(selectedTable);
+        }
+      } else if (act === "s" || act === "schema") {
+        line();
+        console.log(`  📐 FULL SCHEMA FOR '${selectedTable}':`);
+        line();
+        await showSchema(selectedTable);
+        line();
+        await promptQuestion("Press Enter to continue...", "");
+      } else if (act === "q" || act === "sql") {
+        const sql = await promptQuestion("Enter SQL Query", "");
+        if (sql && !["back", "b", "cancel"].includes(sql.trim().toLowerCase())) {
+          try {
+            const startTime = performance.now();
+            let results;
+            if (driver === "postgres") {
+              const res = await client.query(sql);
+              results = res.rows || res;
+            } else {
+              const [rows] = await client.query(sql);
+              results = rows;
+            }
+            const duration = (performance.now() - startTime).toFixed(2);
+            console.log(`\n  🟢 QUERY EXECUTED (${duration}ms)`);
+            if (Array.isArray(results) && results.length > 0) {
+              renderConsoleTable(results);
+            } else {
+              console.dir(results, { depth: null, colors: true });
+            }
+          } catch (e) {
+            console.error(`  ❌ SQL Error: ${e.message}`);
+          }
+        }
+      } else if (act === "drop") {
+        const confirm = await promptQuestion(`⚠️  DROP TABLE '${selectedTable}' PERMANENTLY? (y/n)`, "n");
+        if (confirm.toLowerCase() === "y" || confirm.toLowerCase() === "yes") {
+          try {
+            const dropQ = driver === "postgres" ? `DROP TABLE IF EXISTS "${selectedTable}"` : `DROP TABLE IF EXISTS \`${selectedTable}\``;
+            await client.query(dropQ);
+            console.log(`  ✅ Table '${selectedTable}' dropped successfully!`);
+            stayInTable = false;
+          } catch (e) {
+            console.error(`  ❌ Drop Error: ${e.message}`);
+          }
+        }
+      } else if (act === "trunc" || act === "truncate") {
+        if (isEmpty) {
+          console.log(`\n  ⚠️ Table '${selectedTable}' is already empty.\n`);
+        } else {
+          const confirm = await promptQuestion(`⚠️  TRUNCATE (clear all data from) '${selectedTable}'? (y/n)`, "n");
+          if (confirm.toLowerCase() === "y" || confirm.toLowerCase() === "yes") {
+            try {
+              const truncQ = driver === "postgres" ? `TRUNCATE TABLE "${selectedTable}"` : `TRUNCATE TABLE \`${selectedTable}\``;
+              await client.query(truncQ);
+              console.log(`  ✅ Table '${selectedTable}' truncated successfully!`);
+            } catch (e) {
+              console.error(`  ❌ Truncate Error: ${e.message}`);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

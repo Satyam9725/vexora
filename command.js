@@ -104,7 +104,14 @@ export default async function executeCommand(args) {
     process.exit(1);
   }
 
-  // Execute matched command
-  await commands[targetCmdKey].run(args, commands);
-  process.exit(0);
+  // Execute matched command with One-Time Single-Command Auto-Logout
+  try {
+    await commands[targetCmdKey].run(args, commands);
+  } finally {
+    // Auto-logout as soon as any CLI command completes and returns control to PS prompt
+    clearAuthSession();
+  }
+  if (globalThis.__vexora_cli_executed) {
+    process.exit(0);
+  }
 }

@@ -18,7 +18,7 @@ import { run as runUploadTests } from "./upload.test.js";
 
 async function main() {
     console.log("==========================================");
-    console.log("VEXORA FRAMEWORK INTEGRATED TEST RUNNER");
+    console.log("VEXORA FRAMEWORK MASTER TEST RUNNER");
     console.log("==========================================\n");
 
     try {

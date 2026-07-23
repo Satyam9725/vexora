@@ -23,12 +23,19 @@ import postgres from "./postgres.js";
 import Config from "../core/config.js";
 import MySqlQueryBuilder from "./QueryBuilder/MySqlQueryBuilder.js";
 import PostgresQueryBuilder from "./QueryBuilder/PostgresQueryBuilder.js";
+import MongoQueryBuilder from "./QueryBuilder/MongoQueryBuilder.js";
 
 class Database {
   static instance = null;
   static connections = {}; // Keeps track of all active named database connections
 
   static async connect(connectionInput, dbKey = "default") {
+    if (typeof connectionInput === "object" && connectionInput !== null) {
+      if (connectionInput.enabled === false || connectionInput.enabled === "false" || connectionInput.ENABLED === false || connectionInput.ENABLED === "false") {
+        throw new Error(`❌ DATABASE ERROR: Database connection '${dbKey}' is turned OFF (enabled: false) in .vexora_config/db_config.json.`);
+      }
+    }
+
     // If we already connected to this database key, return it
     if (Database.connections[dbKey]) {
       return Database.connections[dbKey];
@@ -38,14 +45,15 @@ class Database {
 
     // Standardize PHP-style database keys to Vexora keys
     if (typeof input === "object" && input !== null) {
-        input = {
-            host: input.host || input.DB_HOST || "localhost",
-            user: input.user || input.username || input.DB_USER || "root",
-            password: input.password || input.pass || input.DB_PASS || "",
-            database: input.database || input.dbname || input.DB_NAME || "",
-            port: parseInt(input.port || input.DB_PORT) || 3306,
-            driver: input.driver || input.DB_DRIVER || "mysql"
-        };
+      input = {
+        host: input.host || input.DB_HOST || "localhost",
+        user: input.user || input.username || input.DB_USER || "root",
+        password: input.password || input.pass || input.DB_PASS || "",
+        database: input.database || input.dbname || input.DB_NAME || "",
+        port: parseInt(input.port || input.DB_PORT) || 3306,
+        driver: input.driver || input.DB_DRIVER || "mysql",
+        enabled: input.enabled !== false && input.ENABLED !== false,
+      };
     }
 
     // If no argument is passed, auto-detect from Config
@@ -96,7 +104,7 @@ class Database {
       case "mysql":
         connection = await mysql.connect(input);
         break;
-      
+
       case "postgres":
       case "postgresql":
         connection = await postgres.connect(input);
@@ -113,6 +121,8 @@ class Database {
       qbInstance = new MySqlQueryBuilder();
     } else if (protocol === "postgres") {
       qbInstance = new PostgresQueryBuilder();
+    } else if (protocol === "mongodb") {
+      qbInstance = new MongoQueryBuilder();
     }
 
     // Store in active connections dictionary
@@ -126,6 +136,21 @@ class Database {
     return qbInstance;
   }
 
+  static async fetch(keyOrQuery, queryOrParams, params = []) {
+    let key = "default";
+    let query = keyOrQuery;
+    let queryParams = queryOrParams || [];
+
+    if (typeof queryOrParams === "string") {
+      key = keyOrQuery;
+      query = queryOrParams;
+      queryParams = params;
+    }
+
+    const qb = await Database.getConnection(key);
+    return await qb.fetch(query, queryParams);
+  }
+
   /**
    * Helper to retrieve or automatically connect to a named database based on config URL keys
    */
@@ -137,33 +162,33 @@ class Database {
     // Load from db_config.json if it exists and has the key
     let dbConfig = null;
     try {
-        const root = process.cwd();
-        const configPaths = [
-            path.join(root, 'db_config.json'),
-            path.join(root, '.vexora_config', 'db_config.json')
-        ];
-        for (const p of configPaths) {
-            if (fs.existsSync(p)) {
-                dbConfig = JSON.parse(fs.readFileSync(p, 'utf8'));
-                break;
-            }
+      const root = process.cwd();
+      const configPaths = [
+        path.join(root, 'db_config.json'),
+        path.join(root, '.vexora_config', 'db_config.json')
+      ];
+      for (const p of configPaths) {
+        if (fs.existsSync(p)) {
+          dbConfig = JSON.parse(fs.readFileSync(p, 'utf8'));
+          break;
         }
-    } catch (e) {}
+      }
+    } catch (e) { }
 
     let configData = null;
     if (dbConfig) {
-        if (dbConfig[key]) {
-            configData = dbConfig[key];
-        } else if (key === "default") {
-            const keys = Object.keys(dbConfig);
-            if (keys.length > 0) {
-                configData = dbConfig[keys[0]];
-            }
+      if (dbConfig[key]) {
+        configData = dbConfig[key];
+      } else if (key === "default") {
+        const keys = Object.keys(dbConfig);
+        if (keys.length > 0) {
+          configData = dbConfig[keys[0]];
         }
+      }
     }
 
     if (configData) {
-        return await Database.connect(configData, key);
+      return await Database.connect(configData, key);
     }
 
     // 1. Throw error if configuration is not found in db_config.json
@@ -175,7 +200,7 @@ class Database {
   static _resolveArgs(args) {
     let dbKey = "default";
     let actualArgs = [...args];
-    
+
     if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string") {
       const firstArg = args[0].trim().toUpperCase();
       // Check if first arg is an SQL query or identifier
@@ -211,12 +236,12 @@ class Database {
   static async insert(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length === 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
+
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
       dbKey = args[0];
       resolved.shift();
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.insert(...resolved);
   }
@@ -224,12 +249,12 @@ class Database {
   static async update(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length >= 4 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object" && typeof args[3] === "string") {
+
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object") {
       dbKey = args[0];
       resolved.shift();
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.update(...resolved);
   }
@@ -237,12 +262,12 @@ class Database {
   static async delete(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
+
     if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
       dbKey = args[0];
       resolved.shift();
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.delete(...resolved);
   }
@@ -250,12 +275,12 @@ class Database {
   static async upsert(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length === 4 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object" && typeof args[3] === "object") {
+
+    if (args.length >= 4 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "object" && typeof args[3] === "object") {
       dbKey = args[0];
       resolved.shift();
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.upsert(...resolved);
   }
@@ -263,16 +288,18 @@ class Database {
   static async count(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string" && (args.length > 2 ? typeof args[2] === "string" : true)) {
-      // check if first parameter is not an SQL keyword count query
+
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
+      dbKey = args[0];
+      resolved.shift();
+    } else if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string") {
       const testSql = args[0].trim().toUpperCase();
       if (!testSql.startsWith("SELECT") && !testSql.includes(" ")) {
         dbKey = args[0];
         resolved.shift();
       }
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.count(...resolved);
   }
@@ -280,12 +307,12 @@ class Database {
   static async exists(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
+
     if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
       dbKey = args[0];
       resolved.shift();
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.exists(...resolved);
   }
@@ -305,12 +332,15 @@ class Database {
   static async fetchColumn(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && Array.isArray(args[2])) {
-      dbKey = args[0];
-      resolved.shift();
+
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && (Array.isArray(args[2]) || typeof args[2] === "string")) {
+      const testSql = args[0].trim().toUpperCase();
+      if (!testSql.startsWith("SELECT") && !testSql.includes(" ")) {
+        dbKey = args[0];
+        resolved.shift();
+      }
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.fetchColumn(...resolved);
   }
@@ -318,12 +348,15 @@ class Database {
   static async paginate(...args) {
     let dbKey = "default";
     let resolved = [...args];
-    
-    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && Array.isArray(args[2])) {
-      dbKey = args[0];
-      resolved.shift();
+
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string") {
+      const testSql = args[0].trim().toUpperCase();
+      if (!testSql.startsWith("SELECT") && !testSql.includes(" ")) {
+        dbKey = args[0];
+        resolved.shift();
+      }
     }
-    
+
     const conn = await Database.getConnection(dbKey);
     return await conn.paginate(...resolved);
   }

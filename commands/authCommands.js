@@ -28,6 +28,12 @@ export function isAuthenticated() {
     const data = JSON.parse(fs.readFileSync(authPath, "utf8"));
     if (!data || data.status !== "authenticated") return false;
 
+    // Strict Terminal Process Session Check: If terminal PID changed or terminal closed, auto-logout
+    if (data.terminalPid && data.terminalPid !== process.ppid) {
+      clearAuthSession();
+      return false;
+    }
+
     // Session 24-hour expiration check
     if (data.expiresAt && Date.now() > data.expiresAt) {
       clearAuthSession();
@@ -54,6 +60,7 @@ export const authCommands = {
         user: "Vexora Developer",
         role: "admin",
         sessionId: sessionId,
+        terminalPid: process.ppid,
         loggedInAt: new Date().toISOString(),
         expiresAt: Date.now() + 24 * 60 * 60 * 1000,
       };
@@ -68,8 +75,27 @@ export const authCommands = {
       console.log(`  ${colors.bold}📅 Logged In  :${colors.reset} ${new Date(authData.loggedInAt).toLocaleString()}`);
       console.log(`${colors.cyan}========================================================================${colors.reset}\n`);
 
-      // Render original interactive help UI with y/n prompt
-      if (allCommands) {
+      // If a subcommand was chained (e.g. vexora login security:cipher:reset), run it immediately
+      if (args[1] && allCommands) {
+        const subCmdName = args[1];
+        let subCmd = allCommands[subCmdName];
+        if (!subCmd) {
+          for (const [name, cmd] of Object.entries(allCommands)) {
+            if (cmd.aliases && cmd.aliases.includes(subCmdName)) {
+              subCmd = cmd;
+              break;
+            }
+          }
+        }
+        if (subCmd) {
+          await subCmd.run(args.slice(1), allCommands);
+          return;
+        }
+      }
+
+      // Render original interactive help UI with y/n prompt unless in test/non-interactive mode
+      const isNonInteractive = args.includes("--no-interactive") || args.includes("-n") || process.env.NODE_ENV === "test";
+      if (allCommands && !isNonInteractive) {
         await renderHelpUI(allCommands, true);
       }
     },

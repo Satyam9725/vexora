@@ -1,9 +1,9 @@
 import Vexora from "./Vexora.js";
 
-// Start Vexora Server (Auto-connects static serving and API controllers)
+// Start Vexora Server
 const app = Vexora.start(3000);
 
-// Define custom routes directly using app
-app.get("/", (req, res) => {
+// Vexora-native routing syntax: app.Vexora(method, uri, handler)
+app.Vexora("GET", "/", (req, res) => {
     return res.success({ hello: "world" }, "Vexora Server is Running!");
 });

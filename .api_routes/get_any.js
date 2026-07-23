@@ -1,4 +1,2 @@
- const users = await Vexora.fetchAll("auth", "SELECT * FROM projects ");
- 
- Vexora.Response.success(users, "Profile loaded!");
- 
+// API Action Script: Get Any
+return Vexora.Response.success({ message: "Vexora API Route Operational" });

@@ -73,3 +73,27 @@
     }
 },
 
+{
+    "error_id": "74f1e335-b07d-406b-81ce-029cf77acd9b::23-07-2026",
+    "level": "ERROR",
+    "code": "RUNTIME_ERROR",
+    "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'SELECT COUNT(*) AS total FROM `user` WHERE status = ?'\n- 'SELECT 1 FROM `user` WHERE status = ? LIMIT 1'\n",
+    "time": "2026-07-23T18:03:05.976Z",
+    "memory": {
+        "rss": 80191488,
+        "heapTotal": 21372928,
+        "heapUsed": 13332936,
+        "external": 3961487,
+        "arrayBuffers": 44315
+    },
+    "request": null,
+    "data": {
+        "file_name": "./Module.run (file:///test/database_methods.test.js",
+        "line_number": 84,
+        "column_number": 12,
+        "url": null,
+        "user_id": null,
+        "device": null
+    }
+},
+

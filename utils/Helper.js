@@ -22,30 +22,39 @@ import Config from "../core/config.js";
 const ipv4Regex = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/;
 const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
 
+import BcryptEngine from "../security/Bcrypt.js";
+
 class Helper {
-  /* ================= PASSWORD HASHING (SCRYPT / ZERO-DEPENDENCY) ================= */
+  /* ================= PASSWORD HASHING (PHP-COMPATIBLE BCRYPT $2y$) ================= */
 
   /**
-   * Generates a secure scrypt password hash using native Node.js crypto
+   * Generates a PHP-compatible $2y$ Bcrypt password hash
+   * Example: $2y$10$e8w.x.s62Gj77p0P0...
    */
-  static hashPassword(password) {
+  static hashPassword(password, cost = 10) {
     if (!password) throw new Error("Password cannot be empty");
-    const salt = crypto.randomBytes(16).toString("hex");
-    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-    return `${salt}:${hash}`;
+    return BcryptEngine.hash(password, cost, "$2y$");
   }
 
   /**
-   * Verifies a password against an scrypt password hash using timing-safe comparison
+   * Verifies a password against a $2y$ / $2b$ / $2a$ Bcrypt or Scrypt hash
    */
   static verifyPassword(password, hashedPassword) {
     if (!password || !hashedPassword) return false;
-    if (!hashedPassword.includes(":")) return false;
 
-    const [salt, originalHash] = hashedPassword.split(":");
-    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-    
-    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(originalHash));
+    // Check if hash is $2y$ / $2b$ / $2a$ Bcrypt format
+    if (hashedPassword.startsWith("$2a$") || hashedPassword.startsWith("$2b$") || hashedPassword.startsWith("$2y$")) {
+      return BcryptEngine.verify(password, hashedPassword);
+    }
+
+    // Fallback: Legacy Scrypt format (salt:hash)
+    if (hashedPassword.includes(":")) {
+      const [salt, originalHash] = hashedPassword.split(":");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(originalHash));
+    }
+
+    return false;
   }
 
   /* ================= SECURE RANDOM TOKEN GENERATORS ================= */
@@ -85,11 +94,11 @@ class Helper {
     const iv = crypto.randomBytes(12);
     const key = crypto.scryptSync(keyToUse, salt, 32);
     const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    
+
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
     const authTag = cipher.getAuthTag().toString("hex");
-    
+
     return `${salt.toString("hex")}:${iv.toString("hex")}:${authTag}:${encrypted}`;
   }
 
@@ -99,7 +108,7 @@ class Helper {
   static decrypt(encryptedText, secretKey = null) {
     if (!encryptedText) return null;
     if (!encryptedText.includes(":")) return null;
-    
+
     const keyToUse = secretKey || Config.get("AES_SECRET") || Config.get("APP_KEY");
     if (!keyToUse) throw new Error("Decryption key not configured. Set AES_SECRET or APP_KEY in .Vexora/config");
 
@@ -121,13 +130,13 @@ class Helper {
       const iv = Buffer.from(ivHex, "hex");
       const authTag = Buffer.from(authTagHex, "hex");
       const key = crypto.scryptSync(keyToUse, salt, 32);
-      
+
       const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
       decipher.setAuthTag(authTag);
-      
+
       let decrypted = decipher.update(encryptedData, "hex", "utf8");
       decrypted += decipher.final("utf8");
-      
+
       return decrypted;
     } catch {
       return null; // Invalid decryption key or tampered payload
@@ -196,10 +205,10 @@ class Helper {
     }
     const token = req.input(paramName) || req.headers[String(headerName).toLowerCase()];
     if (!token || typeof token !== "string") return false;
-    
+
     const sessionToken = req.session._csrf;
     if (token.length !== sessionToken.length) return false;
-    
+
     return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(sessionToken));
   }
 }
