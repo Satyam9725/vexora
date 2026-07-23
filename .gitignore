@@ -3,9 +3,6 @@
 # Local Runtime Directories & Secret Configs
 .vexora_config/
 .vexora_log/
-.vexora_info/
-.vexora_error_page/
-.api_routes/
 .env
 .env.*
 
