@@ -1216,7 +1216,7 @@ export const securityCommands = {
 
       // Clear Live HUD box completely from terminal screen
       if (hudPrintedLines > 0) {
-        process.stdout.write(`\x1b[${hudPrintedLines}A\x1b[0J`);
+        process.stdout.write(`\x1b[${hudPrintedLines + 4}A\x1b[0J`);
         hudPrintedLines = 0;
       }
 
