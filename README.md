@@ -9,8 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/vexora"><img src="https://img.shields.io/npm/v/vexora?style=flat-square&color=8b5cf6&label=npm" alt="npm version" /></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-10b981.svg?style=flat-square" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/npm/v/vexora?style=flat-square&color=8b5cf6&label=npm" alt="npm version" />
+  <img src="https://img.shields.io/npm/dm/vexora?style=flat-square&color=8b5cf6&label=downloads" alt="npm downloads" />
+  <img src="https://img.shields.io/badge/License-MIT-10b981.svg?style=flat-square" alt="License: MIT" />
   <img src="https://img.shields.io/badge/dependencies-0-10b981.svg?style=flat-square" alt="Zero Dependencies" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-3b82f6.svg?style=flat-square" alt="Node Version" />
   <img src="https://img.shields.io/badge/throughput-~90%2C000%20req%2Fs-f59e0b.svg?style=flat-square" alt="Performance" />
@@ -93,13 +94,32 @@ npm install vexora
 
 <a id="cli-tools"></a>
 
-## 🛠️ CLI Tools
+## 🛠️ CLI Tools & Security Analyzer
 
 Run this command to open the interactive CLI helper tool:
 
 ```bash
-node Vexora
+npx vexora
+# or
+npx vexora init
 ```
+
+### 🛡️ Master Live Security Scanner & Code Analyzer
+
+Audit your entire codebase, configuration, ES module imports, hardcoded secrets, and syntax errors with a single command:
+
+```bash
+npx vexora security:scan
+```
+
+This runs a 5-step animated security scan:
+1. ⚙️ **Master Configuration Audit** (`.vexora_config/config`, CORS, CSRF, DDoS Shield settings)
+2. 🛡️ **HTTP Security Headers & Bot Analyzer Check**
+3. ⚡ **Deep Static Code Analysis & ES Module Syntax Verification**
+4. 🔑 **Hardcoded Secrets & Credential Leak Detection** (AWS keys, Passwords, RSA private keys)
+5. 📌 **Whitelisted Router & API Endpoint Hardening Audit**
+
+Produces an instant **Security Scorecard (e.g. `Score: 98/100 — GRADE A+`)** with exact line numbers and fix recommendations!
 
 ---
 
@@ -112,6 +132,7 @@ node Vexora
 |:---------|:--------|:------------|
 | 🏗️ **Core** | **Zero-Dependency Architecture** | Built 100% on Node.js native modules (`http`, `crypto`, `events`, `async_hooks`). Only optional DB drivers (`mysql2`, `pg`) for database connections. |
 | ⚡ **Performance** | **~90,000 req/sec Throughput** | Shallow call stacks interfacing directly with TCP sockets outperform Express (~15K) and Fastify (~60K). |
+| 🛡️ **Security** | **Master Live Security Scanner** | Built-in `npx vexora security:scan` static analyzer for ES module resolution, hardcoded secrets, and security scorecards. |
 | 🧵 **Context** | **Thread-Safe Request Binding** | Native `AsyncLocalStorage` maps request/response/session globally across all files — zero parameter drilling. |
 | 🔌 **Real-time** | **Native WebSocket Server** | Optimized TCP frame parser with binary mask/unmask built directly into the core stream layer. |
 | 🗄️ **Database** | **Multi-Pool DB Routing** | Simultaneous MySQL + PostgreSQL pools with auto-escaping, entity quoting, pagination, and nested savepoints. |
@@ -490,60 +511,49 @@ export default async function handler(req, res) {
 
 ## 🛣️ Standard Routing & Custom Controllers
 
-Beyond the whitelist-based API routing, you can define custom routes directly on the `app` object returned by `Vexora.start()`:
+Beyond the whitelist-based API routing, you can define custom routes directly on the `app` object returned by `Vexora.start()` using Vexora-native routing syntax:
 
-### Define Custom Routes
+### Vexora Native Routing Syntax
 
 ```javascript
 import Vexora from "vexora";
 
 const app = Vexora.start(3000);
 
-// All custom routes are auto-prefixed with /api
-// app.get("/hello", ...) → actually handles GET /api/hello
-
-app.get("/hello", (req, res) => {
-    return res.success({ greeting: "Hello World!" });
+// Single HTTP Method Routing: app.Vexora(method, uri, handler)
+app.Vexora("GET", "/info", (req, res) => {
+    return res.success({ version: "1.5.4" });
 });
 
-app.post("/submit", async (req, res) => {
+app.Vexora("POST", "/submit", async (req, res) => {
     const data = req.body;
     const id = await Vexora.insert("auth", "submissions", data);
     return res.success({ id }, "Submitted!");
 });
 
-// Multiple methods
-app.match(["GET", "POST"], "/form", (req, res) => {
+app.Vexora("PUT", "/users/1", async (req, res) => {
+    return res.success(req.body, "Updated!");
+});
+
+app.Vexora("DELETE", "/users/1", async (req, res) => {
+    return res.success(null, "Deleted!");
+});
+
+// Multiple Methods Array
+app.Vexora(["GET", "POST"], "/form", (req, res) => {
     return res.json({ status: true, method: req.method });
 });
 
-// Any HTTP method
-app.any("/wildcard", (req, res) => {
+// Any HTTP Method (Wildcard)
+app.Vexora("ANY", "/wildcard", (req, res) => {
     return res.success(null, "Matches any method!");
-});
-```
-
-### Unique Vexora Routing Syntax
-
-```javascript
-// Vexora-style routing: app.Vexora(method, uri, handler)
-app.Vexora("GET", "/info", (req, res) => {
-    return res.success({ version: "1.3.8" });
-});
-
-app.Vexora("POST", "/data", async (req, res) => {
-    return res.success(req.body, "Received!");
-});
-
-app.Vexora("ANY", "/ping", (req, res) => {
-    return res.json({ pong: true });
 });
 ```
 
 > [!IMPORTANT]
 > **Route Priority (highest to lowest):**
-> 1. **API Controllers** (`.api_routes/api.whitelist.js`) — Checked first for `/api/*` requests
-> 2. **Custom Routes** (`app.get()`, `app.post()`, etc.) — Fallback for unhandled `/api/*` requests
+> 1. **App Routes** (`app.Vexora("GET", "/path", ...)`) — Checked first for `/api/*` requests
+> 2. **API Controllers** (`.api_routes/api.whitelist.js`) — Fallback for directory-based `/api/*` requests
 > 3. **Static Files** (`public/`) — Only for non-`/api` requests
 
 ### Route Access Protection
@@ -1798,9 +1808,7 @@ import Vexora from "vexora";
 const app = Vexora.start(port, options);        // Start server
 app.static(dir, defaultFile, opts);             // Configure static serving
 app.cors(origins);                              // Enable CORS
-app.get/post/put/patch/delete(uri, handler);    // Define routes
-app.any(uri, handler);                          // Any HTTP method
-app.Vexora(method, uri, handler);               // Vexora-style routing
+app.Vexora(method, uri, handler);               // Vexora-native routing (GET, POST, PUT, DELETE, ANY)
 
 // ─── Database ────────────────────────────────
 
