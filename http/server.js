@@ -298,6 +298,34 @@ export default function Server(callback, options = {}) {
       }
   }
 
+  const STATIC_SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:;"
+  };
+
+  function fastParseQuery(queryString) {
+    const query = {};
+    const pairs = queryString.split("&");
+    for (let i = 0; i < pairs.length; i++) {
+      const pair = pairs[i];
+      if (!pair) continue;
+      const eqIdx = pair.indexOf("=");
+      if (eqIdx === -1) {
+        query[decodeURIComponent(pair)] = "";
+      } else {
+        const key = decodeURIComponent(pair.substring(0, eqIdx));
+        const val = decodeURIComponent(pair.substring(eqIdx + 1));
+        query[key] = val;
+      }
+    }
+    return query;
+  }
+
   const server = http.createServer((req, res) => {
     if (fastPaths.size > 0) {
         const route = fastPaths.get(`${req.method}:${req.url}`);
@@ -317,16 +345,11 @@ export default function Server(callback, options = {}) {
 
       const response = res;
 
-      // Enforce standard security headers by default (Helmet equivalent)
+      // Enforce standard security headers by default via pre-compiled object (Helmet equivalent)
       if (Config.ENABLE_SECURITY_HEADERS) {
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('X-Frame-Options', 'DENY');
-        res.setHeader('Referrer-Policy', 'no-referrer');
-        res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-        res.setHeader('X-XSS-Protection', '1; mode=block');
-        // Security: Add CSP and HSTS headers
-        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:;");
+        for (const hKey in STATIC_SECURITY_HEADERS) {
+          res.setHeader(hKey, STATIC_SECURITY_HEADERS[hKey]);
+        }
       }
 
       req.method = req.method || "GET";
@@ -339,15 +362,8 @@ export default function Server(callback, options = {}) {
           req.path = queryIdx === -1 ? url : url.substring(0, queryIdx);
           req.query = EMPTY_OBJECT;
           if (queryIdx !== -1) {
-              req.query = {};
               const queryString = url.substring(queryIdx + 1);
-              if (queryString) {
-                  const params = new URLSearchParams(queryString);
-                  for (const [k, v] of params.entries()) {
-                      req.query[k] = v;
-                  }
-              }
-              req.query = trimValue(req.query);
+              req.query = queryString ? trimValue(fastParseQuery(queryString)) : EMPTY_OBJECT;
           }
       }
 
@@ -444,6 +460,11 @@ export default function Server(callback, options = {}) {
     } catch (err) {
       handleRequestError(err, req, res);
     }
+  });
+
+  server.on("connection", (socket) => {
+    socket.setNoDelay(true);
+    socket.setKeepAlive(true, 60000);
   });
 
   const isClusterEnabled = Config.SERVER_CLUSTER;

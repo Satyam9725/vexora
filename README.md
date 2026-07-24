@@ -88,7 +88,7 @@ npm install vexora
 ```
 
 > [!NOTE]
-> Vexora requires **Node.js v18.0.0** or higher. Database drivers (`mysql2`, `pg`) are included as optional peer dependencies and only loaded when a database connection is configured.
+> Vexora requires **Node.js v18.0.0** or higher. Database drivers (`mysql2`, `pg`, `mongodb`) are included as optional peer dependencies and only loaded when a database connection is configured.
 
 ---
 
@@ -130,12 +130,12 @@ Produces an instant **Security Scorecard (e.g. `Score: 98/100 — GRADE A+`)** w
 
 | Category | Feature | Description |
 |:---------|:--------|:------------|
-| 🏗️ **Core** | **Zero-Dependency Architecture** | Built 100% on Node.js native modules (`http`, `crypto`, `events`, `async_hooks`). Only optional DB drivers (`mysql2`, `pg`) for database connections. |
+| 🏗️ **Core** | **Zero-Dependency Architecture** | Built 100% on Node.js native modules (`http`, `crypto`, `events`, `async_hooks`). Only optional DB drivers (`mysql2`, `pg`, `mongodb`) for database connections. |
 | ⚡ **Performance** | **~90,000 req/sec Throughput** | Shallow call stacks interfacing directly with TCP sockets outperform Express (~15K) and Fastify (~60K). |
 | 🛡️ **Security** | **Master Live Security Scanner** | Built-in `vexora security:scan` static analyzer for ES module resolution, hardcoded secrets, and security scorecards. |
 | 🧵 **Context** | **Thread-Safe Request Binding** | Native `AsyncLocalStorage` maps request/response/session globally across all files — zero parameter drilling. |
 | 🔌 **Real-time** | **Native WebSocket Server** | Optimized TCP frame parser with binary mask/unmask built directly into the core stream layer. |
-| 🗄️ **Database** | **Multi-Pool DB Routing** | Simultaneous MySQL + PostgreSQL pools with auto-escaping, entity quoting, pagination, and nested savepoints. |
+| 🗄️ **Database** | **Multi-Pool DB Routing** | Simultaneous MySQL + PostgreSQL + MongoDB pools with auto-escaping, entity quoting, pagination, and nested savepoints. |
 | 💾 **Cache** | **Sub-μs RAM Cache** | In-memory TTL store with atomic counters, garbage collection, and strict RAM limit enforcement. |
 | ✉️ **Mail** | **Native SMTP Client** | Raw TCP/TLS socket construction — SSL, STARTTLS, AUTH LOGIN, Base64 challenges, multipart payloads. |
 | 🔒 **Security** | **Hardened by Default** | Timing-safe CSRF, Helmet headers, global rate limiting, bot jitter analysis, IP blocking, and auto-trimmed inputs. |
@@ -707,6 +707,14 @@ Configure connection pools in `.vexora_config/db_config.json`:
     "DB_USER": "analytics_user",
     "DB_PASS": "analytics_pass",
     "DB_DRIVER": "pg"
+  },
+  "nosql": {
+    "DB_HOST": "cluster0.fsiwzxu.mongodb.net",
+    "DB_NAME": "satyam",
+    "DB_USER": "satyam",
+    "DB_PASS": "@satyam123",
+    "DB_DRIVER": "mongodb",
+    "DB_URL": "mongodb+srv://satyam:%40satyam123@cluster0.fsiwzxu.mongodb.net/satyam?appName=Cluster0"
   }
 }
 ```
@@ -804,6 +812,46 @@ try {
 } catch (err) {
     await Vexora.rollback("auth"); // Rollback entire transaction
 }
+```
+
+### MongoDB Setup & Querying
+Vexora supports MongoDB natively as one of its multi-pool drivers.
+
+#### Peer Dependency Installation
+```bash
+npm install mongodb
+```
+
+#### Configuration Example
+Add your MongoDB configuration inside `.vexora_config/db_config.json` with `"DB_DRIVER": "mongodb"`. You can supply connection credentials individually or use `DB_URL` directly.
+
+#### Unified CRUD API & MongoQueryBuilder
+The unified query builder lets you write code that runs transparently on SQL and NoSQL databases alike. Vexora automatically translates standard operators (`=`, `>`, `>=`, `<`, `<=`, `!=`, `like`, `in`) to MongoDB selectors:
+
+```javascript
+// Retrieve the query builder instance for MongoDB
+const nosql = await Vexora.DB.connect(null, "nosql");
+
+// Retrieve documents
+const activeUsers = await nosql.table("users")
+    .where("status", "=", "active")
+    .where("age", ">=", 18)
+    .limit(10)
+    .get();
+
+// Insert document(s)
+const newId = await Vexora.insert("nosql", "users", {
+    name: "John Doe",
+    email: "john@example.com",
+    status: "active"
+});
+
+// Update documents
+await Vexora.update("nosql", "users", { status: "inactive" }, "email = ?", ["john@example.com"]);
+
+// Delete documents
+await Vexora.delete("nosql", "users", "email = ?", ["john@example.com"]);
+```
 ```
 
 ### Complete Database API

@@ -34,17 +34,41 @@ async function connect(url) {
   try {
     const start = performance.now();
 
-    pool = new Pool({
-      connectionString: url,
-
+    let config = {
       max: 20,
-
       idleTimeoutMillis: 30000,
-
       connectionTimeoutMillis: 10000,
-
       allowExitOnIdle: false,
-    });
+    };
+
+    if (typeof url === "string") {
+      config.connectionString = url;
+    } else if (typeof url === "object" && url !== null) {
+      if (url.max !== undefined || url.connectionLimit !== undefined || url.DB_POOL_MAX !== undefined) {
+        config.max = parseInt(url.max !== undefined ? url.max : (url.connectionLimit !== undefined ? url.connectionLimit : url.DB_POOL_MAX));
+      }
+      if (url.idleTimeoutMillis !== undefined || url.idleTimeout !== undefined) {
+        config.idleTimeoutMillis = parseInt(url.idleTimeoutMillis !== undefined ? url.idleTimeoutMillis : url.idleTimeout);
+      }
+      if (url.connectionTimeoutMillis !== undefined || url.connectTimeout !== undefined) {
+        config.connectionTimeoutMillis = parseInt(url.connectionTimeoutMillis !== undefined ? url.connectionTimeoutMillis : url.connectTimeout);
+      }
+      if (url.allowExitOnIdle !== undefined) {
+        config.allowExitOnIdle = !!url.allowExitOnIdle;
+      }
+
+      if (url.url || url.DB_URL || url.uri) {
+        config.connectionString = url.url || url.DB_URL || url.uri;
+      } else {
+        config.user = url.user || url.username;
+        config.host = url.host;
+        config.database = url.database || url.dbname;
+        config.password = url.password || url.pass;
+        config.port = parseInt(url.port) || 5432;
+      }
+    }
+
+    pool = new Pool(config);
 
     const client = await pool.connect();
 

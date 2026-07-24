@@ -101,6 +101,20 @@ class MongoQueryBuilder extends BaseQueryBuilder {
     return res && res.length > 0 ? res[0] : null;
   }
 
+  async getNextSequence(db, collectionName) {
+    try {
+      const res = await db.collection("counters").findOneAndUpdate(
+        { _id: collectionName },
+        { $inc: { seq: 1 } },
+        { returnDocument: "after", upsert: true }
+      );
+      const doc = res && res.value ? res.value : res;
+      return doc && typeof doc.seq === "number" ? doc.seq : 1;
+    } catch {
+      return Date.now();
+    }
+  }
+
   async insert(...args) {
     const db = mongodb.getDb();
     if (!db) throw new Error("MongoDB not connected.");
@@ -114,12 +128,41 @@ class MongoQueryBuilder extends BaseQueryBuilder {
     }
 
     if (Array.isArray(data)) {
+      for (const item of data) {
+        if (typeof item === "object" && item !== null && item.id === undefined && item._id === undefined) {
+          const seq = await this.getNextSequence(db, table);
+          item._id = seq;
+          item.id = seq;
+        }
+      }
       const res = await db.collection(table).insertMany(data);
       return Object.values(res.insertedIds);
     }
 
+    if (typeof data === "object" && data !== null && data.id === undefined && data._id === undefined) {
+      const seq = await this.getNextSequence(db, table);
+      data._id = seq;
+      data.id = seq;
+    }
+
     const res = await db.collection(table).insertOne(data);
     return res.insertedId ? String(res.insertedId) : 1;
+  }
+
+  async _parseIdFilter(val) {
+    if (typeof val === "string" && /^[0-9a-fA-F]{24}$/.test(val)) {
+      try {
+        const { ObjectId } = await import("mongodb");
+        return { _id: new ObjectId(val) };
+      } catch {
+        // ignore
+      }
+    }
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      return { $or: [{ id: num }, { _id: num }, { id: String(val) }, { _id: String(val) }] };
+    }
+    return { $or: [{ id: val }, { _id: val }] };
   }
 
   async update(...args) {
@@ -133,10 +176,20 @@ class MongoQueryBuilder extends BaseQueryBuilder {
     if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "object") {
       table = args[0];
       data = args[1];
-      if (typeof args[2] === "string" && Array.isArray(args[3])) {
-        // e.g. "id = ?", [userId]
-        filter = { _id: args[3][0] };
-        if (typeof args[3][0] === "number") filter = { id: args[3][0] };
+      if (typeof args[2] === "string") {
+        const whereMatch = args[2].match(/([`"a-zA-Z0-9_]+)\s*=\s*\?/i);
+        const params = Array.isArray(args[3]) ? args[3] : [];
+        if (whereMatch && params.length > 0) {
+          const field = whereMatch[1].replace(/[`"]/g, "");
+          const val = params[0];
+          if (field.toLowerCase() === "id") {
+            filter = await this._parseIdFilter(val);
+          } else {
+            filter = { [field]: val };
+          }
+        } else if (Array.isArray(args[3]) && args[3].length > 0) {
+          filter = await this._parseIdFilter(args[3][0]);
+        }
       } else if (typeof args[2] === "object") {
         filter = args[2];
       }
@@ -157,9 +210,20 @@ class MongoQueryBuilder extends BaseQueryBuilder {
 
     if (args.length >= 2 && typeof args[0] === "string") {
       table = args[0];
-      if (typeof args[1] === "string" && Array.isArray(args[2])) {
-        filter = { _id: args[2][0] };
-        if (typeof args[2][0] === "number") filter = { id: args[2][0] };
+      if (typeof args[1] === "string") {
+        const whereMatch = args[1].match(/([`"a-zA-Z0-9_]+)\s*=\s*\?/i);
+        const params = Array.isArray(args[2]) ? args[2] : [];
+        if (whereMatch && params.length > 0) {
+          const field = whereMatch[1].replace(/[`"]/g, "");
+          const val = params[0];
+          if (field.toLowerCase() === "id") {
+            filter = await this._parseIdFilter(val);
+          } else {
+            filter = { [field]: val };
+          }
+        } else if (Array.isArray(args[2]) && args[2].length > 0) {
+          filter = await this._parseIdFilter(args[2][0]);
+        }
       } else if (typeof args[1] === "object") {
         filter = args[1];
       }
@@ -197,8 +261,20 @@ class MongoQueryBuilder extends BaseQueryBuilder {
 
     if (args.length >= 1 && typeof args[0] === "string") {
       table = args[0];
-      if (typeof args[1] === "string" && Array.isArray(args[2])) {
-        filter = { status: args[2][0] };
+      if (typeof args[1] === "string") {
+        const whereMatch = args[1].match(/([`"a-zA-Z0-9_]+)\s*=\s*\?/i);
+        const params = Array.isArray(args[2]) ? args[2] : [];
+        if (whereMatch && params.length > 0) {
+          const field = whereMatch[1].replace(/[`"]/g, "");
+          const val = params[0];
+          if (field.toLowerCase() === "id") {
+            filter = await this._parseIdFilter(val);
+          } else {
+            filter = { [field]: val };
+          }
+        } else if (Array.isArray(args[2]) && args[2].length > 0) {
+          filter = { status: args[2][0] };
+        }
       } else if (typeof args[1] === "object") {
         filter = args[1];
       }
@@ -241,10 +317,22 @@ class MongoQueryBuilder extends BaseQueryBuilder {
     if (typeof args[0] === "string") {
       const sql = args[0];
       const fromMatch = sql.match(/FROM\s+([`"a-zA-Z0-9_]+)/i);
-      if (fromMatch) table = fromMatch[1].replace(/[`"]/g, "");
+      if (fromMatch) {
+        table = fromMatch[1].replace(/[`"]/g, "");
+      } else {
+        table = sql;
+      }
       
-      if (Array.isArray(args[1]) && args[1].length > 0) {
-        filter = { status: args[1][0] };
+      const whereMatch = sql.match(/WHERE\s+([`"a-zA-Z0-9_]+)\s*=\s*\?/i);
+      if (whereMatch && Array.isArray(args[1]) && args[1].length > 0) {
+        const field = whereMatch[1].replace(/[`"]/g, "");
+        filter = { [field]: args[1][0] };
+      } else if (Array.isArray(args[1])) {
+        if (args[1].length > 0) {
+          filter = { status: args[1][0] };
+        }
+      } else if (typeof args[1] === "object" && args[1] !== null) {
+        filter = args[1];
       }
       page = parseInt(args[2]) || 1;
       perPage = parseInt(args[3]) || 10;
@@ -280,10 +368,20 @@ class MongoQueryBuilder extends BaseQueryBuilder {
       if (fromMatch) {
         collectionName = fromMatch[1].replace(/[`"]/g, "");
       }
-      if (Array.isArray(params) && params.length > 0) {
+      
+      const whereMatch = sqlOrCollection.match(/WHERE\s+([`"a-zA-Z0-9_]+)\s*=\s*\?/i);
+      if (whereMatch && Array.isArray(params) && params.length > 0) {
+        const field = whereMatch[1].replace(/[`"]/g, "");
+        const val = params[0];
+        if (field.toLowerCase() === "id") {
+          queryFilter = await this._parseIdFilter(val);
+        } else {
+          queryFilter = { [field]: val };
+        }
+      } else if (Array.isArray(params) && params.length > 0) {
         queryFilter = { status: params[0] };
         if (typeof params[0] === "number") {
-          queryFilter = { id: params[0] };
+          queryFilter = await this._parseIdFilter(params[0]);
         }
       }
     } else if (typeof params === "object" && !Array.isArray(params)) {

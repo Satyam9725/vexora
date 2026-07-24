@@ -26,16 +26,24 @@ import { systemCommands, renderHelpUI } from "./commands/systemCommands.js";
 import { authCommands, isAuthenticated, clearAuthSession } from "./commands/authCommands.js";
 import { colors } from "./commands/helpers.js";
 
-// Handle Ctrl+C (SIGINT) to automatically logout session
-process.on("SIGINT", () => {
+// Synchronous session cleanup handler on process exit or termination
+function handleExitCleanup() {
   clearAuthSession();
+}
+
+process.on("SIGINT", () => {
+  handleExitCleanup();
   console.log(`\n${colors.brightYellow}⚠️ Ctrl+C detected. Session terminated and logged out.${colors.reset}\n`);
   process.exit(0);
 });
 
 process.on("SIGTERM", () => {
-  clearAuthSession();
+  handleExitCleanup();
   process.exit(0);
+});
+
+process.on("exit", () => {
+  handleExitCleanup();
 });
 
 // Combine all modular command objects
@@ -55,7 +63,7 @@ const commands = {
 commands["list"] = {
   description: "Displays full list of CLI commands",
   category: "ℹ️ System",
-  aliases: ["help", "--help", "-h"],
+  aliases: ["help", "--help", "-h", "cd_list", "cmd_list", "cmd:list", "commands", "list"],
   async run() {
     await renderHelpUI(commands, false);
   }

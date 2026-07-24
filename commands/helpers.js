@@ -119,17 +119,41 @@ export function renderConsoleTable(rows) {
   console.log(`  ${c.gray}└${botBorder}┘${c.reset}`);
 }
 
+let activeRl = null;
+
+export function getReadlineInterface() {
+  if (!activeRl || activeRl.closed) {
+    activeRl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true
+    });
+  }
+  return activeRl;
+}
+
+export function closeReadlineInterface() {
+  if (activeRl && !activeRl.closed) {
+    activeRl.close();
+    activeRl = null;
+  }
+}
+
 export function promptQuestion(query, defaultValue = "") {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+  if (global.mockPromptQuestion) {
+    return Promise.resolve(global.mockPromptQuestion(query, defaultValue));
+  }
+  const rl = getReadlineInterface();
   return new Promise((resolve) => {
     const promptText = defaultValue
       ? `👉 ${query} [${defaultValue}]: `
       : `👉 ${query}: `;
+    
+    if (process.stdin.isPaused()) {
+      process.stdin.resume();
+    }
+
     rl.question(promptText, (answer) => {
-      rl.close();
       resolve(answer.trim() || defaultValue);
     });
   });
@@ -179,6 +203,36 @@ export function readDbConfig() {
 export function writeDbConfig(configs) {
   ensureDir(vexoraConfigDir());
   fs.writeFileSync(dbConfigPath(), JSON.stringify(configs, null, 2), "utf8");
+}
+
+export function startSpinner(text) {
+  const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+  let i = 0;
+  if (process.stdout.isTTY) {
+    process.stdout.write(`\n  \x1b[36m${frames[0]}\x1b[0m ${text}`);
+  } else {
+    console.log(`  ⚡ ${text}`);
+  }
+
+  const timer = setInterval(() => {
+    if (process.stdout.isTTY) {
+      i = (i + 1) % frames.length;
+      process.stdout.write(`\r  \x1b[36m${frames[i]}\x1b[0m ${text}`);
+    }
+  }, 80);
+
+  return {
+    stop(success = true, message = "") {
+      clearInterval(timer);
+      if (process.stdout.isTTY) {
+        process.stdout.write(`\r\x1b[K`);
+      }
+      if (message) {
+        const symbol = success ? "\x1b[32m✅\x1b[0m" : "\x1b[31m❌\x1b[0m";
+        console.log(`  ${symbol} ${message}`);
+      }
+    }
+  };
 }
 
 export function line() {

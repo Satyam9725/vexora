@@ -29,8 +29,12 @@ export function buildMongoUri(config) {
     return config;
   }
 
+  if (config.url || config.DB_URL || config.uri) {
+    return config.url || config.DB_URL || config.uri;
+  }
+
   const { host = "localhost", user = "", password = "", database = "vexora_db", port = 27017, appName } = config;
-  
+
   // Safe URL-encode password and user to prevent special character breakages like '@' or '#'
   const encodedUser = encodeURIComponent(user);
   const encodedPass = encodeURIComponent(password);
@@ -87,7 +91,7 @@ async function connect(connectionInput) {
 
     await clientInstance.connect();
     dbInstance = clientInstance.db(dbName);
-    
+
     const end = performance.now();
     console.log(`✅ MongoDB Connected (${(end - start).toFixed(2)}ms)`);
     return dbInstance;

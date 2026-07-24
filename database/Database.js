@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import mysql from "./mysql.js";
 import postgres from "./postgres.js";
+import mongodb from "./mongodb.js";
 import Config from "../core/config.js";
 import MySqlQueryBuilder from "./QueryBuilder/MySqlQueryBuilder.js";
 import PostgresQueryBuilder from "./QueryBuilder/PostgresQueryBuilder.js";
@@ -45,14 +46,24 @@ class Database {
 
     // Standardize PHP-style database keys to Vexora keys
     if (typeof input === "object" && input !== null) {
+      const driver = input.driver || input.DB_DRIVER || "mysql";
+      let defaultPort = 3306;
+      if (driver === "mongodb") {
+        defaultPort = 27017;
+      } else if (driver === "postgres" || driver === "postgresql") {
+        defaultPort = 5432;
+      }
+
       input = {
+        ...input,
         host: input.host || input.DB_HOST || "localhost",
         user: input.user || input.username || input.DB_USER || "root",
         password: input.password || input.pass || input.DB_PASS || "",
         database: input.database || input.dbname || input.DB_NAME || "",
-        port: parseInt(input.port || input.DB_PORT) || 3306,
-        driver: input.driver || input.DB_DRIVER || "mysql",
+        port: parseInt(input.port || input.DB_PORT) || defaultPort,
+        driver,
         enabled: input.enabled !== false && input.ENABLED !== false,
+        url: input.url || input.DB_URL || input.uri || null,
       };
     }
 
@@ -109,6 +120,10 @@ class Database {
       case "postgresql":
         connection = await postgres.connect(input);
         protocol = "postgres";
+        break;
+
+      case "mongodb":
+        connection = await mongodb.connect(input);
         break;
 
       default:
@@ -263,7 +278,7 @@ class Database {
     let dbKey = "default";
     let resolved = [...args];
 
-    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && (typeof args[2] === "string" || typeof args[2] === "object")) {
       dbKey = args[0];
       resolved.shift();
     }
@@ -289,7 +304,7 @@ class Database {
     let dbKey = "default";
     let resolved = [...args];
 
-    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && (typeof args[2] === "string" || typeof args[2] === "object")) {
       dbKey = args[0];
       resolved.shift();
     } else if (args.length >= 2 && typeof args[0] === "string" && typeof args[1] === "string") {
@@ -308,7 +323,7 @@ class Database {
     let dbKey = "default";
     let resolved = [...args];
 
-    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && typeof args[2] === "string") {
+    if (args.length >= 3 && typeof args[0] === "string" && typeof args[1] === "string" && (typeof args[2] === "string" || typeof args[2] === "object")) {
       dbKey = args[0];
       resolved.shift();
     }
@@ -383,6 +398,8 @@ class Database {
         await mysql.disconnect();
       } else if (conn.driver === "postgres") {
         await postgres.disconnect();
+      } else if (conn.driver === "mongodb") {
+        await mongodb.disconnect();
       }
     }
     Database.connections = {};

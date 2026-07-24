@@ -4,7 +4,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { colors, promptQuestion, line, padDisplayEnd, getDisplayWidth } from "./helpers.js";
+import { colors, promptQuestion, line, padDisplayEnd, getDisplayWidth, closeReadlineInterface } from "./helpers.js";
 
 export const systemCommands = {
   "info": {
@@ -444,5 +444,6 @@ ${c.cyan}${c.bold}  ██╗   ██╗███████╗██╗  █�
 
       console.log(`  ${c.dim}✅ Finished execution.${c.reset}`);
     }
+    closeReadlineInterface();
   }
 }

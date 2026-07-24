@@ -105,20 +105,13 @@ class ApiController {
             }
 
             // Search backwards from the deepest matched folder up to the root .api_routes folder
-            // looking for the first api.whitelist.js or index.js
+            // looking for the first api.whitelist.js
             for (let i = matchedDepth; i >= 0; i--) {
                 const checkDir = path.join(process.cwd(), '.api_routes', ...parts.slice(1, i + 1));
                 const wl = path.join(checkDir, 'api.whitelist.js');
-                const idx = path.join(checkDir, 'index.js');
                 
                 if (fs.existsSync(wl)) {
                     indexFile = wl;
-                    const joined = parts.slice(1, i + 1).join('/');
-                    baseMount = joined ? `/api/${joined}` : '/api';
-                    moduleName = parts[i] || 'api';
-                    break;
-                } else if (fs.existsSync(idx)) {
-                    indexFile = idx;
                     const joined = parts.slice(1, i + 1).join('/');
                     baseMount = joined ? `/api/${joined}` : '/api';
                     moduleName = parts[i] || 'api';

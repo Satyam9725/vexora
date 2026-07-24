@@ -33,6 +33,10 @@ function buildPoolOptions(input) {
   };
 
   if (typeof input === "object" && input !== null) {
+    const connectionLimit = input.connectionLimit !== undefined ? input.connectionLimit : (input.max !== undefined ? input.max : (input.DB_POOL_MAX !== undefined ? input.DB_POOL_MAX : defaultOptions.connectionLimit));
+    const waitForConnections = input.waitForConnections !== undefined ? input.waitForConnections : defaultOptions.waitForConnections;
+    const queueLimit = input.queueLimit !== undefined ? input.queueLimit : defaultOptions.queueLimit;
+
     return {
       ...defaultOptions,
       host: input.host || "localhost",
@@ -40,6 +44,9 @@ function buildPoolOptions(input) {
       password: input.password || input.pass || "",
       database: input.database || input.dbname || "",
       port: parseInt(input.port) || 3306,
+      connectionLimit: parseInt(connectionLimit),
+      waitForConnections: !!waitForConnections,
+      queueLimit: parseInt(queueLimit),
     };
   }
 

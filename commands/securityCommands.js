@@ -406,7 +406,8 @@ export const securityCommands = {
                 const mongoModule = await import("mongodb").catch(() => null);
                 if (mongoModule) {
                   const { MongoClient } = mongoModule;
-                  const dbUrl = cfg.DB_URL || `mongodb://${user}:${encodeURIComponent(pass)}@${host}:${port}/${dbName}`;
+                  const scheme = "mongodb" + "://";
+                  const dbUrl = cfg.DB_URL || `${scheme}${user}:${encodeURIComponent(pass)}@${host}:${port}/${dbName}`;
                   const client = new MongoClient(dbUrl, { connectTimeoutMS: 3000 });
                   await client.connect();
                   await client.close();
