@@ -300,7 +300,7 @@ graph TD
     Sandbox --> Storage["📁 File Storage"]
     DB --> MySQL[("MySQL Pool")]
     DB --> PG[("PostgreSQL Pool")]
-    DB --> PG[("MongoDB")]
+    DB --> MongoDB[("MongoDB")]
     ApiController --> Logger["🪵 Audit Logger"]
     Logger --> Disk[".vexora_log/"]
 ```
