@@ -44,6 +44,7 @@ Thumbs.db
 # Git Repository Metadata
 .git/
 .github/
+.agents/
 
 # Temporary Local Storage & Upload Test Directories
 public/

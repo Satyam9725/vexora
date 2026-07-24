@@ -1,13 +1,12 @@
 {
   "name": "vexora",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "Vexora Framework - Advanced, Blazing-Fast, Zero-Dependency Backend Framework for Node.js",
   "type": "module",
   "main": "./Vexora.js",
   "module": "./Vexora.js",
   "bin": {
-    "vexora": "./bin/cli.js",
-    "Vexora": "./bin/cli.js"
+    "vexora": "./bin/cli.js"
   },
   "exports": {
     ".": {

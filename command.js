@@ -76,12 +76,32 @@ commands["list"] = {
 export default async function executeCommand(args) {
   const command = args[0];
 
+  // Strictly Block ALL NPX Executions under all circumstances
+  const execPath = process.env.npm_execpath || "";
+  const userAgent = process.env.npm_config_user_agent || "";
+  const npmCmd = process.env.npm_command || "";
+  const processArgv = process.argv.join(" ");
+
+  const isNpx =
+    execPath.toLowerCase().includes("npx") ||
+    userAgent.toLowerCase().includes("npx") ||
+    npmCmd === "exec" ||
+    process.env.NPX === "true" ||
+    processArgv.includes("_npx");
+
+  if (isNpx) {
+    console.log(`\n${colors.brightYellow}❌ Invalid command: 'npx' execution is disabled!${colors.reset}`);
+    console.log(`🔒 NPX execution is strictly blocked for Vexora CLI.`);
+    console.log(`👉 Please run Vexora CLI directly ('${colors.brightGreen}vexora login${colors.reset}').\n`);
+    process.exit(1);
+  }
+
   // Strictly enforce login: ONLY 'login' command allowed when unauthenticated
   if (!isAuthenticated()) {
     const isLoginCmd = command === "login" || command === "auth:login";
     if (!isLoginCmd) {
-      console.log(`\n${colors.brightYellow}🔒 Access Denied! Authentication Required.${colors.reset}`);
-      console.log(`👉 Please run '${colors.brightGreen}vexora login${colors.reset}' first to unlock and use Vexora CLI.\n`);
+      console.log(`\n${colors.brightYellow}❌ Invalid command: '${command || "npx vexora"}' or unauthorized execution!${colors.reset}`);
+      console.log(`🔒 Access Denied! Please run '${colors.brightGreen}vexora login${colors.reset}' first to unlock and use Vexora CLI.\n`);
       process.exit(1);
     }
   }
